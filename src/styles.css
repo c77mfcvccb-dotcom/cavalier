@@ -436,27 +436,66 @@ button {
   padding-bottom: 4px;
 }
 
+/* Hauteur libre plutôt que carrée : les étiquettes doivent tenir sans
+   déborder, y compris sur un écran de 360 px. */
 .jour {
-  aspect-ratio: 1;
+  min-height: 58px;
   border-radius: 9px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
+  gap: 2px;
+  padding: 4px 3px;
   font-size: 0.85rem;
   background: var(--carte);
   border: 1px solid transparent;
+  overflow: hidden;
 }
 
+.jour .numero { line-height: 1.1; }
 .jour.hors-mois { opacity: 0.3; }
 .jour.aujourdhui { border-color: var(--vert); font-weight: 700; }
 .jour.selectionne { background: var(--vert); color: #fff; }
-.jour .pastilles { display: flex; gap: 2px; height: 6px; align-items: center; }
-.jour .pastilles i { width: 5px; height: 5px; border-radius: 50%; display: block; }
-/* Les soins prennent une marque carrée : elle se distingue des pastilles
-   rondes des cavaliers même sans percevoir la différence de couleur. */
-.jour .pastilles i.marque-soin { border-radius: 1px; width: 6px; height: 6px; }
+
+.jour .etiquettes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+.etiquette-jour {
+  display: block;
+  width: 100%;
+  padding: 1px 3px;
+  border-radius: 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid transparent;
+}
+
+.etiquette-jour.surplus {
+  background: var(--sable);
+  color: var(--texte-doux);
+}
+
+/* Sur le jour sélectionné (fond vert foncé), un liseré blanc détache
+   l'étiquette sans lui faire perdre sa couleur d'identification. */
+.jour.selectionne .etiquette-jour { border-color: rgba(255, 255, 255, 0.9); }
+.jour.selectionne .etiquette-jour.surplus {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+@media (max-width: 359px) {
+  .etiquette-jour { font-size: 0.54rem; padding: 1px 2px; }
+}
 
 /* ---------- Éléments de liste ---------- */
 .element {

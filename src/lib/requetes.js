@@ -1,7 +1,7 @@
 // Requêtes Supabase partagées. Le RLS filtre déjà les lignes accessibles :
 // ces fonctions ne refont donc pas de contrôle de droits côté client.
 import { supabase } from './supabase'
-import { COULEUR_SOIN } from './constantes'
+import { COULEUR_SOIN, traitCavalier } from './couleurs'
 import { cleJour, enDateLocale } from './format'
 
 /** Chevaux d'un cavalier, via la table de liaison (rôle + couleur inclus). */
@@ -69,8 +69,8 @@ export async function chargerCavaliersDuCheval(chevalId) {
 
 /**
  * Créneaux d'un ou plusieurs chevaux, enrichis de la couleur du cavalier.
- * Les couleurs vivent dans cheval_cavaliers : on les rapatrie en une requête
- * puis on les associe côté client (moins coûteux qu'une jointure par ligne).
+ * La couleur se déduit de l'identifiant du cavalier : plus besoin de la
+ * seconde requête sur cheval_cavaliers que faisait cette fonction.
  */
 export async function chargerCreneaux({ chevauxIds, debut, fin }) {
   if (!chevauxIds?.length) return []
@@ -87,19 +87,9 @@ export async function chargerCreneaux({ chevauxIds, debut, fin }) {
   const { data: creneaux, error } = await requete
   if (error) throw error
 
-  const { data: liaisons, error: erreurLiaisons } = await supabase
-    .from('cheval_cavaliers')
-    .select('cheval_id, cavalier_id, couleur')
-    .in('cheval_id', chevauxIds)
-  if (erreurLiaisons) throw erreurLiaisons
-
-  const couleurs = new Map(
-    (liaisons || []).map((l) => [`${l.cheval_id}:${l.cavalier_id}`, l.couleur])
-  )
-
   return (creneaux || []).map((creneau) => ({
     ...creneau,
-    couleur: couleurs.get(`${creneau.cheval_id}:${creneau.cavalier_id}`) || '#94a3b8',
+    couleur: traitCavalier(creneau.cavalier_id),
   }))
 }
 
@@ -137,7 +127,7 @@ export async function chargerEvenements({ chevauxIds, debut, fin }) {
       cheval_id: echeance.cheval_id,
       cheval: { id: echeance.cheval_id, nom: echeance.cheval_nom },
       debut: echeance.prochaine_echeance,
-      couleur: COULEUR_SOIN,
+      couleur: COULEUR_SOIN.trait,
       type: echeance.type,
       statut: echeance.statut,
       jours_restants: echeance.jours_restants,

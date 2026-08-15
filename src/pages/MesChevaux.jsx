@@ -58,7 +58,7 @@ export default function MesChevaux() {
                       <div className="nom">{cheval.nom}</div>
                       <div className="detail">{details || 'Fiche à compléter'}</div>
                       <div style={{ marginTop: 5 }}>
-                        <span className="badge" style={{ background: `${cheval.couleur}1a`, color: cheval.couleur }}>
+                        <span className="badge">
                           {ROLES[cheval.role]?.libelle || cheval.role}
                         </span>
                       </div>

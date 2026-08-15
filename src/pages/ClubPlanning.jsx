@@ -4,7 +4,7 @@ import { chargerChevauxClub, chargerEvenements } from '../lib/requetes'
 import { Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import LigneEvenement from '../composants/LigneEvenement'
-import { COULEUR_SOIN } from '../lib/constantes'
+import { COULEUR_SOIN } from '../lib/couleurs'
 import { cleJour, debutSemaine, formatDate } from '../lib/format'
 
 /**
@@ -100,7 +100,7 @@ export default function ClubPlanning() {
             Créneau de monte
           </span>
           <span className="badge contour">
-            <i className="pastille carree" style={{ background: COULEUR_SOIN }} />
+            <i className="pastille carree" style={{ background: COULEUR_SOIN.trait }} />
             Échéance de soin
           </span>
         </div>

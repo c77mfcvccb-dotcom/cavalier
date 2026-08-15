@@ -75,7 +75,14 @@ accède à ses chevaux via `club_id`).
 | `cheval_id`   | uuid FK |                                                          |
 | `cavalier_id` | uuid FK | profil de type `cavalier`                                |
 | `role`        | text    | `proprietaire` \| `demi_pension` \| `cavalier_club`        |
-| `couleur`     | text    | hex, attribué automatiquement — code couleur du calendrier |
+| `couleur`     | text    | hérité — voir la note ci-dessous                         |
+
+> La colonne `couleur` n'est plus lue par l'application. Elle attribuait une
+> couleur par paire (cheval, cavalier), si bien qu'un même cavalier changeait
+> de teinte d'un cheval à l'autre. La couleur est désormais dérivée de
+> l'identifiant du cavalier (`src/lib/couleurs.js`), donc identique partout.
+> La colonne est conservée telle quelle : la supprimer n'apporterait rien et
+> demanderait une migration.
 
 Unicité sur `(cheval_id, cavalier_id)`. Un cheval peut être partagé entre
 2 cavaliers ou plus, sans limite.

@@ -6,7 +6,7 @@ import { Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import Calendrier from '../composants/Calendrier'
 import LigneEvenement from '../composants/LigneEvenement'
-import { COULEUR_SOIN } from '../lib/constantes'
+import { COULEUR_SOIN } from '../lib/couleurs'
 import { cleJour, formatDate } from '../lib/format'
 
 /** Tous les chevaux du cavalier fusionnés : créneaux de monte et échéances de soins. */
@@ -76,16 +76,21 @@ export default function CalendrierGlobal() {
 
             <Calendrier evenements={evenements} jourSelectionne={jour} onSelectionJour={setJour} />
 
-            <div className="puces" style={{ marginTop: 12 }}>
-              <span className="badge contour">
-                <i className="pastille" style={{ background: 'var(--vert-clair)' }} />
-                Créneau de monte
-              </span>
-              <span className="badge contour">
-                <i className="pastille carree" style={{ background: COULEUR_SOIN }} />
-                Échéance de soin
-              </span>
-            </div>
+            <p className="aide" style={{ marginTop: 12 }}>
+              Dans la grille, le prénom indique qui monte ;{' '}
+              <span
+                className="etiquette-jour"
+                style={{
+                  display: 'inline-block',
+                  width: 'auto',
+                  background: COULEUR_SOIN.fond,
+                  color: COULEUR_SOIN.texte,
+                }}
+              >
+                🔨
+              </span>{' '}
+              une échéance de soin.
+            </p>
           </>
         )}
       </main>

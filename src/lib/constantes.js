@@ -38,13 +38,6 @@ export const TYPES_SOIN = {
   autre: { libelle: 'Autre', emoji: '📋', intervalleJours: null },
 }
 
-/**
- * Couleur des échéances de soins dans les calendriers. Volontairement neutre
- * et absente de la palette des cavaliers (voir couleur_libre en SQL) : un soin
- * n'appartient à personne, il concerne le cheval.
- */
-export const COULEUR_SOIN = '#57534e'
-
 /** Ressenti noté après une séance — le signal faible qui compte en demi-pension. */
 export const RESSENTIS = {
   ras: { libelle: 'RAS', emoji: '🙂', alerte: false },

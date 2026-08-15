@@ -5,6 +5,7 @@ import { useAuth } from '../../contexte/AuthContexte'
 import { Avatar, Champ, Erreur, Feuille, PhotoCheval } from '../../composants/Ui'
 import ChargeurPhoto from '../../composants/ChargeurPhoto'
 import { ROLES, SEXES } from '../../lib/constantes'
+import { traitCavalier } from '../../lib/couleurs'
 import { formatDate, texteAge } from '../../lib/format'
 
 export default function OngletFiche({ cheval, cavaliers, estGestionnaire, recharger }) {
@@ -151,7 +152,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
 
           {cavaliers.map((liaison) => (
             <div key={liaison.id} className="element">
-              <span className="bordure-couleur" style={{ background: liaison.couleur }} />
+              <span className="bordure-couleur" style={{ background: traitCavalier(liaison.cavalier_id) }} />
               <Avatar profil={liaison.profil} />
               <div className="corps">
                 <div className="titre">

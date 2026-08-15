@@ -5,6 +5,7 @@ import { chargerCreneaux } from '../../lib/requetes'
 import { Champ, Chargement, Erreur, Feuille } from '../../composants/Ui'
 import Calendrier from '../../composants/Calendrier'
 import { TYPES_CRENEAU } from '../../lib/constantes'
+import { couleurCavalier, prenom } from '../../lib/couleurs'
 import { cleJour, formatDate, formatHeure, valeurDatetimeLocal } from '../../lib/format'
 
 export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire }) {
@@ -92,10 +93,12 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
           <span
             key={liaison.id}
             className="badge"
-            style={{ background: `${liaison.couleur}1a`, color: liaison.couleur }}
+            style={{
+              background: couleurCavalier(liaison.cavalier_id).fond,
+              color: couleurCavalier(liaison.cavalier_id).texte,
+            }}
           >
-            <i className="pastille" style={{ background: liaison.couleur }} />
-            {liaison.profil?.nom?.split(' ')[0]}
+            {prenom(liaison.profil?.nom)}
           </span>
         ))}
       </div>
