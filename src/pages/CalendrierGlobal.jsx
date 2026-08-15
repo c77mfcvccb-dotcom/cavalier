@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
-import { chargerCreneaux, chargerMesChevaux } from '../lib/requetes'
+import { chargerEvenements, chargerMesChevaux } from '../lib/requetes'
 import { Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import Calendrier from '../composants/Calendrier'
-import { TYPES_CRENEAU } from '../lib/constantes'
-import { cleJour, formatDate, formatHeure } from '../lib/format'
+import LigneEvenement from '../composants/LigneEvenement'
+import { COULEUR_SOIN } from '../lib/constantes'
+import { cleJour, formatDate } from '../lib/format'
 
-/** Tous les chevaux du cavalier fusionnés dans un seul calendrier. */
+/** Tous les chevaux du cavalier fusionnés : créneaux de monte et échéances de soins. */
 export default function CalendrierGlobal() {
   const { utilisateur } = useAuth()
-  const [creneaux, setCreneaux] = useState([])
+  const [evenements, setEvenements] = useState([])
   const [chevaux, setChevaux] = useState([])
   const [jour, setJour] = useState(() => new Date())
   const [chargement, setChargement] = useState(true)
@@ -24,8 +25,8 @@ export default function CalendrierGlobal() {
       .then(async (mesChevaux) => {
         if (annule) return
         setChevaux(mesChevaux)
-        const tous = await chargerCreneaux({ chevauxIds: mesChevaux.map((c) => c.id) })
-        if (!annule) setCreneaux(tous)
+        const tous = await chargerEvenements({ chevauxIds: mesChevaux.map((c) => c.id) })
+        if (!annule) setEvenements(tous)
       })
       .catch((e) => !annule && setErreur(e.message || 'Chargement impossible'))
       .finally(() => !annule && setChargement(false))
@@ -38,7 +39,7 @@ export default function CalendrierGlobal() {
   if (chargement) return <Chargement />
 
   const cleSelection = cleJour(jour)
-  const duJour = creneaux.filter((c) => cleJour(c.debut) === cleSelection)
+  const duJour = evenements.filter((e) => cleJour(e.debut) === cleSelection)
 
   return (
     <>
@@ -56,41 +57,30 @@ export default function CalendrierGlobal() {
           />
         ) : (
           <>
-            <Calendrier creneaux={creneaux} jourSelectionne={jour} onSelectionJour={setJour} />
+            <Calendrier evenements={evenements} jourSelectionne={jour} onSelectionJour={setJour} />
+
+            <div className="puces" style={{ marginTop: 12 }}>
+              <span className="badge contour">
+                <i className="pastille" style={{ background: 'var(--vert-clair)' }} />
+                Créneau de monte
+              </span>
+              <span className="badge contour">
+                <i className="pastille carree" style={{ background: COULEUR_SOIN }} />
+                Échéance de soin
+              </span>
+            </div>
 
             <section className="section">
               <div className="titre-section">
-                <h2>
-                  {formatDate(jour, { avecJour: true })}
-                </h2>
+                <h2>{formatDate(jour, { avecJour: true })}</h2>
               </div>
 
               {duJour.length === 0 ? (
-                <div className="carte centre doux">Aucun créneau ce jour-là</div>
+                <div className="carte centre doux">Rien de prévu ce jour-là</div>
               ) : (
                 <div className="liste">
-                  {duJour.map((creneau) => (
-                    <Link
-                      key={creneau.id}
-                      to={`/chevaux/${creneau.cheval_id}?onglet=calendrier`}
-                      className="element"
-                    >
-                      <span className="bordure-couleur" style={{ background: creneau.couleur }} />
-                      <div className="corps">
-                        <div className="titre">
-                          {creneau.cheval?.nom}
-                          <span className="doux">
-                            {' '}
-                            · {creneau.titre || TYPES_CRENEAU[creneau.type]}
-                          </span>
-                        </div>
-                        <div className="meta">
-                          {formatHeure(creneau.debut)} – {formatHeure(creneau.fin)} ·{' '}
-                          {creneau.cavalier?.nom}
-                        </div>
-                      </div>
-                      <span className="fleche">›</span>
-                    </Link>
+                  {duJour.map((evenement) => (
+                    <LigneEvenement key={evenement.id} evenement={evenement} />
                   ))}
                 </div>
               )}

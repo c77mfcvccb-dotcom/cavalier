@@ -37,6 +37,13 @@ export const TYPES_SOIN = {
   autre: { libelle: 'Autre', emoji: '📋', intervalleJours: null },
 }
 
+/**
+ * Couleur des échéances de soins dans les calendriers. Volontairement neutre
+ * et absente de la palette des cavaliers (voir couleur_libre en SQL) : un soin
+ * n'appartient à personne, il concerne le cheval.
+ */
+export const COULEUR_SOIN = '#57534e'
+
 export const STATUTS_ECHEANCE = {
   retard: { libelle: 'En retard', classe: 'retard' },
   urgent: { libelle: 'Cette semaine', classe: 'urgent' },

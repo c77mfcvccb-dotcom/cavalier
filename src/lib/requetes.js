@@ -1,6 +1,8 @@
 // Requêtes Supabase partagées. Le RLS filtre déjà les lignes accessibles :
 // ces fonctions ne refont donc pas de contrôle de droits côté client.
 import { supabase } from './supabase'
+import { COULEUR_SOIN } from './constantes'
+import { cleJour, enDateLocale } from './format'
 
 /** Chevaux d'un cavalier, via la table de liaison (rôle + couleur inclus). */
 export async function chargerMesChevaux(cavalierId) {
@@ -99,6 +101,52 @@ export async function chargerCreneaux({ chevauxIds, debut, fin }) {
     ...creneau,
     couleur: couleurs.get(`${creneau.cheval_id}:${creneau.cavalier_id}`) || '#94a3b8',
   }))
+}
+
+/**
+ * Flux unique du calendrier : créneaux de monte + échéances de soins.
+ *
+ * Chaque élément porte un `genre` (« creneau » ou « soin ») qui pilote son
+ * rendu — pastille ronde à la couleur du cavalier, ou carré neutre avec
+ * l'emoji du type de soin.
+ *
+ * Les échéances viennent de la vue v_echeances, qui ne retient que le soin le
+ * plus récent de chaque type : c'est bien « la prochaine échéance » du cheval,
+ * et non l'historique des échéances déjà remplacées.
+ */
+export async function chargerEvenements({ chevauxIds, debut, fin }) {
+  if (!chevauxIds?.length) return []
+
+  const [creneaux, echeances] = await Promise.all([
+    chargerCreneaux({ chevauxIds, debut, fin }),
+    chargerEcheances(),
+  ])
+
+  const dansLaFenetre = (jour) => {
+    const date = enDateLocale(jour)
+    if (debut && date < enDateLocale(cleJour(debut))) return false
+    if (fin && date > enDateLocale(cleJour(fin))) return false
+    return true
+  }
+
+  const soins = echeances
+    .filter((e) => chevauxIds.includes(e.cheval_id) && dansLaFenetre(e.prochaine_echeance))
+    .map((echeance) => ({
+      id: `soin-${echeance.id}`,
+      genre: 'soin',
+      cheval_id: echeance.cheval_id,
+      cheval: { id: echeance.cheval_id, nom: echeance.cheval_nom },
+      debut: echeance.prochaine_echeance,
+      couleur: COULEUR_SOIN,
+      type: echeance.type,
+      statut: echeance.statut,
+      jours_restants: echeance.jours_restants,
+      praticien: echeance.praticien,
+    }))
+
+  return [...creneaux.map((c) => ({ ...c, genre: 'creneau' })), ...soins].sort(
+    (a, b) => enDateLocale(a.debut) - enDateLocale(b.debut)
+  )
 }
 
 export async function chargerSeances(chevalId) {

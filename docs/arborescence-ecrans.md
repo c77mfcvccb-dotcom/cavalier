@@ -42,7 +42,10 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
                       ajout d'un soin (échéance pré-remplie)
 
 /calendrier           CALENDRIER GLOBAL — tous mes chevaux fusionnés,
-                      vue mois puis détail du jour
+                      vue mois puis détail du jour. Deux natures d'événement :
+                      créneaux de monte (pastille ronde, couleur du cavalier)
+                      et échéances de soins (marque carrée neutre + emoji du
+                      type de soin + badge d'urgence)
 
 /profil               Nom, photo, galop, ville, téléphone, déconnexion
 ```
@@ -66,7 +69,9 @@ Barre d'onglets : **Cavalerie · Santé · Planning · Profil**
 
 /planning             PLANNING GLOBAL — qui monte quel cheval quand,
                       vue semaine ; chaque créneau porte le nom du cheval
-                      et la couleur du cavalier
+                      et la couleur du cavalier. Les échéances de soins de
+                      la cavalerie s'intercalent au bon jour, dans le même
+                      rendu que côté cavalier
 
 /profil               Nom du club, photo, ville, présentation, déconnexion
 ```

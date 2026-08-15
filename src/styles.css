@@ -238,6 +238,8 @@ button {
   flex-shrink: 0;
 }
 
+.pastille.carree { border-radius: 2px; }
+
 /* ---------- Boutons ---------- */
 .bouton {
   display: inline-flex;
@@ -439,6 +441,9 @@ button {
 .jour.selectionne { background: var(--vert); color: #fff; }
 .jour .pastilles { display: flex; gap: 2px; height: 6px; align-items: center; }
 .jour .pastilles i { width: 5px; height: 5px; border-radius: 50%; display: block; }
+/* Les soins prennent une marque carrée : elle se distingue des pastilles
+   rondes des cavaliers même sans percevoir la différence de couleur. */
+.jour .pastilles i.marque-soin { border-radius: 1px; width: 6px; height: 6px; }
 
 /* ---------- Éléments de liste ---------- */
 .element {

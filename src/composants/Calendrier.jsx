@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import { cleJour, formatMoisAnnee, grilleMois, JOURS_COURTS } from '../lib/format'
 
 /**
- * Grille mensuelle avec pastilles de couleur par cavalier.
- * `creneaux` : [{ id, debut, couleur }] — la couleur vient de cheval_cavaliers.
+ * Grille mensuelle des événements du calendrier.
+ * `evenements` : [{ id, debut, couleur, genre }] — `genre` vaut « creneau »
+ * (pastille ronde à la couleur du cavalier) ou « soin » (carré neutre).
  */
-export default function Calendrier({ creneaux = [], jourSelectionne, onSelectionJour }) {
+export default function Calendrier({ evenements = [], jourSelectionne, onSelectionJour }) {
   const [curseur, setCurseur] = useState(() => {
     const d = jourSelectionne ? new Date(jourSelectionne) : new Date()
     return new Date(d.getFullYear(), d.getMonth(), 1)
@@ -13,13 +14,13 @@ export default function Calendrier({ creneaux = [], jourSelectionne, onSelection
 
   const parJour = useMemo(() => {
     const carte = new Map()
-    for (const creneau of creneaux) {
-      const cle = cleJour(creneau.debut)
+    for (const evenement of evenements) {
+      const cle = cleJour(evenement.debut)
       if (!carte.has(cle)) carte.set(cle, [])
-      carte.get(cle).push(creneau)
+      carte.get(cle).push(evenement)
     }
     return carte
-  }, [creneaux])
+  }, [evenements])
 
   const semaines = useMemo(
     () => grilleMois(curseur.getFullYear(), curseur.getMonth()),
@@ -50,7 +51,15 @@ export default function Calendrier({ creneaux = [], jourSelectionne, onSelection
         {semaines.flat().map((date) => {
           const cle = cleJour(date)
           const duJour = parJour.get(cle) || []
-          const couleurs = [...new Set(duJour.map((c) => c.couleur))].slice(0, 4)
+
+          // Une marque par couleur et par genre, 4 au maximum pour rester lisible
+          const marques = []
+          for (const evenement of duJour) {
+            const genre = evenement.genre || 'creneau'
+            if (!marques.some((m) => m.couleur === evenement.couleur && m.genre === genre)) {
+              marques.push({ couleur: evenement.couleur, genre })
+            }
+          }
 
           const classes = ['jour']
           if (date.getMonth() !== curseur.getMonth()) classes.push('hors-mois')
@@ -65,8 +74,12 @@ export default function Calendrier({ creneaux = [], jourSelectionne, onSelection
             >
               <span>{date.getDate()}</span>
               <span className="pastilles">
-                {couleurs.map((couleur) => (
-                  <i key={couleur} style={{ background: couleur }} />
+                {marques.slice(0, 4).map((marque) => (
+                  <i
+                    key={`${marque.genre}-${marque.couleur}`}
+                    className={marque.genre === 'soin' ? 'marque-soin' : undefined}
+                    style={{ background: marque.couleur }}
+                  />
                 ))}
               </span>
             </button>

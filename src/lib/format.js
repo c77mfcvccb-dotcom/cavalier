@@ -8,9 +8,27 @@ const MOIS = [
 
 export const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
+/**
+ * Convertit une valeur en Date locale.
+ * Les colonnes DATE de Postgres arrivent en « AAAA-MM-JJ » : `new Date()` les
+ * lit comme minuit UTC, ce qui décale l'affichage d'un jour dans les fuseaux
+ * en retard sur UTC. On les construit donc explicitement en heure locale.
+ */
+export function enDateLocale(valeur) {
+  if (valeur instanceof Date) return valeur
+  if (typeof valeur === 'string') {
+    const jourSeul = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valeur)
+    if (jourSeul) {
+      const [, annee, mois, jour] = jourSeul
+      return new Date(Number(annee), Number(mois) - 1, Number(jour))
+    }
+  }
+  return new Date(valeur)
+}
+
 /** Clé « AAAA-MM-JJ » dans le fuseau local (pas d'UTC : évite les décalages de jour). */
 export function cleJour(date) {
-  const d = new Date(date)
+  const d = enDateLocale(date)
   const mois = String(d.getMonth() + 1).padStart(2, '0')
   const jour = String(d.getDate()).padStart(2, '0')
   return `${d.getFullYear()}-${mois}-${jour}`
@@ -18,7 +36,7 @@ export function cleJour(date) {
 
 export function formatDate(valeur, options = {}) {
   if (!valeur) return '—'
-  const d = new Date(valeur)
+  const d = enDateLocale(valeur)
   if (Number.isNaN(d.getTime())) return '—'
   const { avecJour = false, court = false } = options
   const mois = court ? MOIS[d.getMonth()].slice(0, 4) : MOIS[d.getMonth()]
@@ -48,7 +66,7 @@ export function joursRelatifs(jours) {
 
 export function calculerAge(dateNaissance) {
   if (!dateNaissance) return null
-  const n = new Date(dateNaissance)
+  const n = enDateLocale(dateNaissance)
   const aujourdhui = new Date()
   let age = aujourdhui.getFullYear() - n.getFullYear()
   const m = aujourdhui.getMonth() - n.getMonth()

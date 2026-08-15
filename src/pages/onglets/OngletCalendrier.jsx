@@ -45,7 +45,7 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
     <div className="pile" style={{ gap: 18 }}>
       <Erreur>{erreur}</Erreur>
 
-      <Calendrier creneaux={creneaux} jourSelectionne={jour} onSelectionJour={setJour} />
+      <Calendrier evenements={creneaux} jourSelectionne={jour} onSelectionJour={setJour} />
 
       <div className="puces">
         {cavaliers.map((liaison) => (
