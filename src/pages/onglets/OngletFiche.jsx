@@ -236,8 +236,8 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
               className="bouton"
               onClick={() =>
                 navigator.share({
-                  title: 'Cavalier',
-                  text: `Rejoins ${cheval.nom} sur Cavalier avec le code ${code}`,
+                  title: 'Licol',
+                  text: `Rejoins ${cheval.nom} sur Licol avec le code ${code}`,
                 })
               }
             >

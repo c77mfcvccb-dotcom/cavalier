@@ -41,7 +41,7 @@ export default function Inscription() {
   return (
     <div className="ecran-auth">
       <div className="marque">
-        <img src="/icone.svg" alt="" />
+        <img src="/logo.svg" alt="" />
         <h1>Créer un compte</h1>
       </div>
 

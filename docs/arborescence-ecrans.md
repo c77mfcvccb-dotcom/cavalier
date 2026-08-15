@@ -1,4 +1,4 @@
-# Arborescence des écrans — Cavalier V1
+# Arborescence des écrans — Licol V1
 
 Mobile-first : navigation par barre d'onglets en bas d'écran, 4 onglets max,
 différente selon le type de compte. Tout est en français.

@@ -1,4 +1,4 @@
-# Modèle de données — Cavalier V1
+# Modèle de données — Licol V1
 
 Base Postgres hébergée par Supabase, Row Level Security activée sur **toutes**
 les tables. L'authentification s'appuie sur `auth.users` (email + mot de passe,

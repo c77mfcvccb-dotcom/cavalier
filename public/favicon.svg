@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Licol">
+  <title>Licol</title>
+  <!--
+    Version réduite : sans étampures, et avec un fer un peu plus épais.
+    À 16 ou 32 px, les six trous se referment en bouillie ; la silhouette
+    seule reste nette.
+  -->
+  <rect width="512" height="512" rx="112" fill="#1f3a2e"/>
+  <path d="M 190 358 A 122 122 0 1 1 322 358"
+        fill="none" stroke="#f5e9d7" stroke-width="72" stroke-linecap="round"/>
+</svg>

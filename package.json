@@ -1,9 +1,9 @@
 {
-  "name": "cavalier",
+  "name": "licol",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Gestion des chevaux pour les cavaliers et suivi de la cavalerie pour les clubs",
+  "description": "Licol — le carnet partagé de votre cheval : demi-pension, séances et suivi santé",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

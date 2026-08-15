@@ -1,6 +1,18 @@
-# Cavalier
+# Licol
 
-Application web mobile-first pour les cavaliers et les clubs équestres.
+**Le carnet partagé de votre cheval.** Application web mobile-first pour les
+cavaliers et les clubs équestres.
+
+Le nom vient du licol, la pièce qui relie le cavalier à son cheval au
+quotidien — et c'est bien de lien qu'il s'agit ici : entre co-cavaliers d'une
+même demi-pension, et entre un club et ses cavaliers. Il se distingue aussi
+de la nomenclature dominante du secteur, largement construite sur le préfixe
+« Equi- ».
+
+L'identité tient dans deux fichiers : `public/logo.svg` (fer à cheval avec
+ses étampures, pour l'icône d'application) et `public/favicon.svg` (même fer,
+sans les trous, qui se refermeraient en bouillie à 16 px). Les PNG de la PWA
+se régénèrent avec `npm run icones`.
 
 - **Côté cavalier** : ses chevaux, le partage en demi-pension par code
   d'invitation, un calendrier partagé par cheval, un carnet de séances et

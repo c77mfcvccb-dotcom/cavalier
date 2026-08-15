@@ -29,9 +29,9 @@ export default function Connexion() {
   return (
     <div className="ecran-auth">
       <div className="marque">
-        <img src="/icone.svg" alt="" />
-        <h1>Cavalier</h1>
-        <p>Vos chevaux, votre demi-pension, leur santé.</p>
+        <img src="/logo.svg" alt="" />
+        <h1>Licol</h1>
+        <p>Le carnet partagé de votre cheval.</p>
       </div>
 
       <form onSubmit={surSoumission}>

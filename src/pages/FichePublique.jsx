@@ -134,7 +134,7 @@ export default function FichePublique() {
           )}
 
           <footer className="document-pied doux">
-            Partagé depuis Cavalier le {formatDate(fiche.genere_le)}. Ce lien peut
+            Partagé depuis Licol le {formatDate(fiche.genere_le)}. Ce lien peut
             être révoqué à tout moment par le propriétaire du cheval.
           </footer>
         </article>

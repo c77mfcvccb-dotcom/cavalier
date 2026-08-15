@@ -1,7 +1,7 @@
 {
-  "name": "Cavalier",
-  "short_name": "Cavalier",
-  "description": "Gestion des chevaux, demi-pension partagée et suivi santé de la cavalerie.",
+  "name": "Licol",
+  "short_name": "Licol",
+  "description": "Le carnet partagé de votre cheval : planning de demi-pension, séances et suivi santé.",
   "lang": "fr",
   "start_url": "/",
   "scope": "/",

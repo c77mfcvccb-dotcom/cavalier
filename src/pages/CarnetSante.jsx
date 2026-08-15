@@ -162,7 +162,7 @@ export default function CarnetSante() {
           )}
 
           <footer className="document-pied doux">
-            Document généré par Cavalier. Les montants et les informations des
+            Document généré par Licol. Les montants et les informations des
             cavaliers ne figurent pas dans ce carnet.
           </footer>
         </article>
