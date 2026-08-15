@@ -102,7 +102,11 @@ begin
      set actif = false, revoque_le = now()
    where cheval_id = p_cheval and actif;
 
-  v_token := encode(gen_random_bytes(16), 'hex');
+  -- gen_random_uuid() appartient au cœur de PostgreSQL (pg_catalog) et se
+  -- résout quel que soit le search_path. gen_random_bytes, elle, vient de
+  -- pgcrypto, installé dans le schéma « extensions » sur Supabase : elle
+  -- serait invisible depuis cette fonction. Voir la migration 0004.
+  v_token := replace(gen_random_uuid()::text, '-', '');
 
   insert into partages_publics (cheval_id, token, cree_par)
   values (p_cheval, v_token, auth.uid());

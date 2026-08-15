@@ -35,6 +35,13 @@ Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
 | `0001_schema.sql` | Tables, fonctions, RLS, bucket `photos` |
 | `0002_correctif_rls_chevaux.sql` | Correctif RLS sur la création d'un cheval |
 | `0003_carnet_depenses_partage.sql` | Ressenti des séances, seuil d'inactivité, protocoles de vaccin, contrainte de montant, liens publics |
+| `0004_correctif_token_lien_public.sql` | Génération du jeton sans pgcrypto (invisible depuis un `security definer` sur Supabase) |
+
+> Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
+> `extensions`, pas dans `public`. Une fonction `security definer` déclarée
+> `set search_path = public` ne voit donc **aucune** fonction d'extension.
+> Préférer les fonctions du cœur de PostgreSQL — `gen_random_uuid()` plutôt
+> que `gen_random_bytes()` de pgcrypto.
 
 ## Mise en route
 
