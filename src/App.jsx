@@ -4,6 +4,7 @@ import { configurationManquante } from './lib/supabase'
 import { Chargement } from './composants/Ui'
 import { NavBas } from './composants/Mise'
 
+import Rappels from './composants/Rappels'
 import Connexion from './pages/Connexion'
 import Inscription from './pages/Inscription'
 import TableauBord from './pages/TableauBord'
@@ -13,9 +14,12 @@ import FicheCheval from './pages/FicheCheval'
 import RejoindreCheval from './pages/RejoindreCheval'
 import CalendrierGlobal from './pages/CalendrierGlobal'
 import Profil from './pages/Profil'
+import CarnetSante from './pages/CarnetSante'
+import FichePublique from './pages/FichePublique'
 import ClubCavalerie from './pages/ClubCavalerie'
 import ClubSante from './pages/ClubSante'
 import ClubPlanning from './pages/ClubPlanning'
+import ClubDepenses from './pages/ClubDepenses'
 
 function ConfigurationRequise() {
   return (
@@ -42,6 +46,8 @@ export default function App() {
   if (!session) {
     return (
       <Routes>
+        {/* La fiche partagée s'ouvre sans compte : elle précède la redirection. */}
+        <Route path="/public/:token" element={<FichePublique />} />
         <Route path="/connexion" element={<Connexion />} />
         <Route path="/inscription" element={<Inscription />} />
         <Route path="*" element={<Navigate to="/connexion" replace />} />
@@ -54,12 +60,15 @@ export default function App() {
 
   return (
     <div className="app">
+      <Rappels />
+
       <Routes>
         {estClub ? (
           <>
             <Route path="/" element={<ClubCavalerie />} />
             <Route path="/sante" element={<ClubSante />} />
             <Route path="/planning" element={<ClubPlanning />} />
+            <Route path="/depenses" element={<ClubDepenses />} />
           </>
         ) : (
           <>
@@ -70,8 +79,10 @@ export default function App() {
           </>
         )}
 
+        <Route path="/public/:token" element={<FichePublique />} />
         <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
         <Route path="/chevaux/:id" element={<FicheCheval />} />
+        <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

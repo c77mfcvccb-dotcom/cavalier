@@ -366,6 +366,19 @@ button {
 @keyframes apparition { from { opacity: 0; } to { opacity: 1; } }
 @keyframes remontee { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
+/* ---------- Bandeau de rappel ---------- */
+.bandeau-rappel {
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border-radius: var(--rayon);
+  border: 1px solid var(--bordure);
+  background: var(--carte);
+  box-shadow: var(--ombre);
+}
+
+.bandeau-rappel.retard { border-color: #f0c8c2; background: #fdf3f1; }
+.bandeau-rappel.urgent { border-color: #f0dcc0; background: #fdf7ee; }
+
 /* ---------- Onglets internes ---------- */
 .onglets {
   display: flex;
@@ -460,6 +473,75 @@ button {
 .element .titre { font-weight: 600; font-size: 0.94rem; }
 .element .meta { font-size: 0.8rem; color: var(--texte-doux); }
 .element .bordure-couleur { width: 4px; align-self: stretch; border-radius: 999px; flex-shrink: 0; }
+
+/* ---------- Groupes repliables (carnet de santé) ---------- */
+.entete-groupe {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--sable);
+}
+
+.ligne-soin {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--bordure);
+}
+
+.voir-plus {
+  width: 100%;
+  padding: 9px;
+  border-top: 1px solid var(--bordure);
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--vert-clair);
+}
+
+/* ---------- Jauge de répartition ---------- */
+.jauge {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--sable);
+  overflow: hidden;
+  margin-top: 3px;
+}
+
+.jauge span { display: block; height: 100%; background: var(--vert-clair); border-radius: 999px; }
+
+/* ---------- Histogramme mensuel ---------- */
+.histogramme {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 110px;
+}
+
+.histogramme .colonne {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  gap: 4px;
+}
+
+.histogramme .colonne span {
+  width: 100%;
+  min-height: 2px;
+  background: var(--vert-clair);
+  border-radius: 3px 3px 0 0;
+}
+
+.histogramme .colonne em {
+  font-style: normal;
+  font-size: 0.65rem;
+  color: var(--texte-doux);
+}
 
 /* ---------- États ---------- */
 .etat-vide {
@@ -563,6 +645,68 @@ button {
   flex: 1;
   height: 1px;
   background: var(--bordure);
+}
+
+/* ---------- Document imprimable (carnet de santé, fiche publique) ---------- */
+.document {
+  background: var(--carte);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  padding: 18px;
+}
+
+.document-entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--vert);
+  margin-bottom: 16px;
+}
+
+.document-entete h1 { font-size: 1.4rem; }
+.document-entete img { width: 74px; height: 74px; border-radius: 10px; object-fit: cover; }
+
+.document section { margin-bottom: 18px; }
+.document h2 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vert-clair);
+  margin-bottom: 8px;
+}
+
+.document-pied {
+  border-top: 1px solid var(--bordure);
+  padding-top: 10px;
+  font-size: 0.76rem;
+}
+
+.tableau { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.tableau th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--texte-doux);
+  border-bottom: 1px solid var(--bordure);
+  padding: 6px 8px 6px 0;
+}
+.tableau td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--bordure); vertical-align: top; }
+
+@media print {
+  .entete,
+  .nav-bas,
+  .bandeau-rappel,
+  .bouton-flottant,
+  .masquer-impression { display: none !important; }
+
+  html, body { background: #fff; }
+  .app { max-width: none; }
+  .contenu { padding: 0; }
+  .document { border: none; border-radius: 0; padding: 0; box-shadow: none; }
+  .document section { break-inside: avoid; }
+  .tableau { font-size: 10pt; }
+  @page { margin: 14mm; }
 }
 
 /* ---------- Divers ---------- */

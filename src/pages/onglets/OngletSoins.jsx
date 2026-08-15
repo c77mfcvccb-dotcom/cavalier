@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerSoins } from '../../lib/requetes'
 import { Champ, Chargement, Erreur, EtatVide, Feuille } from '../../composants/Ui'
-import { STATUTS_ECHEANCE, TYPES_SOIN } from '../../lib/constantes'
+import { PROTOCOLES_VACCIN, STATUTS_ECHEANCE, TYPES_SOIN } from '../../lib/constantes'
 import { ajouterJours, cleJour, formatDate, joursRelatifs } from '../../lib/format'
 
 /** Statut calculé côté client, avec les mêmes seuils que la vue v_echeances. */
@@ -18,12 +19,16 @@ function statutEcheance(dateEcheance) {
   return { cle: 'ok', jours }
 }
 
+const euros = (montant) =>
+  `${Number(montant).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`
+
 export default function OngletSoins({ cheval }) {
   const { profil } = useAuth()
   const [soins, setSoins] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [feuilleOuverte, setFeuilleOuverte] = useState(false)
+  const [typeDeplie, setTypeDeplie] = useState(null)
 
   const recharger = useCallback(async () => {
     try {
@@ -51,6 +56,44 @@ export default function OngletSoins({ cheval }) {
     )
   }, [soins])
 
+  // Historique regroupé par type de soin, du plus récent au plus ancien
+  const historiqueParType = useMemo(() => {
+    const groupes = new Map()
+    for (const soin of soins) {
+      if (!groupes.has(soin.type)) groupes.set(soin.type, [])
+      groupes.get(soin.type).push(soin)
+    }
+    return [...groupes.entries()].sort(
+      (a, b) => new Date(b[1][0].date_realisee) - new Date(a[1][0].date_realisee)
+    )
+  }, [soins])
+
+  const depenses = useMemo(() => {
+    const anneeCourante = new Date().getFullYear()
+    const moisCourant = new Date().getMonth()
+    let annee = 0
+    let mois = 0
+    const parType = new Map()
+
+    for (const soin of soins) {
+      if (!soin.cout) continue
+      const montant = Number(soin.cout)
+      const date = new Date(soin.date_realisee)
+      if (date.getFullYear() === anneeCourante) {
+        annee += montant
+        if (date.getMonth() === moisCourant) mois += montant
+        parType.set(soin.type, (parType.get(soin.type) || 0) + montant)
+      }
+    }
+
+    return {
+      annee,
+      mois,
+      anneeCourante,
+      parType: [...parType.entries()].sort((a, b) => b[1] - a[1]),
+    }
+  }, [soins])
+
   async function supprimer(soin) {
     if (!window.confirm('Supprimer cette entrée de suivi ?')) return
     const { error } = await supabase.from('soins').delete().eq('id', soin.id)
@@ -64,9 +107,18 @@ export default function OngletSoins({ cheval }) {
     <div className="pile" style={{ gap: 18 }}>
       <Erreur>{erreur}</Erreur>
 
-      <button className="bouton pleine-largeur" onClick={() => setFeuilleOuverte(true)}>
-        + Ajouter un soin
-      </button>
+      <div className="rangee">
+        <button
+          className="bouton"
+          style={{ flex: 1 }}
+          onClick={() => setFeuilleOuverte(true)}
+        >
+          + Ajouter un soin
+        </button>
+        <Link to={`/chevaux/${cheval.id}/carnet`} className="bouton secondaire">
+          Carnet
+        </Link>
+      </div>
 
       {echeances.length > 0 && (
         <section>
@@ -97,9 +149,48 @@ export default function OngletSoins({ cheval }) {
         </section>
       )}
 
+      {depenses.annee > 0 && (
+        <section>
+          <div className="titre-section">
+            <h2>Dépenses {depenses.anneeCourante}</h2>
+          </div>
+          <div className="carte">
+            <div className="rangee espace" style={{ marginBottom: 12 }}>
+              <div>
+                <div className="doux" style={{ fontSize: '0.8rem' }}>Ce mois-ci</div>
+                <div className="gras" style={{ fontSize: '1.15rem' }}>{euros(depenses.mois)}</div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div className="doux" style={{ fontSize: '0.8rem' }}>Depuis janvier</div>
+                <div className="gras" style={{ fontSize: '1.15rem' }}>{euros(depenses.annee)}</div>
+              </div>
+            </div>
+
+            <div className="pile" style={{ gap: 7 }}>
+              {depenses.parType.map(([type, montant]) => {
+                const config = TYPES_SOIN[type] || TYPES_SOIN.autre
+                const part = Math.round((montant / depenses.annee) * 100)
+                return (
+                  <div key={type}>
+                    <div className="rangee espace" style={{ fontSize: '0.85rem' }}>
+                      <span>{config.emoji} {config.libelle}</span>
+                      <span className="doux">{euros(montant)}</span>
+                    </div>
+                    <div className="jauge">
+                      <span style={{ width: `${part}%` }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section>
         <div className="titre-section">
-          <h2>Historique</h2>
+          <h2>Carnet de santé</h2>
+          <span className="doux">{soins.length} entrée{soins.length > 1 ? 's' : ''}</span>
         </div>
 
         {soins.length === 0 ? (
@@ -110,31 +201,68 @@ export default function OngletSoins({ cheval }) {
           />
         ) : (
           <div className="liste">
-            {soins.map((soin) => {
-              const type = TYPES_SOIN[soin.type] || TYPES_SOIN.autre
-              const details = [soin.praticien, soin.produit].filter(Boolean).join(' · ')
+            {historiqueParType.map(([type, entrees]) => {
+              const config = TYPES_SOIN[type] || TYPES_SOIN.autre
+              const deplie = typeDeplie === type
+              const visibles = deplie ? entrees : entrees.slice(0, 1)
+
               return (
-                <div key={soin.id} className="element">
-                  <span style={{ fontSize: '1.3rem' }}>{type.emoji}</span>
-                  <div className="corps">
-                    <div className="titre">{type.libelle}</div>
-                    <div className="meta">{formatDate(soin.date_realisee)}</div>
-                    {details && <div className="meta">{details}</div>}
-                    {soin.notes && (
-                      <div className="meta" style={{ whiteSpace: 'pre-wrap', marginTop: 4 }}>
-                        {soin.notes}
+                <div key={type} className="carte" style={{ padding: 0, overflow: 'hidden' }}>
+                  <button
+                    className="entete-groupe"
+                    onClick={() => setTypeDeplie(deplie ? null : type)}
+                  >
+                    <span style={{ fontSize: '1.2rem' }}>{config.emoji}</span>
+                    <span className="gras" style={{ flex: 1, textAlign: 'left' }}>
+                      {config.libelle}
+                    </span>
+                    <span className="badge contour">{entrees.length}</span>
+                    <span className="doux">{deplie ? '▴' : '▾'}</span>
+                  </button>
+
+                  <div className="pile" style={{ gap: 0 }}>
+                    {visibles.map((soin) => (
+                      <div key={soin.id} className="ligne-soin">
+                        <div className="corps">
+                          <div className="rangee espace">
+                            <span className="gras" style={{ fontSize: '0.9rem' }}>
+                              {formatDate(soin.date_realisee)}
+                            </span>
+                            {soin.cout ? <span className="doux">{euros(soin.cout)}</span> : null}
+                          </div>
+                          {(soin.praticien || soin.produit || soin.protocole) && (
+                            <div className="meta">
+                              {[
+                                soin.praticien,
+                                PROTOCOLES_VACCIN[soin.protocole]?.libelle || soin.protocole,
+                                soin.produit,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </div>
+                          )}
+                          {soin.notes && (
+                            <div className="meta" style={{ whiteSpace: 'pre-wrap' }}>{soin.notes}</div>
+                          )}
+                          {soin.prochaine_echeance && (
+                            <div className="meta">
+                              Prochaine : {formatDate(soin.prochaine_echeance, { court: true })}
+                            </div>
+                          )}
+                        </div>
+                        <button className="bouton fantome petit" onClick={() => supprimer(soin)}>
+                          ✕
+                        </button>
                       </div>
-                    )}
-                    {soin.prochaine_echeance && (
-                      <div className="meta">
-                        Prochaine : {formatDate(soin.prochaine_echeance, { court: true })}
-                      </div>
+                    ))}
+
+                    {!deplie && entrees.length > 1 && (
+                      <button className="voir-plus" onClick={() => setTypeDeplie(type)}>
+                        Voir les {entrees.length - 1} précédent
+                        {entrees.length > 2 ? 's' : ''}
+                      </button>
                     )}
                   </div>
-                  {soin.cout ? <span className="doux">{soin.cout} €</span> : null}
-                  <button className="bouton fantome petit" onClick={() => supprimer(soin)}>
-                    ✕
-                  </button>
                 </div>
               )
             })}
@@ -159,6 +287,7 @@ export default function OngletSoins({ cheval }) {
 function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
   const valeursParDefaut = () => ({
     type: 'ferrure',
+    protocole: '',
     date_realisee: cleJour(new Date()),
     prochaine_echeance: ajouterJours(new Date(), TYPES_SOIN.ferrure.intervalleJours),
     praticien: '',
@@ -182,26 +311,26 @@ function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
 
   const modifier = (champ) => (e) => setValeurs((v) => ({ ...v, [champ]: e.target.value }))
 
-  // Changer de type (ou de date) recalcule l'échéance avec l'intervalle habituel.
-  function changerType(evenement) {
-    const type = evenement.target.value
-    const intervalle = TYPES_SOIN[type]?.intervalleJours
-    setValeurs((v) => ({
-      ...v,
-      type,
-      prochaine_echeance: intervalle ? ajouterJours(v.date_realisee, intervalle) : '',
-    }))
-  }
+  /** Intervalle applicable : celui du protocole de vaccin s'il y en a un. */
+  const intervalleDe = (type, protocole) =>
+    type === 'vaccin' && protocole
+      ? PROTOCOLES_VACCIN[protocole]?.intervalleJours
+      : TYPES_SOIN[type]?.intervalleJours
 
-  function changerDate(evenement) {
-    const date_realisee = evenement.target.value
-    const intervalle = TYPES_SOIN[valeurs.type]?.intervalleJours
-    setValeurs((v) => ({
-      ...v,
-      date_realisee,
-      prochaine_echeance:
-        intervalle && date_realisee ? ajouterJours(date_realisee, intervalle) : v.prochaine_echeance,
-    }))
+  function recalculer(champs) {
+    setValeurs((v) => {
+      const suivant = { ...v, ...champs }
+      const intervalle = intervalleDe(suivant.type, suivant.protocole)
+      return {
+        ...suivant,
+        prochaine_echeance:
+          intervalle && suivant.date_realisee
+            ? ajouterJours(suivant.date_realisee, intervalle)
+            : suivant.type === 'vaccin' && !suivant.protocole
+              ? v.prochaine_echeance
+              : '',
+      }
+    })
   }
 
   async function enregistrer(evenement) {
@@ -212,6 +341,7 @@ function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
     const { error } = await supabase.from('soins').insert({
       cheval_id: cheval.id,
       type: valeurs.type,
+      protocole: valeurs.type === 'vaccin' ? valeurs.protocole || null : null,
       date_realisee: valeurs.date_realisee,
       prochaine_echeance: valeurs.prochaine_echeance || null,
       praticien: valeurs.praticien || null,
@@ -226,13 +356,18 @@ function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
     else onAjoute()
   }
 
+  const aideProtocole = PROTOCOLES_VACCIN[valeurs.protocole]?.aide
+
   return (
     <Feuille titre="Nouveau soin" ouverte={ouverte} onFermer={onFermer}>
       <form onSubmit={enregistrer}>
         <Erreur>{erreur}</Erreur>
 
         <Champ label="Type de soin">
-          <select value={valeurs.type} onChange={changerType}>
+          <select
+            value={valeurs.type}
+            onChange={(e) => recalculer({ type: e.target.value, protocole: '' })}
+          >
             {Object.entries(TYPES_SOIN).map(([cle, config]) => (
               <option key={cle} value={cle}>
                 {config.emoji} {config.libelle}
@@ -241,9 +376,28 @@ function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
           </select>
         </Champ>
 
+        {valeurs.type === 'vaccin' && (
+          <Champ label="Protocole" aide={aideProtocole}>
+            <select
+              value={valeurs.protocole}
+              onChange={(e) => recalculer({ protocole: e.target.value })}
+            >
+              <option value="">Choisir un protocole…</option>
+              {Object.entries(PROTOCOLES_VACCIN).map(([cle, config]) => (
+                <option key={cle} value={cle}>{config.libelle}</option>
+              ))}
+            </select>
+          </Champ>
+        )}
+
         <div className="ligne-champs">
           <Champ label="Date">
-            <input type="date" value={valeurs.date_realisee} onChange={changerDate} required />
+            <input
+              type="date"
+              value={valeurs.date_realisee}
+              onChange={(e) => recalculer({ date_realisee: e.target.value })}
+              required
+            />
           </Champ>
           <Champ label="Prochaine échéance">
             <input
@@ -263,12 +417,12 @@ function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
             <input
               value={valeurs.produit}
               onChange={modifier('produit')}
-              placeholder={valeurs.type === 'vaccin' ? 'Grippe + tétanos…' : 'Equimax…'}
+              placeholder={valeurs.type === 'vaccin' ? 'Equilis Prequenza…' : 'Equimax…'}
             />
           </Champ>
         )}
 
-        <Champ label="Coût (€)">
+        <Champ label="Montant (€)" aide="Facultatif — alimente le suivi des dépenses">
           <input type="number" min="0" step="0.01" value={valeurs.cout} onChange={modifier('cout')} />
         </Champ>
 

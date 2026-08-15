@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { Avatar, Champ, Erreur, Feuille, PhotoCheval } from '../../composants/Ui'
@@ -13,11 +13,50 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
 
   const [editionOuverte, setEditionOuverte] = useState(false)
   const [invitationOuverte, setInvitationOuverte] = useState(false)
+  const [partageOuvert, setPartageOuvert] = useState(false)
+  const [lienPublic, setLienPublic] = useState(null)
   const [code, setCode] = useState('')
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
 
   const maLiaison = cavaliers.find((c) => c.cavalier_id === profil.id)
+
+  // Lien public actif éventuel — visible du seul propriétaire ou club (RLS)
+  useEffect(() => {
+    if (!estGestionnaire) return
+    supabase
+      .from('partages_publics')
+      .select('token')
+      .eq('cheval_id', cheval.id)
+      .eq('actif', true)
+      .maybeSingle()
+      .then(({ data }) => setLienPublic(data?.token ?? null))
+  }, [cheval.id, estGestionnaire])
+
+  const urlPublique = lienPublic ? `${window.location.origin}/public/${lienPublic}` : null
+
+  async function genererLienPublic() {
+    setErreur('')
+    setEnvoi(true)
+    const { data, error } = await supabase.rpc('creer_lien_public', { p_cheval: cheval.id })
+    setEnvoi(false)
+    if (error) {
+      setErreur(error.message.replace(/^.*?:\s*/, ''))
+      return
+    }
+    setLienPublic(data)
+    setPartageOuvert(true)
+  }
+
+  async function revoquerLienPublic() {
+    if (!window.confirm('Le lien cessera immédiatement de fonctionner. Continuer ?')) return
+    const { error } = await supabase.rpc('revoquer_lien_public', { p_cheval: cheval.id })
+    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
+    else {
+      setLienPublic(null)
+      setPartageOuvert(false)
+    }
+  }
 
   async function genererCode() {
     setErreur('')
@@ -138,6 +177,32 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
         </p>
       </section>
 
+      <section>
+        <div className="titre-section">
+          <h2>Partage</h2>
+        </div>
+        <div className="pile">
+          <Link to={`/chevaux/${cheval.id}/carnet`} className="bouton secondaire pleine-largeur">
+            Carnet de santé imprimable
+          </Link>
+
+          {estGestionnaire &&
+            (urlPublique ? (
+              <button className="bouton secondaire pleine-largeur" onClick={() => setPartageOuvert(true)}>
+                Lien public actif — voir ou révoquer
+              </button>
+            ) : (
+              <button
+                className="bouton secondaire pleine-largeur"
+                onClick={genererLienPublic}
+                disabled={envoi}
+              >
+                Créer un lien public en lecture seule
+              </button>
+            ))}
+        </div>
+      </section>
+
       <div className="pile">
         {maLiaison && maLiaison.role !== 'proprietaire' && (
           <button className="bouton danger pleine-largeur" onClick={quitterCheval}>
@@ -186,6 +251,45 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           </button>
           <button className="bouton fantome" onClick={() => setInvitationOuverte(false)}>
             Fermer
+          </button>
+        </div>
+      </Feuille>
+
+      <Feuille
+        titre="Lien public de la fiche"
+        ouverte={partageOuvert}
+        onFermer={() => setPartageOuvert(false)}
+      >
+        <p className="doux" style={{ marginBottom: 14 }}>
+          Ce lien ouvre l'identité du cheval et son carnet de santé, sans compte.
+          Il n'expose ni le propriétaire, ni les montants, ni les cavaliers liés.
+        </p>
+
+        {urlPublique && (
+          <div className="carte" style={{ wordBreak: 'break-all', fontSize: '0.84rem' }}>
+            {urlPublique}
+          </div>
+        )}
+
+        <div className="pile" style={{ marginTop: 14 }}>
+          {navigator.share && urlPublique && (
+            <button
+              className="bouton"
+              onClick={() =>
+                navigator.share({ title: `${cheval.nom} — carnet de santé`, url: urlPublique })
+              }
+            >
+              Partager le lien
+            </button>
+          )}
+          <button
+            className="bouton secondaire"
+            onClick={() => navigator.clipboard?.writeText(urlPublique)}
+          >
+            Copier le lien
+          </button>
+          <button className="bouton danger" onClick={revoquerLienPublic}>
+            Révoquer ce lien
           </button>
         </div>
       </Feuille>

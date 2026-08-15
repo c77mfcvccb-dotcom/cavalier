@@ -58,6 +58,11 @@ export default function ClubCavalerie() {
             ? `${chevaux.length} ${chevaux.length > 1 ? 'chevaux' : 'cheval'}`
             : profil.nom
         }
+        action={
+          <Link to="/depenses" className="bouton fantome petit">
+            Dépenses
+          </Link>
+        }
       />
 
       <main className="contenu">

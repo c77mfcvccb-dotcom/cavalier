@@ -25,6 +25,16 @@ Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
 
 - [`docs/modele-de-donnees.md`](docs/modele-de-donnees.md) — tables, relations, RLS
 - [`docs/arborescence-ecrans.md`](docs/arborescence-ecrans.md) — écrans et navigation
+- [`docs/notifications.md`](docs/notifications.md) — pourquoi le rappel à
+  l'ouverture plutôt que le push serveur
+
+## Migrations SQL, dans l'ordre
+
+| Fichier | Contenu |
+|---|---|
+| `0001_schema.sql` | Tables, fonctions, RLS, bucket `photos` |
+| `0002_correctif_rls_chevaux.sql` | Correctif RLS sur la création d'un cheval |
+| `0003_carnet_depenses_partage.sql` | Ressenti des séances, seuil d'inactivité, protocoles de vaccin, contrainte de montant, liens publics |
 
 ## Mise en route
 

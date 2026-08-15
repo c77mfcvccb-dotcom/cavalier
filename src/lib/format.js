@@ -6,6 +6,12 @@ const MOIS = [
   'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
 ]
 
+// Abréviations françaises d'usage : elles ne se déduisent pas d'une troncature.
+const MOIS_ABREGES = [
+  'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
+  'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
+]
+
 export const JOURS_COURTS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
 /**
@@ -39,7 +45,7 @@ export function formatDate(valeur, options = {}) {
   const d = enDateLocale(valeur)
   if (Number.isNaN(d.getTime())) return '—'
   const { avecJour = false, court = false } = options
-  const mois = court ? MOIS[d.getMonth()].slice(0, 4) : MOIS[d.getMonth()]
+  const mois = court ? MOIS_ABREGES[d.getMonth()] : MOIS[d.getMonth()]
   const base = `${d.getDate()} ${mois} ${d.getFullYear()}`
   return avecJour ? `${JOURS[d.getDay()]} ${base}` : base
 }

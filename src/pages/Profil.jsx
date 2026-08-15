@@ -15,6 +15,7 @@ export default function Profil() {
     telephone: profil.telephone || '',
     ville: profil.ville || '',
     bio: profil.bio || '',
+    seuil_inactivite_jours: profil.seuil_inactivite_jours ?? 7,
   })
   const [erreur, setErreur] = useState('')
   const [message, setMessage] = useState('')
@@ -37,6 +38,7 @@ export default function Profil() {
         telephone: valeurs.telephone || null,
         ville: valeurs.ville || null,
         bio: valeurs.bio || null,
+        seuil_inactivite_jours: Number(valeurs.seuil_inactivite_jours) || 7,
       })
       .eq('id', profil.id)
 
@@ -102,6 +104,20 @@ export default function Profil() {
 
           <Champ label={estClub ? 'Présentation du club' : 'À propos'}>
             <textarea value={valeurs.bio} onChange={modifier('bio')} />
+          </Champ>
+
+          <Champ
+            label="Alerte d'inactivité"
+            aide="Signale un cheval qui n'a pas travaillé depuis ce nombre de jours."
+          >
+            <select
+              value={valeurs.seuil_inactivite_jours}
+              onChange={modifier('seuil_inactivite_jours')}
+            >
+              {[3, 5, 7, 10, 14, 21, 30].map((jours) => (
+                <option key={jours} value={jours}>{jours} jours</option>
+              ))}
+            </select>
           </Champ>
 
           <button className="bouton pleine-largeur" disabled={envoi}>
