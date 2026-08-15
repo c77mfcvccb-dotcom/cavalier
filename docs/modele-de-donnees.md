@@ -160,6 +160,27 @@ Toutes les tables filles (`creneaux`, `seances`, `soins`, `cheval_cavaliers`,
 cheval n'expose ses données qu'aux cavaliers liés et/ou au club propriétaire,
 comme demandé.
 
+### Le cas particulier de la politique SELECT sur `chevaux`
+
+```sql
+using (cree_par = auth.uid() or club_id = auth.uid() or a_acces_cheval(id, auth.uid()))
+```
+
+Les deux premiers termes ne sont pas redondants, ils sont **nécessaires**.
+PostgreSQL applique aussi la politique SELECT à la ligne renvoyée par un
+`INSERT ... RETURNING` — ce que fait le client à chaque création de cheval
+(`.insert().select().single()`). À cet instant précis :
+
+- la liaison dans `cheval_cavaliers` n'existe pas encore, puisqu'elle est
+  créée par un trigger `AFTER INSERT` qui ne s'est pas déclenché ;
+- la nouvelle ligne n'est pas visible à une sous-requête sur `chevaux`, car
+  une ligne insérée par la commande en cours est hors de son propre snapshot.
+  Le test `club_id` échoue donc lui aussi s'il passe par `a_acces_cheval`.
+
+Tester d'abord `cree_par` et `club_id`, qui sont des colonnes de la ligne
+candidate elle-même, est la seule façon de laisser passer la création tout en
+gardant le cloisonnement pour toutes les autres lectures.
+
 `profils` n'est lisible que par soi-même et par les personnes avec qui on
 partage au moins un cheval (fonction `partage_un_cheval`) — nécessaire pour
 afficher les noms et couleurs dans le calendrier.

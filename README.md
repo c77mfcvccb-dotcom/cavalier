@@ -31,10 +31,16 @@ Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
 ### 1. Créer le projet Supabase
 
 1. Créez un projet sur [supabase.com](https://supabase.com).
-2. Ouvrez **SQL Editor** et exécutez l'intégralité de
-   [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql).
-   Ce script crée les tables, les fonctions, les politiques RLS et le bucket
-   de stockage `photos`.
+2. Ouvrez **SQL Editor** et exécutez les fichiers de
+   [`supabase/migrations/`](supabase/migrations/) **dans l'ordre de leur
+   numéro**. `0001_schema.sql` crée les tables, les fonctions, les politiques
+   RLS et le bucket de stockage `photos` ; les migrations suivantes sont des
+   correctifs à appliquer par-dessus.
+
+   > Sur une base déjà installée avant le correctif `0002`, la création d'un
+   > cheval échoue avec « new row violates row-level security policy for table
+   > "chevaux" ». Exécuter `0002_correctif_rls_chevaux.sql` suffit à la
+   > réparer, sans toucher aux données existantes.
 3. Dans **Authentication → Providers**, laissez « Email » activé. Pour la
    connexion Google (optionnelle), activez le provider Google et renseignez
    vos identifiants OAuth.

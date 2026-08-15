@@ -426,9 +426,19 @@ create policy profils_update on public.profils for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());
 
 -- --- chevaux ---
+-- Les deux premières conditions portent directement sur les colonnes de la
+-- ligne testée. C'est indispensable : PostgreSQL applique aussi cette politique
+-- au RETURNING d'un INSERT, or à cet instant la liaison cheval_cavaliers
+-- n'existe pas encore (créée par un trigger AFTER) et la nouvelle ligne n'est
+-- pas visible à une sous-requête sur « chevaux ». Sans elles, toute création
+-- de cheval échoue sur « new row violates row-level security policy ».
 drop policy if exists chevaux_select on public.chevaux;
 create policy chevaux_select on public.chevaux for select to authenticated
-  using (a_acces_cheval(id, auth.uid()));
+  using (
+    cree_par = auth.uid()
+    or club_id = auth.uid()
+    or a_acces_cheval(id, auth.uid())
+  );
 
 drop policy if exists chevaux_insert on public.chevaux;
 create policy chevaux_insert on public.chevaux for insert to authenticated
