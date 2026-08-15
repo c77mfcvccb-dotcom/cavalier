@@ -1,0 +1,105 @@
+# Cavalier
+
+Application web mobile-first pour les cavaliers et les clubs équestres.
+
+- **Côté cavalier** : ses chevaux, le partage en demi-pension par code
+  d'invitation, un calendrier partagé par cheval, un carnet de séances et
+  le suivi santé avec alertes d'échéances.
+- **Côté club** : le pilotage de la cavalerie, le même suivi santé en vue
+  globale triée par urgence, et le planning « qui monte quel cheval quand ».
+
+PWA installable sur l'écran d'accueil. Interface entièrement en français.
+
+## Stack
+
+| Couche       | Choix                                             |
+|--------------|---------------------------------------------------|
+| Front        | React 18 + Vite, React Router                     |
+| Back         | Supabase (Postgres, Auth, Storage) avec RLS       |
+| Hébergement  | Vercel                                            |
+| Style        | CSS, une feuille unique, mobile-first             |
+
+Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
+
+## Documentation
+
+- [`docs/modele-de-donnees.md`](docs/modele-de-donnees.md) — tables, relations, RLS
+- [`docs/arborescence-ecrans.md`](docs/arborescence-ecrans.md) — écrans et navigation
+
+## Mise en route
+
+### 1. Créer le projet Supabase
+
+1. Créez un projet sur [supabase.com](https://supabase.com).
+2. Ouvrez **SQL Editor** et exécutez l'intégralité de
+   [`supabase/migrations/0001_schema.sql`](supabase/migrations/0001_schema.sql).
+   Ce script crée les tables, les fonctions, les politiques RLS et le bucket
+   de stockage `photos`.
+3. Dans **Authentication → Providers**, laissez « Email » activé. Pour la
+   connexion Google (optionnelle), activez le provider Google et renseignez
+   vos identifiants OAuth.
+4. Pendant le développement, vous pouvez désactiver « Confirm email » dans
+   **Authentication → Sign In / Providers** pour vous connecter immédiatement
+   après l'inscription.
+
+### 2. Lancer l'application en local
+
+```bash
+cp .env.example .env    # puis renseignez l'URL et la clé anon du projet
+npm install
+npm run dev
+```
+
+L'application est servie sur http://localhost:5173.
+
+### 3. Déployer sur Vercel
+
+1. Importez le dépôt dans Vercel (framework détecté : Vite).
+2. Ajoutez les variables d'environnement `VITE_SUPABASE_URL` et
+   `VITE_SUPABASE_ANON_KEY`.
+3. Déployez. Le fichier `vercel.json` gère déjà la réécriture des routes
+   côté client.
+4. Dans Supabase → **Authentication → URL Configuration**, ajoutez l'URL de
+   production dans « Site URL » et « Redirect URLs » pour que la connexion
+   Google fonctionne.
+
+## Scripts
+
+| Commande          | Effet                                             |
+|-------------------|---------------------------------------------------|
+| `npm run dev`     | Serveur de développement                          |
+| `npm run build`   | Build de production dans `dist/`                  |
+| `npm run preview` | Prévisualise le build                             |
+| `npm run icones`  | Régénère les icônes PNG de la PWA                 |
+
+## Comment fonctionne le partage en demi-pension
+
+1. Le propriétaire ouvre la fiche de son cheval, onglet **Fiche**, et appuie
+   sur **+ Inviter** : un code à 6 caractères est généré (valable 30 jours,
+   une seule utilisation).
+2. L'autre cavalier saisit ce code dans **Mes chevaux → Rejoindre avec un
+   code**.
+3. Il est immédiatement lié au cheval, reçoit sa propre couleur, et voit le
+   même calendrier, le même carnet de séances et le même suivi santé.
+
+La validation du code se fait dans une fonction Postgres `security definer` :
+un code invalide ne révèle jamais l'existence du cheval, et personne ne peut
+lister les invitations d'un cheval auquel il n'a pas accès.
+
+Un club procède de la même façon pour rattacher un cavalier à un cheval de
+club : le cheval apparaît alors dans l'onglet « Mes chevaux » du cavalier.
+
+## Sécurité
+
+Toutes les tables sont protégées par Row Level Security. L'accès aux données
+d'un cheval découle d'une seule règle, centralisée dans la fonction
+`a_acces_cheval` : être lié au cheval via `cheval_cavaliers`, ou en être le
+club propriétaire. Le détail des politiques est décrit dans
+[`docs/modele-de-donnees.md`](docs/modele-de-donnees.md).
+
+## Hors périmètre V1
+
+Réservation et paiement de cours, facturation, messagerie interne et
+notifications push. Les emails de rappel d'échéances sont prévus en V1.1
+(la vue `v_echeances` fournit déjà les données nécessaires : il suffira d'une
+Edge Function planifiée).
