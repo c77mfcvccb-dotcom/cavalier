@@ -57,20 +57,8 @@ export default function CalendrierGlobal() {
           />
         ) : (
           <>
-            <Calendrier evenements={evenements} jourSelectionne={jour} onSelectionJour={setJour} />
-
-            <div className="puces" style={{ marginTop: 12 }}>
-              <span className="badge contour">
-                <i className="pastille" style={{ background: 'var(--vert-clair)' }} />
-                Créneau de monte
-              </span>
-              <span className="badge contour">
-                <i className="pastille carree" style={{ background: COULEUR_SOIN }} />
-                Échéance de soin
-              </span>
-            </div>
-
-            <section className="section">
+            {/* Détail du jour au-dessus de la grille, comme sur la fiche cheval */}
+            <section style={{ marginBottom: 20 }}>
               <div className="titre-section">
                 <h2>{formatDate(jour, { avecJour: true })}</h2>
               </div>
@@ -85,6 +73,19 @@ export default function CalendrierGlobal() {
                 </div>
               )}
             </section>
+
+            <Calendrier evenements={evenements} jourSelectionne={jour} onSelectionJour={setJour} />
+
+            <div className="puces" style={{ marginTop: 12 }}>
+              <span className="badge contour">
+                <i className="pastille" style={{ background: 'var(--vert-clair)' }} />
+                Créneau de monte
+              </span>
+              <span className="badge contour">
+                <i className="pastille carree" style={{ background: COULEUR_SOIN }} />
+                Échéance de soin
+              </span>
+            </div>
           </>
         )}
       </main>

@@ -45,21 +45,9 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
     <div className="pile" style={{ gap: 18 }}>
       <Erreur>{erreur}</Erreur>
 
-      <Calendrier evenements={creneaux} jourSelectionne={jour} onSelectionJour={setJour} />
-
-      <div className="puces">
-        {cavaliers.map((liaison) => (
-          <span
-            key={liaison.id}
-            className="badge"
-            style={{ background: `${liaison.couleur}1a`, color: liaison.couleur }}
-          >
-            <i className="pastille" style={{ background: liaison.couleur }} />
-            {liaison.profil?.nom?.split(' ')[0]}
-          </span>
-        ))}
-      </div>
-
+      {/* Le jour sélectionné et son action d'ajout passent avant la grille :
+          poser un créneau est le geste courant, il ne doit pas demander de
+          faire défiler l'écran. */}
       <section>
         <div className="titre-section">
           <h2>{formatDate(jour, { avecJour: true })}</h2>
@@ -96,6 +84,21 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
           </div>
         )}
       </section>
+
+      <Calendrier evenements={creneaux} jourSelectionne={jour} onSelectionJour={setJour} />
+
+      <div className="puces">
+        {cavaliers.map((liaison) => (
+          <span
+            key={liaison.id}
+            className="badge"
+            style={{ background: `${liaison.couleur}1a`, color: liaison.couleur }}
+          >
+            <i className="pastille" style={{ background: liaison.couleur }} />
+            {liaison.profil?.nom?.split(' ')[0]}
+          </span>
+        ))}
+      </div>
 
       <FeuilleCreneau
         cheval={cheval}
