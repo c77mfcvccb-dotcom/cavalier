@@ -7,8 +7,28 @@
  * Voir docs/notifications.md pour la comparaison des options.
  */
 
-const CLE_DEJA_NOTIFIE = 'cavalier.echeances-notifiees'
-const CLE_BANDEAU_MASQUE = 'cavalier.bandeau-masque-le'
+const CLE_DEJA_NOTIFIE = 'licol.echeances-notifiees'
+const CLE_BANDEAU_MASQUE = 'licol.bandeau-masque-le'
+
+// Clés de l'ancien nom. Sans cette reprise, les personnes déjà installées
+// recevraient une seconde fois la notification de toutes leurs échéances en
+// cours, et reverraient le bandeau qu'elles avaient masqué.
+const ANCIENNES_CLES = {
+  [CLE_DEJA_NOTIFIE]: 'cavalier.echeances-notifiees',
+  [CLE_BANDEAU_MASQUE]: 'cavalier.bandeau-masque-le',
+}
+
+function lire(cle) {
+  const valeur = localStorage.getItem(cle)
+  if (valeur !== null) return valeur
+
+  const ancienne = localStorage.getItem(ANCIENNES_CLES[cle])
+  if (ancienne !== null) {
+    localStorage.setItem(cle, ancienne)
+    localStorage.removeItem(ANCIENNES_CLES[cle])
+  }
+  return ancienne
+}
 
 export const STATUTS_ALERTE = ['retard', 'urgent']
 
@@ -42,7 +62,7 @@ export async function demanderPermissionNotifications() {
 
 function dejaNotifiees() {
   try {
-    return new Set(JSON.parse(localStorage.getItem(CLE_DEJA_NOTIFIE) || '[]'))
+    return new Set(JSON.parse(lire(CLE_DEJA_NOTIFIE) || '[]'))
   } catch {
     return new Set()
   }
@@ -97,7 +117,7 @@ export async function notifierNouvellesEcheances(echeances) {
 
 /** Le bandeau se masque pour la journée, pas définitivement. */
 export function bandeauMasqueAujourdhui(cleDuJour) {
-  return localStorage.getItem(CLE_BANDEAU_MASQUE) === cleDuJour
+  return lire(CLE_BANDEAU_MASQUE) === cleDuJour
 }
 
 export function masquerBandeau(cleDuJour) {
