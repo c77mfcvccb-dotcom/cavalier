@@ -1,15 +1,25 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
 import { Champ, Erreur } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import ChargeurPhoto from '../composants/ChargeurPhoto'
 import { SEXES } from '../lib/constantes'
+import { LIMITE_CHEVAUX_GRATUIT } from '../lib/abonnement'
+import { chargerNbChevauxCrees } from '../lib/requetes'
 
 export default function NouveauCheval() {
-  const { profil, estClub } = useAuth()
+  const { profil, estClub, estPremium } = useAuth()
   const navigate = useNavigate()
+  const [quotaAtteint, setQuotaAtteint] = useState(false)
+
+  // Le serveur refusera de toute façon ; on évite de faire remplir un
+  // formulaire pour rien.
+  useEffect(() => {
+    if (estPremium) return
+    chargerNbChevauxCrees(profil.id).then((nb) => setQuotaAtteint(nb >= LIMITE_CHEVAUX_GRATUIT))
+  }, [estPremium, profil.id])
 
   const [valeurs, setValeurs] = useState({
     nom: '',
@@ -50,10 +60,17 @@ export default function NouveauCheval() {
       if (error) throw error
       navigate(`/chevaux/${data.id}`, { replace: true })
     } catch (e) {
+      // Le refus du RLS remonte ici si le quota a été atteint entre-temps
+      if (e.message?.includes('row-level security')) {
+        navigate('/premium?motif=chevaux', { replace: true })
+        return
+      }
       setErreur(e.message || "Création impossible")
       setEnvoi(false)
     }
   }
+
+  if (quotaAtteint) return <Navigate to="/premium?motif=chevaux" replace />
 
   return (
     <>

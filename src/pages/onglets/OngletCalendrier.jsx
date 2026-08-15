@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link as Lien, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerCreneaux } from '../../lib/requetes'
@@ -7,6 +8,11 @@ import Calendrier from '../../composants/Calendrier'
 import { TYPES_CRENEAU } from '../../lib/constantes'
 import { couleurCavalier, prenom } from '../../lib/couleurs'
 import { cleJour, formatDate, formatHeure, valeurDatetimeLocal } from '../../lib/format'
+import {
+  creneauHorsPlanGratuit,
+  dernierJourGratuit,
+  finSemaineCourante,
+} from '../../lib/abonnement'
 
 export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire }) {
   const { profil } = useAuth()
@@ -128,7 +134,8 @@ function FeuilleCreneau({
   onFermer,
   onAjoute,
 }) {
-  const { profil } = useAuth()
+  const { profil, estPremium } = useAuth()
+  const navigate = useNavigate()
 
   const creneauParDefaut = useCallback(() => {
     const debut = new Date(jour)
@@ -177,6 +184,13 @@ function FeuilleCreneau({
       return
     }
 
+    // Le serveur refusera de toute façon (politique RLS) : on préfère
+    // conduire vers l'offre plutôt que d'afficher une erreur technique.
+    if (!estPremium && creneauHorsPlanGratuit(valeurs.debut)) {
+      navigate('/premium?motif=calendrier')
+      return
+    }
+
     setEnvoi(true)
     const { error } = await supabase.from('creneaux').insert({
       cheval_id: cheval.id,
@@ -189,9 +203,17 @@ function FeuilleCreneau({
     })
 
     setEnvoi(false)
-    if (error) setErreur(error.message)
-    else onAjoute()
+    if (error) {
+      // Filet : décalage d'horloge ou de fuseau entre le navigateur et le serveur
+      if (error.message?.includes('row-level security')) {
+        navigate('/premium?motif=calendrier')
+        return
+      }
+      setErreur(error.message)
+    } else onAjoute()
   }
+
+  const borneGratuite = estPremium ? null : valeurDatetimeLocal(finSemaineCourante())
 
   return (
     <Feuille titre="Nouveau créneau" ouverte={ouverte} onFermer={onFermer}>
@@ -220,12 +242,26 @@ function FeuilleCreneau({
 
         <div className="ligne-champs">
           <Champ label="Début">
-            <input type="datetime-local" value={valeurs.debut} onChange={modifier('debut')} required />
+            <input
+              type="datetime-local"
+              value={valeurs.debut}
+              onChange={modifier('debut')}
+              max={borneGratuite ?? undefined}
+              required
+            />
           </Champ>
           <Champ label="Fin">
             <input type="datetime-local" value={valeurs.fin} onChange={modifier('fin')} required />
           </Champ>
         </div>
+
+        {!estPremium && (
+          <p className="aide" style={{ marginTop: -6, marginBottom: 14 }}>
+            Plan gratuit : jusqu'au {formatDate(dernierJourGratuit(), { avecJour: true })}.{' '}
+            <Lien to="/premium?motif=calendrier">Passer en Premium</Lien> pour planifier
+            au-delà.
+          </p>
+        )}
 
         <Champ label="Titre" aide="Facultatif">
           <input

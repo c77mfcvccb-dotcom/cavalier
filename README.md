@@ -39,6 +39,8 @@ Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
 - [`docs/arborescence-ecrans.md`](docs/arborescence-ecrans.md) — écrans et navigation
 - [`docs/notifications.md`](docs/notifications.md) — pourquoi le rappel à
   l'ouverture plutôt que le push serveur
+- [`docs/abonnement.md`](docs/abonnement.md) — plan gratuit, premium, et
+  montage RevenueCat
 
 ## Migrations SQL, dans l'ordre
 
@@ -48,6 +50,7 @@ Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
 | `0002_correctif_rls_chevaux.sql` | Correctif RLS sur la création d'un cheval |
 | `0003_carnet_depenses_partage.sql` | Ressenti des séances, seuil d'inactivité, protocoles de vaccin, contrainte de montant, liens publics |
 | `0004_correctif_token_lien_public.sql` | Génération du jeton sans pgcrypto (invisible depuis un `security definer` sur Supabase) |
+| `0005_abonnements_et_limites.sql` | Table `abonnements`, `est_premium()`, et limites du plan gratuit appliquées en RLS |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

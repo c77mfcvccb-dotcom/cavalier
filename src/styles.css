@@ -666,8 +666,14 @@ button {
 
 .choix-compte button.actif { border-color: var(--vert); background: #f2f7f4; }
 .choix-compte button .emoji { font-size: 1.7rem; }
-.choix-compte button .titre { font-weight: 650; }
-.choix-compte button .desc { font-size: 0.82rem; color: var(--texte-doux); }
+/* display:block, sinon le libellé et sa description se collent sur une ligne */
+.choix-compte button .titre { display: block; font-weight: 650; }
+.choix-compte button .desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.82rem;
+  color: var(--texte-doux);
+}
 
 .separateur {
   display: flex;

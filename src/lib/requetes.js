@@ -33,6 +33,20 @@ export async function chargerChevauxClub(clubId) {
   }))
 }
 
+/**
+ * Nombre de chevaux créés par ce compte — sert à anticiper la limite du plan
+ * gratuit. La limite qui fait foi reste la politique RLS de la migration 0005.
+ */
+export async function chargerNbChevauxCrees(profilId) {
+  const { count, error } = await supabase
+    .from('chevaux')
+    .select('id', { count: 'exact', head: true })
+    .eq('cree_par', profilId)
+
+  if (error) throw error
+  return count ?? 0
+}
+
 /** Tous les chevaux visibles, quel que soit le type de compte. */
 export async function chargerChevauxVisibles(profil) {
   return profil.type_compte === 'club'

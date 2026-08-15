@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerSoins } from '../../lib/requetes'
 import { Champ, Chargement, Erreur, EtatVide, Feuille } from '../../composants/Ui'
+import BloquePremium from '../../composants/BloquePremium'
 import { PROTOCOLES_VACCIN, STATUTS_ECHEANCE, TYPES_SOIN } from '../../lib/constantes'
 import { ajouterJours, cleJour, formatDate, joursRelatifs } from '../../lib/format'
 
@@ -23,7 +24,7 @@ const euros = (montant) =>
   `${Number(montant).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`
 
 export default function OngletSoins({ cheval }) {
-  const { profil } = useAuth()
+  const { profil, estPremium } = useAuth()
   const [soins, setSoins] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -31,6 +32,12 @@ export default function OngletSoins({ cheval }) {
   const [typeDeplie, setTypeDeplie] = useState(null)
 
   const recharger = useCallback(async () => {
+    // Inutile d'interroger la base en gratuit : le RLS renverrait une liste
+    // vide, ce qui ressemblerait à un carnet réellement vide.
+    if (!estPremium) {
+      setChargement(false)
+      return
+    }
     try {
       setSoins(await chargerSoins(cheval.id))
     } catch (e) {
@@ -38,7 +45,7 @@ export default function OngletSoins({ cheval }) {
     } finally {
       setChargement(false)
     }
-  }, [cheval.id])
+  }, [cheval.id, estPremium])
 
   useEffect(() => {
     recharger()
@@ -99,6 +106,17 @@ export default function OngletSoins({ cheval }) {
     const { error } = await supabase.from('soins').delete().eq('id', soin.id)
     if (error) setErreur(error.message)
     else recharger()
+  }
+
+  if (!estPremium) {
+    return (
+      <BloquePremium
+        emoji="🩺"
+        titre="Carnet de santé"
+        texte="Ferrure, vaccins, vermifuges, ostéopathe, dentiste : tout le suivi du cheval, avec les rappels d'échéance et le carnet imprimable pour le vétérinaire."
+        motif="soins"
+      />
+    )
   }
 
   if (chargement) return <Chargement />

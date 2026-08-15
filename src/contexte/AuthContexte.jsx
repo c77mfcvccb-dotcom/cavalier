@@ -3,10 +3,33 @@ import { supabase, configurationManquante } from '../lib/supabase'
 
 const AuthContexte = createContext(null)
 
+/** Miroir local de est_premium() en SQL : la date prime sur le statut. */
+function abonnementActif(abonnement) {
+  if (!abonnement) return false
+  if (!['actif', 'essai'].includes(abonnement.statut)) return false
+  return !abonnement.expire_le || new Date(abonnement.expire_le) > new Date()
+}
+
 export function FournisseurAuth({ children }) {
   const [session, setSession] = useState(null)
   const [profil, setProfil] = useState(null)
+  const [abonnement, setAbonnement] = useState(null)
   const [chargement, setChargement] = useState(true)
+
+  const chargerAbonnement = useCallback(async (utilisateur) => {
+    if (!utilisateur) {
+      setAbonnement(null)
+      return
+    }
+    // La table n'est jamais écrite depuis ici : seul le webhook RevenueCat
+    // y touche, via la clé service_role.
+    const { data } = await supabase
+      .from('abonnements')
+      .select('statut, produit, expire_le')
+      .eq('profil_id', utilisateur.id)
+      .maybeSingle()
+    setAbonnement(data ?? null)
+  }, [])
 
   const chargerProfil = useCallback(async (utilisateur) => {
     if (!utilisateur) {
@@ -56,18 +79,18 @@ export function FournisseurAuth({ children }) {
 
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
-      await chargerProfil(data.session?.user)
+      await Promise.all([chargerProfil(data.session?.user), chargerAbonnement(data.session?.user)])
       setChargement(false)
     })
 
-    const { data: abonnement } = supabase.auth.onAuthStateChange(async (_evenement, nouvelle) => {
+    const { data: ecoute } = supabase.auth.onAuthStateChange(async (_evenement, nouvelle) => {
       setSession(nouvelle)
-      await chargerProfil(nouvelle?.user)
+      await Promise.all([chargerProfil(nouvelle?.user), chargerAbonnement(nouvelle?.user)])
       setChargement(false)
     })
 
-    return () => abonnement.subscription.unsubscribe()
-  }, [chargerProfil])
+    return () => ecoute.subscription.unsubscribe()
+  }, [chargerProfil, chargerAbonnement])
 
   const valeur = useMemo(
     () => ({
@@ -76,7 +99,12 @@ export function FournisseurAuth({ children }) {
       profil,
       chargement,
       estClub: profil?.type_compte === 'club',
+      abonnement,
+      estPremium: abonnementActif(abonnement),
       rafraichirProfil: () => chargerProfil(session?.user),
+      // Après un retour de RevenueCat, le webhook peut n'avoir pas encore
+      // écrit : l'écran d'abonnement rappelle cette fonction en boucle courte.
+      rafraichirAbonnement: () => chargerAbonnement(session?.user),
 
       async inscription({ email, motDePasse, nom, typeCompte }) {
         const { error } = await supabase.auth.signUp({
@@ -110,9 +138,10 @@ export function FournisseurAuth({ children }) {
       async deconnexion() {
         await supabase.auth.signOut()
         setProfil(null)
+        setAbonnement(null)
       },
     }),
-    [session, profil, chargement, chargerProfil]
+    [session, profil, abonnement, chargement, chargerProfil, chargerAbonnement]
   )
 
   return <AuthContexte.Provider value={valeur}>{children}</AuthContexte.Provider>

@@ -14,6 +14,7 @@ import FicheCheval from './pages/FicheCheval'
 import RejoindreCheval from './pages/RejoindreCheval'
 import CalendrierGlobal from './pages/CalendrierGlobal'
 import Profil from './pages/Profil'
+import Premium from './pages/Premium'
 import CarnetSante from './pages/CarnetSante'
 import FichePublique from './pages/FichePublique'
 import ClubCavalerie from './pages/ClubCavalerie'
@@ -84,6 +85,7 @@ export default function App() {
         <Route path="/chevaux/:id" element={<FicheCheval />} />
         <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
         <Route path="/profil" element={<Profil />} />
+        <Route path="/premium" element={<Premium />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

@@ -3,10 +3,12 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexte/AuthContexte'
 import { Avatar, Champ, Erreur, Succes } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
+import { Link } from 'react-router-dom'
+import { JOURS_ESSAI } from '../lib/abonnement'
 import ChargeurPhoto from '../composants/ChargeurPhoto'
 
 export default function Profil() {
-  const { profil, utilisateur, estClub, rafraichirProfil, deconnexion } = useAuth()
+  const { profil, utilisateur, estClub, estPremium, rafraichirProfil, deconnexion } = useAuth()
 
   const [valeurs, setValeurs] = useState({
     nom: profil.nom || '',
@@ -61,9 +63,12 @@ export default function Profil() {
           <div>
             <div className="gras">{profil.nom}</div>
             <div className="doux">{utilisateur.email}</div>
-            <span className="badge" style={{ marginTop: 6 }}>
-              {estClub ? 'Compte club' : 'Compte cavalier'}
-            </span>
+            <div className="puces" style={{ marginTop: 6 }}>
+              <span className="badge">{estClub ? 'Compte club' : 'Compte cavalier'}</span>
+              <span className={`badge ${estPremium ? 'ok' : 'contour'}`}>
+                {estPremium ? 'Premium' : 'Plan gratuit'}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -125,9 +130,17 @@ export default function Profil() {
           </button>
         </form>
 
+        <Link
+          to="/premium"
+          className={`bouton pleine-largeur ${estPremium ? 'secondaire' : ''}`}
+          style={{ marginTop: 22 }}
+        >
+          {estPremium ? 'Gérer mon abonnement' : `Passer en Premium — ${JOURS_ESSAI} jours offerts`}
+        </Link>
+
         <button
           className="bouton secondaire pleine-largeur"
-          style={{ marginTop: 22 }}
+          style={{ marginTop: 12 }}
           onClick={deconnexion}
         >
           Se déconnecter
