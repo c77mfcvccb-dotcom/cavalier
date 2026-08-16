@@ -1,12 +1,26 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { Entete } from '../composants/Mise'
-import { Erreur, Succes } from '../composants/Ui'
+import { Chargement, Erreur, Succes } from '../composants/Ui'
 import BlocAbonnement from '../composants/BlocAbonnement'
-import { AVANTAGES_PREMIUM, estResilie, JOURS_ESSAI, OFFRES } from '../lib/abonnement'
-
-const LIEN_ACHAT = import.meta.env.VITE_REVENUECAT_LIEN_ACHAT
+import {
+  AVANTAGES_PREMIUM,
+  decrireOffre,
+  estResilie,
+  JOURS_ESSAI,
+  OFFRES,
+  trierOffres,
+} from '../lib/abonnement'
+import {
+  acheter,
+  aDroitPremium,
+  chargerOffre,
+  EN_BAC_A_SABLE,
+  estAnnulationClient,
+  estDejaAbonne,
+  infosClient,
+} from '../lib/revenuecat'
 
 /** Raison de l'arrivée sur cet écran, pour un message adapté. */
 const MOTIFS = {
@@ -17,53 +31,166 @@ const MOTIFS = {
   depenses: 'Le suivi des dépenses fait partie de Licol Premium.',
 }
 
+/** Sondage de la base après paiement : 10 essais espacés de 3 s. */
+const ESSAIS_WEBHOOK = 10
+const DELAI_WEBHOOK = 3000
+
+/**
+ * Repli affiché si le catalogue RevenueCat n'a pas pu être chargé : les prix
+ * codés en dur, pour ne pas présenter une page vide. Le bouton d'achat, lui,
+ * reste désactivé — sans package, il n'y a rien à acheter.
+ */
+const OFFRES_REPLI = Object.entries(OFFRES).map(([cle, offre]) => ({
+  ...offre,
+  cle,
+  paquet: null,
+  joursEssai: JOURS_ESSAI,
+}))
+
 export default function Premium() {
   const { utilisateur, abonnement, estPremium, rafraichirAbonnement } = useAuth()
   const [parametres] = useSearchParams()
-  const [offreChoisie, setOffreChoisie] = useState('premium_annuel')
+
+  const [offres, setOffres] = useState(null)
+  const [chargementOffres, setChargementOffres] = useState(true)
+  const [erreurCatalogue, setErreurCatalogue] = useState(null)
+
+  const [choix, setChoix] = useState(null)
+  const [achatEnCours, setAchatEnCours] = useState(false)
+  const [erreurAchat, setErreurAchat] = useState(null)
+
   const [attenteWebhook, setAttenteWebhook] = useState(false)
+  const [webhookAbandonne, setWebhookAbandonne] = useState(false)
+  const [droitRevenueCat, setDroitRevenueCat] = useState(false)
 
   const motif = MOTIFS[parametres.get('motif')]
+  // Ancien parcours par redirection : des liens peuvent encore traîner dans
+  // des emails de RevenueCat. On continue de les accueillir.
   const retourAchat = parametres.get('achat') === 'ok'
   const sondage = useRef(null)
 
   /**
-   * Au retour du paiement, l'abonnement n'est pas encore en base : il arrive
-   * par le webhook RevenueCat, avec quelques secondes de décalage. On
-   * interroge donc la base une dizaine de fois avant d'abandonner.
+   * Après l'encaissement, l'accès n'est pas encore ouvert : il le sera quand
+   * le webhook aura écrit dans `abonnements`, seule table que consultent les
+   * politiques RLS. Quelques secondes, en général. On interroge la base
+   * plutôt que de croire le SDK sur parole, parce que c'est la base qui
+   * décidera à la requête suivante.
    */
-  useEffect(() => {
-    if (!retourAchat || estPremium) return
-
+  const attendreWebhook = useCallback(() => {
+    if (sondage.current) return
     setAttenteWebhook(true)
+    setWebhookAbandonne(false)
+
     let essais = 0
     sondage.current = setInterval(async () => {
       essais += 1
       await rafraichirAbonnement()
-      if (essais >= 10) {
+      if (essais >= ESSAIS_WEBHOOK) {
         clearInterval(sondage.current)
+        sondage.current = null
         setAttenteWebhook(false)
+        setWebhookAbandonne(true)
       }
-    }, 3000)
+    }, DELAI_WEBHOOK)
+  }, [rafraichirAbonnement])
 
-    return () => clearInterval(sondage.current)
-  }, [retourAchat, estPremium, rafraichirAbonnement])
-
+  // Le sondage s'arrête de lui-même dès que l'abonnement est en base.
   useEffect(() => {
     if (estPremium && sondage.current) {
       clearInterval(sondage.current)
+      sondage.current = null
       setAttenteWebhook(false)
+      setWebhookAbandonne(false)
     }
   }, [estPremium])
 
-  function souscrire() {
-    if (!LIEN_ACHAT) return
-    // RevenueCat rattache l'achat au compte via app_user_id : il doit être
-    // l'identifiant Supabase, sinon le webhook ne saura pas qui créditer.
-    const url = new URL(LIEN_ACHAT)
-    url.searchParams.set('app_user_id', utilisateur.id)
-    url.searchParams.set('email', utilisateur.email ?? '')
-    window.location.href = url.toString()
+  useEffect(() => () => clearInterval(sondage.current), [])
+
+  useEffect(() => {
+    if (retourAchat && !estPremium) attendreWebhook()
+  }, [retourAchat, estPremium, attendreWebhook])
+
+  /** Catalogue RevenueCat : prix réels, devise du visiteur, essai configuré. */
+  useEffect(() => {
+    if (!utilisateur || estPremium) return
+    let abandonne = false
+
+    setChargementOffres(true)
+    chargerOffre(utilisateur.id)
+      .then((offering) => {
+        if (abandonne) return
+        const paquets = trierOffres(offering?.availablePackages ?? []).map(decrireOffre)
+        if (!paquets.length) throw new Error('Offering « default » vide')
+        setOffres(paquets)
+        setChoix((precedent) => precedent ?? paquets[paquets.length - 1].cle)
+        setErreurCatalogue(null)
+      })
+      .catch((erreur) => {
+        if (abandonne) return
+        console.error('Catalogue RevenueCat indisponible', erreur)
+        setOffres(OFFRES_REPLI)
+        setChoix((precedent) => precedent ?? OFFRES_REPLI[OFFRES_REPLI.length - 1].cle)
+        setErreurCatalogue(
+          'Les formules n’ont pas pu être chargées. Vérifiez votre connexion, puis rouvrez cet écran.'
+        )
+      })
+      .finally(() => {
+        if (!abandonne) setChargementOffres(false)
+      })
+
+    return () => {
+      abandonne = true
+    }
+  }, [utilisateur, estPremium])
+
+  const offreChoisie = offres?.find((offre) => offre.cle === choix) ?? offres?.[0] ?? null
+
+  async function souscrire() {
+    if (!offreChoisie?.paquet || achatEnCours) return
+
+    setErreurAchat(null)
+    setAchatEnCours(true)
+    try {
+      const { customerInfo } = await acheter({
+        idUtilisateur: utilisateur.id,
+        paquet: offreChoisie.paquet,
+        email: utilisateur.email,
+      })
+      setDroitRevenueCat(aDroitPremium(customerInfo))
+      attendreWebhook()
+    } catch (erreur) {
+      // Fermer la fenêtre de paiement n'est pas un incident.
+      if (await estAnnulationClient(erreur)) return
+
+      // Déjà abonné ailleurs (autre onglet, achat rejoué) : l'accès viendra
+      // du webhook, il n'y a rien à réparer côté cavalier.
+      if (await estDejaAbonne(erreur)) {
+        setDroitRevenueCat(true)
+        attendreWebhook()
+        return
+      }
+
+      console.error('Achat RevenueCat impossible', erreur)
+      setErreurAchat(
+        erreur?.message ||
+          'Le paiement n’a pas pu aboutir. Réessayez dans un instant ; rien n’a été débité.'
+      )
+    } finally {
+      setAchatEnCours(false)
+    }
+  }
+
+  /** Dernier recours : redemander l'état à RevenueCat, puis relancer l'attente. */
+  async function reverifier() {
+    setWebhookAbandonne(false)
+    try {
+      const infos = await infosClient(utilisateur.id)
+      setDroitRevenueCat(aDroitPremium(infos))
+    } catch (erreur) {
+      console.error('Statut RevenueCat illisible', erreur)
+    }
+    await rafraichirAbonnement()
+    attendreWebhook()
   }
 
   if (estPremium) {
@@ -83,6 +210,8 @@ export default function Premium() {
     )
   }
 
+  const joursEssaiAffiches = offreChoisie?.joursEssai ?? JOURS_ESSAI
+
   return (
     <>
       <Entete titre="Licol Premium" retour />
@@ -90,18 +219,38 @@ export default function Premium() {
       <main className="contenu">
         {motif && <div className="carte" style={{ marginBottom: 18 }}>{motif}</div>}
 
+        {EN_BAC_A_SABLE && (
+          <div className="carte doux" style={{ marginBottom: 18, fontSize: '0.85rem' }}>
+            🧪 Mode bac à sable RevenueCat : aucun paiement réel n’est encaissé.
+          </div>
+        )}
+
         {attenteWebhook && (
           <div className="carte centre doux" style={{ marginBottom: 18 }}>
             Paiement enregistré, activation en cours…
           </div>
         )}
 
-        {retourAchat && !attenteWebhook && !estPremium && (
-          <Erreur>
-            L'activation prend plus de temps que prévu. Fermez et rouvrez
-            l'application dans quelques minutes ; si rien ne change, écrivez-nous.
-          </Erreur>
+        {webhookAbandonne && (
+          <div style={{ marginBottom: 18 }}>
+            <Erreur>
+              {droitRevenueCat
+                ? 'Votre paiement est bien enregistré chez notre prestataire, mais l’activation tarde à nous parvenir. Rien n’est perdu.'
+                : 'L’activation prend plus de temps que prévu.'}
+            </Erreur>
+            <button className="bouton fantome pleine-largeur" onClick={reverifier}>
+              Vérifier à nouveau
+            </button>
+            <p className="aide" style={{ marginTop: 8 }}>
+              Si rien ne change d’ici quelques minutes, écrivez-nous : le
+              paiement est tracé de leur côté, l’accès sera rétabli sans
+              nouvelle dépense.
+            </p>
+          </div>
         )}
+
+        {erreurAchat && <Erreur>{erreurAchat}</Erreur>}
+        {erreurCatalogue && <Erreur>{erreurCatalogue}</Erreur>}
 
         <section style={{ marginBottom: 22 }}>
           <div className="liste">
@@ -117,50 +266,54 @@ export default function Premium() {
           </div>
         </section>
 
-        <div className="choix-compte">
-          {Object.entries(OFFRES).map(([cle, offre]) => (
-            <button
-              key={cle}
-              type="button"
-              className={offreChoisie === cle ? 'actif' : undefined}
-              onClick={() => setOffreChoisie(cle)}
-            >
-              <span style={{ flex: 1 }}>
-                <span className="titre">
-                  {offre.libelle}
-                  {offre.recommande && (
-                    <span className="badge" style={{ marginLeft: 8 }}>Le plus choisi</span>
-                  )}
+        {chargementOffres ? (
+          <Chargement texte="Chargement des formules…" />
+        ) : (
+          <div className="choix-compte">
+            {offres?.map((offre) => (
+              <button
+                key={offre.cle}
+                type="button"
+                className={offreChoisie?.cle === offre.cle ? 'actif' : undefined}
+                onClick={() => setChoix(offre.cle)}
+              >
+                <span style={{ flex: 1 }}>
+                  <span className="titre">
+                    {offre.libelle}
+                    {offre.miseEnAvant && (
+                      <span className="badge" style={{ marginLeft: 8 }}>
+                        {offre.miseEnAvant}
+                      </span>
+                    )}
+                  </span>
+                  <span className="desc">{offre.detail}</span>
                 </span>
-                <span className="desc">{offre.detail}</span>
-              </span>
-              <span style={{ textAlign: 'right' }}>
-                <span className="gras" style={{ display: 'block' }}>{offre.prix}</span>
-                <span className="doux" style={{ fontSize: '0.76rem' }}>{offre.periode}</span>
-              </span>
-            </button>
-          ))}
-        </div>
+                <span style={{ textAlign: 'right' }}>
+                  <span className="gras" style={{ display: 'block' }}>{offre.prix}</span>
+                  <span className="doux" style={{ fontSize: '0.76rem' }}>{offre.periode}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         <button
           className="bouton pleine-largeur"
           style={{ marginTop: 18 }}
           onClick={souscrire}
-          disabled={!LIEN_ACHAT}
+          disabled={!offreChoisie?.paquet || achatEnCours || attenteWebhook}
         >
-          Commencer l'essai de {JOURS_ESSAI} jours
+          {achatEnCours
+            ? 'Ouverture du paiement…'
+            : `Commencer l'essai de ${joursEssaiAffiches} jours`}
         </button>
 
-        {!LIEN_ACHAT && (
-          <p className="aide" style={{ marginTop: 10, color: 'var(--rouge)' }}>
-            Lien d'achat non configuré : renseignez VITE_REVENUECAT_LIEN_ACHAT.
+        {offreChoisie && (
+          <p className="aide centre" style={{ marginTop: 12 }}>
+            {joursEssaiAffiches} jours gratuits, puis {offreChoisie.prix}{' '}
+            {offreChoisie.periode}. Résiliable à tout moment pendant l'essai.
           </p>
         )}
-
-        <p className="aide centre" style={{ marginTop: 12 }}>
-          {JOURS_ESSAI} jours gratuits, puis {OFFRES[offreChoisie].prix}{' '}
-          {OFFRES[offreChoisie].periode}. Résiliable à tout moment pendant l'essai.
-        </p>
       </main>
     </>
   )

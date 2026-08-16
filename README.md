@@ -29,9 +29,13 @@ PWA installable sur l'écran d'accueil. Interface entièrement en français.
 | Front        | React 18 + Vite, React Router                     |
 | Back         | Supabase (Postgres, Auth, Storage) avec RLS       |
 | Hébergement  | Vercel                                            |
+| Paiement     | RevenueCat Web Billing (`@revenuecat/purchases-js`) |
 | Style        | CSS, une feuille unique, mobile-first             |
 
-Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
+Aucune dépendance UI externe : tout l'habillage tient dans une feuille de
+style. Le SDK de paiement, lui, pèse plus lourd que le reste de
+l'application — il est donc chargé à la demande, dans son propre *chunk*, à
+la seule ouverture de l'écran d'abonnement.
 
 ## Documentation
 
@@ -53,6 +57,7 @@ Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
 | `0005_abonnements_et_limites.sql` | Table `abonnements`, `est_premium()`, et limites du plan gratuit appliquées en RLS |
 | `0006_limite_chevaux_partages.sql` | Le plan gratuit compte les chevaux rejoints par code, pas seulement les créés |
 | `0007_resiliation.sql` | URL du portail client, et accès maintenu jusqu'à l'échéance après résiliation |
+| `0008_ordre_evenements_webhook.sql` | Un événement RevenueCat rejoué dans le désordre ne défait plus un événement plus récent |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
@@ -102,6 +107,10 @@ L'application est servie sur http://localhost:5173.
 4. Dans Supabase → **Authentication → URL Configuration**, ajoutez l'URL de
    production dans « Site URL » et « Redirect URLs » pour que la connexion
    Google fonctionne.
+5. Pour l'abonnement, ajoutez `VITE_REVENUECAT_CLE_PUBLIQUE` et déclarez le
+   domaine dans RevenueCat → **Web → Web Billing**. Sans variable, le paywall
+   tourne en bac à sable et l'annonce à l'écran :
+   voir [`docs/abonnement.md`](docs/abonnement.md).
 
 ## Scripts
 
