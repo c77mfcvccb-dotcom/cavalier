@@ -7,6 +7,7 @@
 | Chevaux | 1 cheval **au total**, créé ou rejoint avec un code |
 | Carnet de santé | inaccessible, lecture comprise |
 | Calendrier | aucun créneau créé ni déplacé au-delà du dimanche courant |
+| Dépenses | module inaccessible, lecture comprise |
 
 Premium : **4,99 €/mois** ou **39,99 €/an**, après **7 jours d'essai gratuit**.
 

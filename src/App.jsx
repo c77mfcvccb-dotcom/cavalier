@@ -24,6 +24,7 @@ import ClubCavalerie from './pages/ClubCavalerie'
 import ClubSante from './pages/ClubSante'
 import ClubPlanning from './pages/ClubPlanning'
 import ClubDepenses from './pages/ClubDepenses'
+import Depenses from './pages/Depenses'
 
 function ConfigurationRequise() {
   return (
@@ -77,7 +78,6 @@ export default function App() {
             <Route path="/" element={<ClubCavalerie />} />
             <Route path="/sante" element={<ClubSante />} />
             <Route path="/planning" element={<ClubPlanning />} />
-            <Route path="/depenses" element={<ClubDepenses />} />
           </>
         ) : (
           <>
@@ -92,6 +92,8 @@ export default function App() {
         <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
         <Route path="/chevaux/:id" element={<FicheCheval />} />
         <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
+        <Route path="/depenses" element={<Depenses />} />
+        <Route path="/depenses/soins" element={<ClubDepenses />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/premium" element={<Premium />} />
         <Route path="/cgv" element={<Cgv />} />

@@ -848,3 +848,123 @@ button {
   cursor: pointer;
 }
 .case-acceptation a { color: var(--bleu); text-decoration: underline; }
+
+/* ── Module Dépenses ───────────────────────────────────────── */
+
+/* Le total du mois est l'information principale de l'écran : il est traité
+   comme un titre, avec des chiffres tabulaires pour que la valeur ne
+   sautille pas d'un mois à l'autre. */
+.total-mois { text-align: center; }
+.total-mois .montant {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin: 6px 0 2px;
+}
+
+.navigation-mois {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.navigation-mois button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--bordure);
+  background: var(--carte);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--texte);
+  cursor: pointer;
+}
+.navigation-mois button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.filtre-chevaux { margin-top: 12px; }
+.filtre-chevaux select { width: 100%; }
+
+/* ── Graphique mensuel ──────────────────────────────────────
+   Une seule série, donc une seule teinte : la hauteur porte
+   l'information, la couleur n'en porte aucune. Le mois sélectionné se
+   distingue par un contraste de ton, pas par une teinte nouvelle, qui
+   se lirait comme une seconde série. */
+.graphique-mois {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px; /* le filet de fond entre deux barres, qui les sépare sans trait */
+}
+.graphique-mois .barre {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  min-width: 0;
+}
+.graphique-mois .piste {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+.graphique-mois .remplissage {
+  width: 100%;
+  background: var(--vert-clair);
+  border-radius: 4px 4px 0 0; /* ergot arrondi côté valeur, pied à plat */
+  opacity: 0.45;
+  transition: opacity 0.15s, background 0.15s;
+}
+/* Un mois sans dépense garde un trait au ras de la ligne de base : il est
+   vide, pas absent — ce qui n'est pas la même lecture. */
+.graphique-mois .remplissage.vide { background: var(--bordure); opacity: 1; border-radius: 2px; }
+.graphique-mois .barre.actif .remplissage { opacity: 1; background: var(--vert); }
+.graphique-mois .barre:hover .remplissage { opacity: 0.75; }
+.graphique-mois .barre.actif:hover .remplissage { opacity: 1; }
+.graphique-mois .mois {
+  font-size: 0.68rem;
+  color: var(--texte-doux);
+}
+.graphique-mois .barre.actif .mois { color: var(--texte); font-weight: 650; }
+
+/* ── Répartition par catégorie ──────────────────────────────
+   Barres classées plutôt qu'un camembert : neuf parts en secteurs sont
+   illisibles, et une longueur se compare d'un coup d'œil quand un angle
+   ne se compare pas. */
+.repartition .poste + .poste { margin-top: 14px; }
+.repartition .entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.88rem;
+  margin-bottom: 5px;
+}
+.repartition .piste {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--sable);
+  overflow: hidden;
+}
+.repartition .remplissage {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--vert-clair);
+}
+.repartition .aide { display: block; margin-top: 3px; }
+
+.actions-depense {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.actions-depense .bouton { padding: 4px 6px; min-height: 0; font-size: 0.76rem; }
+.actions-depense .bouton.danger { border: 0; }

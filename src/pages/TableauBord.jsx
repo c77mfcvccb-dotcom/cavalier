@@ -59,7 +59,15 @@ export default function TableauBord() {
 
   return (
     <>
-      <Entete titre={`Bonjour ${prenom}`} sousTitre={formatDate(new Date(), { avecJour: true })} />
+      <Entete
+        titre={`Bonjour ${prenom}`}
+        sousTitre={formatDate(new Date(), { avecJour: true })}
+        action={
+          <Link to="/depenses" className="bouton fantome petit">
+            Dépenses
+          </Link>
+        }
+      />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>

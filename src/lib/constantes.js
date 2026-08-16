@@ -84,6 +84,25 @@ export const PROTOCOLES_VACCIN = {
   autre_vaccin: { libelle: 'Autre vaccin', intervalleJours: 365, aide: null },
 }
 
+/**
+ * Postes de dépense. Les clés sont contraintes en base (migration 0009) :
+ * en ajouter une ici sans toucher au `check` ferait échouer l'insertion.
+ *
+ * L'ordre est celui du formulaire, et il n'est pas alphabétique : la
+ * pension et le maréchal reviennent tous les mois, le reste est plus rare.
+ */
+export const CATEGORIES_DEPENSE = {
+  pension: { libelle: 'Pension', emoji: '🏠' },
+  marechal: { libelle: 'Maréchal', emoji: '🔨' },
+  veterinaire: { libelle: 'Vétérinaire', emoji: '🩺' },
+  osteo: { libelle: 'Ostéopathe', emoji: '🖐️' },
+  alimentation: { libelle: 'Alimentation', emoji: '🌾' },
+  materiel: { libelle: 'Matériel', emoji: '🎒' },
+  concours: { libelle: 'Concours', emoji: '🏆' },
+  transport: { libelle: 'Transport', emoji: '🚚' },
+  autre: { libelle: 'Autre', emoji: '💶' },
+}
+
 export const STATUTS_ECHEANCE = {
   retard: { libelle: 'En retard', classe: 'retard' },
   urgent: { libelle: 'Cette semaine', classe: 'urgent' },
