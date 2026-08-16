@@ -27,7 +27,7 @@ const MESSAGES = {
 }
 
 export default function Reinitialisation() {
-  const { session, definirMotDePasse } = useAuth()
+  const { session, definirMotDePasse, abandonnerRecuperation } = useAuth()
   const navigate = useNavigate()
 
   const [probleme, setProbleme] = useState(problemeDansUrl)
@@ -44,6 +44,12 @@ export default function Reinitialisation() {
     const minuterie = setTimeout(() => setProbleme('invalide'), 2500)
     return () => clearTimeout(minuterie)
   }, [probleme, session])
+
+  // Un lien mort ferme la récupération, sinon le bouton « demander un
+  // nouveau lien » se ferait renvoyer ici en boucle.
+  useEffect(() => {
+    if (probleme) abandonnerRecuperation()
+  }, [probleme, abandonnerRecuperation])
 
   async function surSoumission(evenement) {
     evenement.preventDefault()
@@ -137,6 +143,22 @@ export default function Reinitialisation() {
           {envoi ? 'Enregistrement…' : 'Enregistrer et me connecter'}
         </button>
       </form>
+
+      {/* Sortie de secours : la session est déjà ouverte, et quelqu'un qui
+          retrouve son mot de passe entre-temps ne doit pas rester enfermé
+          sur cet écran. */}
+      <p className="centre" style={{ marginTop: 18 }}>
+        <button
+          type="button"
+          className="lien-discret"
+          onClick={() => {
+            abandonnerRecuperation()
+            navigate('/', { replace: true })
+          }}
+        >
+          Garder mon mot de passe actuel
+        </button>
+      </p>
 
       <PiedDePage />
     </div>

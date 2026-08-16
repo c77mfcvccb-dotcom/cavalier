@@ -1,4 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
+// Importé ici, et non depuis un composant : ce module lit l'URL au chargement
+// et doit le faire AVANT que le client ci-dessous n'en efface le fragment.
+import './recuperation'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const cle = import.meta.env.VITE_SUPABASE_ANON_KEY

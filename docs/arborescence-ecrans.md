@@ -22,9 +22,16 @@ différente selon le type de compte. Tout est en français.
 `src/App.jsx`) : le lien du mail ouvre une session, l'application basculerait
 donc en mode connecté et renverrait vers l'accueil avant toute saisie.
 
-L'URL doit figurer dans Supabase → **Authentication → URL Configuration →
-Redirect URLs** (`https://licol.app/**` suffit), sinon le lien retombe sur la
-Site URL et l'écran n'est jamais atteint.
+Le lien n'atterrit d'ailleurs pas toujours sur cette URL. Si l'adresse de
+retour ne figure pas dans Supabase → **Authentication → URL Configuration →
+Redirect URLs** (`https://licol.app/**` suffit), le serveur d'authentification
+renvoie sur la **Site URL**, jeton compris : la session s'ouvre sur l'accueil
+et le mot de passe n'est jamais changé. `src/lib/recuperation.js` retient donc
+qu'une récupération est en cours — `type=recovery` lu dans l'URL **avant** la
+création du client Supabase, doublé de l'événement `PASSWORD_RECOVERY` — et
+tout chemin ramène à l'écran de saisie tant que le nouveau mot de passe n'a
+pas été posé. Une sortie discrète (« Garder mon mot de passe actuel ») évite
+d'y rester enfermé.
 
 ## Compte CAVALIER
 

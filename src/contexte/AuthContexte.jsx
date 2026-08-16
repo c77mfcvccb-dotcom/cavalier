@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase, configurationManquante } from '../lib/supabase'
+import { cloreRecuperation, ouvrirRecuperation, recuperationEnCours } from '../lib/recuperation'
 
 const AuthContexte = createContext(null)
 
@@ -22,6 +23,8 @@ export function FournisseurAuth({ children }) {
   const [profil, setProfil] = useState(null)
   const [abonnement, setAbonnement] = useState(null)
   const [chargement, setChargement] = useState(true)
+  // Lu dès le premier rendu : le drapeau est posé à l'import, donc déjà là.
+  const [recuperation, setRecuperation] = useState(recuperationEnCours)
 
   const chargerAbonnement = useCallback(async (utilisateur) => {
     if (!utilisateur) {
@@ -96,7 +99,15 @@ export function FournisseurAuth({ children }) {
       setChargement(false)
     })
 
-    const { data: ecoute } = supabase.auth.onAuthStateChange(async (_evenement, nouvelle) => {
+    const { data: ecoute } = supabase.auth.onAuthStateChange(async (evenement, nouvelle) => {
+      // Seconde détection, complémentaire de la lecture d'URL : elle attrape
+      // les flots où le jeton ne passe pas par le fragment. Elle ne peut pas
+      // s'y substituer — l'écoute est posée après le montage, et l'événement
+      // peut avoir déjà été émis.
+      if (evenement === 'PASSWORD_RECOVERY') {
+        ouvrirRecuperation()
+        setRecuperation(true)
+      }
       setSession(nouvelle)
       await Promise.all([chargerProfil(nouvelle?.user), chargerAbonnement(nouvelle?.user)])
       setChargement(false)
@@ -112,6 +123,7 @@ export function FournisseurAuth({ children }) {
       profil,
       chargement,
       estClub: profil?.type_compte === 'club',
+      recuperation,
       abonnement,
       estPremium: abonnementActif(abonnement),
       rafraichirProfil: () => chargerProfil(session?.user),
@@ -190,15 +202,27 @@ export function FournisseurAuth({ children }) {
       async definirMotDePasse(motDePasse) {
         const { error } = await supabase.auth.updateUser({ password: motDePasse })
         if (error) throw error
+        // Le mot de passe est posé : plus rien à retenir, l'application peut
+        // reprendre son cours normal.
+        cloreRecuperation()
+        setRecuperation(false)
+      },
+
+      /** Sortie de la récupération sans avoir changé de mot de passe. */
+      abandonnerRecuperation() {
+        cloreRecuperation()
+        setRecuperation(false)
       },
 
       async deconnexion() {
         await supabase.auth.signOut()
+        cloreRecuperation()
+        setRecuperation(false)
         setProfil(null)
         setAbonnement(null)
       },
     }),
-    [session, profil, abonnement, chargement, chargerProfil, chargerAbonnement]
+    [session, profil, abonnement, chargement, recuperation, chargerProfil, chargerAbonnement]
   )
 
   return <AuthContexte.Provider value={valeur}>{children}</AuthContexte.Provider>

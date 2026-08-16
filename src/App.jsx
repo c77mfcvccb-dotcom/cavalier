@@ -46,7 +46,7 @@ function ConfigurationRequise() {
 }
 
 export default function App() {
-  const { session, profil, chargement, estClub } = useAuth()
+  const { session, profil, chargement, estClub, recuperation } = useAuth()
   const { pathname } = useLocation()
 
   if (configurationManquante) return <ConfigurationRequise />
@@ -57,6 +57,13 @@ export default function App() {
   // renverrait vers l'accueil — avec sa barre de navigation — avant même que
   // le nouveau mot de passe ait pu être saisi.
   if (pathname === '/reinitialisation') return <Reinitialisation />
+
+  // Le lien de récupération n'atterrit pas toujours sur /reinitialisation :
+  // si l'URL de retour n'est pas dans la liste blanche du projet Supabase,
+  // le serveur d'authentification renvoie sur la Site URL, jeton compris. La
+  // session s'ouvre alors sur l'accueil et la saisie du nouveau mot de passe
+  // n'a jamais lieu. Tant qu'elle n'a pas eu lieu, tout chemin y ramène.
+  if (recuperation) return <Navigate to="/reinitialisation" replace />
 
   if (!session) {
     return (
