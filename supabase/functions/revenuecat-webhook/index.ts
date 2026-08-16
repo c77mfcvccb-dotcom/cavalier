@@ -147,6 +147,14 @@ Deno.serve(async (requete) => {
   const profilId = String(evenement.app_user_id ?? '')
   const periodType = String(evenement.period_type ?? '')
 
+  // Instant où RevenueCat a PRODUIT l'événement, pas celui où il nous
+  // parvient. Les deux diffèrent dès qu'un envoi a échoué : RevenueCat
+  // réessaie pendant des heures, et un EXPIRATION rejoué peut arriver après
+  // le RENEWAL qui l'a rendu caduc. Le trigger de la migration 0008 s'appuie
+  // sur cette date pour écarter un événement périmé.
+  const horodatage = Number(evenement.event_timestamp_ms ?? 0)
+  const evenementLe = horodatage > 0 ? new Date(horodatage).toISOString() : null
+
   // Date de fin d'accès. Sur un échec de prélèvement, RevenueCat peut ouvrir
   // un délai de grâce qui court au-delà de l'échéance : c'est la plus
   // lointaine des deux dates qui borne réellement le service.
@@ -218,6 +226,10 @@ Deno.serve(async (requete) => {
       rc_app_user_id: profilId,
       ...(produit ? { produit } : {}),
       ...(urlGestion ? { url_gestion: urlGestion } : {}),
+      // Omise si l'événement n'en porte pas : PostgREST ne touche alors pas
+      // la colonne, et la date connue survit. L'écraser avec null
+      // désarmerait la protection contre les rejeux.
+      ...(evenementLe ? { dernier_evenement_le: evenementLe } : {}),
       maj_le: new Date().toISOString(),
     },
     { onConflict: 'profil_id' }

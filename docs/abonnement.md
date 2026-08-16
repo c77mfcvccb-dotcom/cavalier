@@ -236,6 +236,36 @@ Le webhook vérifie enfin que l'événement porte bien l'entitlement `premium`,
 quand RevenueCat le transmet : un futur produit vendu à côté ne doit pas
 ouvrir le carnet de santé au passage.
 
+### Les événements n'arrivent pas dans l'ordre
+
+RevenueCat réessaie un envoi échoué pendant des heures. Un `EXPIRATION`
+rejoué peut donc arriver **après** le `RENEWAL` qui l'a rendu caduc — et le
+webhook, qui écrasait la ligne à chaque fois, repassait le compte en gratuit
+alors qu'il venait d'être renouvelé. Rien ne le rattrapait avant l'événement
+suivant, soit un mois plus tard.
+
+La migration 0008 ajoute `abonnements.dernier_evenement_le`, alimentée par
+`event_timestamp_ms` — l'instant où l'événement a été **produit**, et non
+celui où il nous parvient. `maj_le` ne pouvait pas servir : il enregistre la
+réception, donc précisément la valeur faussée par un rejeu tardif.
+
+Un trigger `BEFORE UPDATE` écarte alors toute écriture plus ancienne que la
+ligne en place. Il vit dans la base plutôt que dans la fonction Edge parce
+que c'est la table qui doit refuser un retour en arrière, quel que soit le
+chemin d'écriture : webhook redéployé de travers, correctif manuel, futur
+script de reprise.
+
+Le trigger renvoie `OLD` au lieu de lever une exception. C'est délibéré :
+l'écriture est annulée, le webhook répond 200, et RevenueCat cesse de
+réessayer un message qui n'a plus rien à apporter. Une exception aurait
+produit l'inverse — un 500, puis des réessais sans fin d'un événement
+périmé.
+
+Deux cas passent volontairement : une ligne dont `dernier_evenement_le` est
+null (héritée d'avant la migration, sinon elle resterait figée à jamais), et
+une écriture sans horodatage, qui conserve alors la date connue plutôt que
+de l'effacer — sans quoi la protection se désarmerait toute seule.
+
 ### D'où vient l'URL du portail
 
 Les événements Web Billing ne portent pas `management_url` — contrairement
