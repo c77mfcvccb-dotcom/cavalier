@@ -9,6 +9,11 @@
 | Calendrier | aucun créneau créé ni déplacé au-delà du dimanche courant |
 | Dépenses | module inaccessible, lecture comprise |
 
+> Les dépenses sont **cloisonnées par compte** : sur un cheval en
+> demi-pension, chaque cavalier ne voit et ne totalise que ce qu'il a
+> lui-même engagé. La règle est posée en RLS (`profil_id = auth.uid()`),
+> pas dans l'interface.
+
 Premium : **4,99 €/mois** ou **39,99 €/an**, après **7 jours d'essai gratuit**.
 
 ## Les limites sont appliquées par la base, pas par l'interface

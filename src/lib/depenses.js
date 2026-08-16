@@ -90,6 +90,41 @@ export function seriesMensuelle(depenses, reference) {
   })
 }
 
+/**
+ * Sous-totaux par cheval, du plus lourd au plus léger.
+ *
+ * Construits à partir des dépenses et non de la cavalerie : un cheval
+ * partagé sur lequel on a engagé quelque chose doit apparaître, et un
+ * cheval sans dépense du mois n'a rien à faire dans une liste de montants.
+ *
+ * Les dépenses sans cheval — une selle, un déplacement — sont regroupées
+ * en fin de liste plutôt que réparties d'office : les imputer à un cheval
+ * fausserait les sous-totaux.
+ */
+export function repartitionParCheval(depenses, nomDuCheval) {
+  const totaux = new Map()
+  for (const d of depenses) {
+    const cle = d.cheval_id || null
+    const actuel = totaux.get(cle) || { montant: 0, nombre: 0 }
+    totaux.set(cle, { montant: actuel.montant + Number(d.montant), nombre: actuel.nombre + 1 })
+  }
+
+  const total = [...totaux.values()].reduce((s, v) => s + v.montant, 0)
+  return [...totaux.entries()]
+    .map(([chevalId, v]) => ({
+      chevalId,
+      nom: chevalId ? nomDuCheval(chevalId) : 'Sans cheval',
+      montant: v.montant,
+      nombre: v.nombre,
+      part: total > 0 ? v.montant / total : 0,
+    }))
+    .sort((a, b) => {
+      if (!a.chevalId) return 1
+      if (!b.chevalId) return -1
+      return b.montant - a.montant
+    })
+}
+
 /** Postes du mois, du plus lourd au plus léger — l'ordre qui informe. */
 export function repartitionParCategorie(depenses) {
   const totaux = new Map()

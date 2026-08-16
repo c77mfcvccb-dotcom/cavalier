@@ -66,6 +66,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0007_resiliation.sql` | URL du portail client, et accès maintenu jusqu'à l'échéance après résiliation |
 | `0008_ordre_evenements_webhook.sql` | Un événement RevenueCat rejoué dans le désordre ne défait plus un événement plus récent |
 | `0009_depenses.sql` | Table `depenses` et module de suivi du budget, réservé au premium |
+| `0010_depenses_unifiees.sql` | Le coût d'un soin alimente `depenses` par trigger ; un soin s'écrit désormais à son propre nom |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

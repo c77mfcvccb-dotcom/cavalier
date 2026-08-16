@@ -19,6 +19,7 @@ import {
   filtrerParCheval,
   moisSuivantPossible,
   repartitionParCategorie,
+  repartitionParCheval,
   seriesMensuelle,
   total as sommer,
 } from '../lib/depenses'
@@ -90,6 +91,18 @@ export default function Depenses() {
 
   const nomCheval = (id) =>
     id ? chevaux.find((c) => c.id === id)?.nom || 'Cheval retiré' : 'Tous les chevaux'
+
+  /**
+   * Sous-totaux par cheval, calculés AVANT le filtre : c'est la vue
+   * d'ensemble qui sert à choisir sur quel cheval se concentrer, elle ne
+   * peut pas se réduire au cheval déjà sélectionné.
+   */
+  const parCheval = useMemo(() => {
+    const cle = cleMois(mois)
+    const duMoisTousChevaux = depenses.filter((d) => cleMois(d.date) === cle)
+    return repartitionParCheval(duMoisTousChevaux, nomCheval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [depenses, mois, chevaux])
 
   async function supprimer(depense) {
     const { error } = await supabase.from('depenses').delete().eq('id', depense.id)
@@ -169,21 +182,56 @@ export default function Depenses() {
           </div>
         </section>
 
-        {chevaux.length > 0 && (
-          <div className="filtre-chevaux">
-            <select
-              value={chevalFiltre}
-              onChange={(e) => setChevalFiltre(e.target.value)}
-              aria-label="Filtrer par cheval"
-            >
-              <option value="">Tous les chevaux</option>
-              {chevaux.map((cheval) => (
-                <option key={cheval.id} value={cheval.id}>
-                  {cheval.nom}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Répartition par cheval — et filtre du même coup : toucher un
+            cheval restreint l'écran à celui-là. Deux commandes séparées
+            pour la même intention auraient encombré sans rien ajouter. */}
+        {parCheval.length > 0 && (
+          <section style={{ marginTop: 18 }}>
+            <div className="titre-section">
+              <h2>Par cheval</h2>
+              {chevalFiltre && (
+                <button className="bouton fantome petit" onClick={() => setChevalFiltre('')}>
+                  Tout afficher
+                </button>
+              )}
+            </div>
+
+            <div className="par-cheval">
+              {parCheval.map((ligne) => {
+                const actif = chevalFiltre === (ligne.chevalId || '')
+                return (
+                  <button
+                    key={ligne.chevalId || 'sans-cheval'}
+                    type="button"
+                    className={actif ? 'ligne actif' : 'ligne'}
+                    aria-pressed={actif}
+                    onClick={() => setChevalFiltre(actif ? '' : ligne.chevalId || '')}
+                  >
+                    <span className="corps">
+                      <span className="nom">{ligne.nom}</span>
+                      <span className="piste">
+                        <span
+                          className="remplissage"
+                          style={{ width: `${Math.max(2, ligne.part * 100)}%` }}
+                        />
+                      </span>
+                    </span>
+                    <span className="chiffres">
+                      <span className="gras">{euros(ligne.montant)}</span>
+                      <span className="aide">
+                        {ligne.nombre} dépense{ligne.nombre > 1 ? 's' : ''}
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <p className="aide" style={{ marginTop: 8 }}>
+              Seules vos propres dépenses sont comptées. Sur un cheval partagé,
+              ce que dépense l’autre cavalier ne figure pas ici.
+            </p>
+          </section>
         )}
 
         {chargement ? (
