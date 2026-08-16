@@ -30,6 +30,8 @@ export default function OngletSoins({ cheval }) {
   const [erreur, setErreur] = useState('')
   const [feuilleOuverte, setFeuilleOuverte] = useState(false)
   const [typeDeplie, setTypeDeplie] = useState(null)
+  // Périodicités propres à ce cheval : une ligne absente vaut « défaut ».
+  const [intervalles, setIntervalles] = useState({})
 
   const recharger = useCallback(async () => {
     // Inutile d'interroger la base en gratuit : le RLS renverrait une liste
@@ -39,7 +41,19 @@ export default function OngletSoins({ cheval }) {
       return
     }
     try {
-      setSoins(await chargerSoins(cheval.id))
+      const [liste, reglages] = await Promise.all([
+        chargerSoins(cheval.id),
+        supabase
+          .from('rappels_soins')
+          .select('type, intervalle_jours, actif')
+          .eq('cheval_id', cheval.id),
+      ])
+      setSoins(liste)
+      setIntervalles(
+        Object.fromEntries(
+          (reglages.data || []).map((r) => [r.type, r.actif ? r.intervalle_jours : null])
+        )
+      )
     } catch (e) {
       setErreur(e.message || 'Chargement des soins impossible')
     } finally {
@@ -135,6 +149,13 @@ export default function OngletSoins({ cheval }) {
         </button>
         <Link to={`/chevaux/${cheval.id}/carnet`} className="bouton secondaire">
           Carnet
+        </Link>
+        <Link
+          to={`/chevaux/${cheval.id}/rappels`}
+          className="bouton secondaire"
+          aria-label="Réglages des rappels"
+        >
+          🔔
         </Link>
       </div>
 
@@ -291,6 +312,7 @@ export default function OngletSoins({ cheval }) {
       <FeuilleSoin
         cheval={cheval}
         profilId={profil.id}
+        intervalles={intervalles}
         ouverte={feuilleOuverte}
         onFermer={() => setFeuilleOuverte(false)}
         onAjoute={() => {
@@ -302,12 +324,17 @@ export default function OngletSoins({ cheval }) {
   )
 }
 
-function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
+function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, onAjoute }) {
+  const intervalleDeType = (type) =>
+    type in intervalles ? intervalles[type] : TYPES_SOIN[type]?.intervalleJours
+
   const valeursParDefaut = () => ({
     type: 'ferrure',
     protocole: '',
     date_realisee: cleJour(new Date()),
-    prochaine_echeance: ajouterJours(new Date(), TYPES_SOIN.ferrure.intervalleJours),
+    prochaine_echeance: intervalleDeType('ferrure')
+      ? ajouterJours(new Date(), intervalleDeType('ferrure'))
+      : '',
     praticien: '',
     produit: '',
     cout: '',
@@ -329,11 +356,23 @@ function FeuilleSoin({ cheval, profilId, ouverte, onFermer, onAjoute }) {
 
   const modifier = (champ) => (e) => setValeurs((v) => ({ ...v, [champ]: e.target.value }))
 
-  /** Intervalle applicable : celui du protocole de vaccin s'il y en a un. */
-  const intervalleDe = (type, protocole) =>
-    type === 'vaccin' && protocole
-      ? PROTOCOLES_VACCIN[protocole]?.intervalleJours
-      : TYPES_SOIN[type]?.intervalleJours
+  /**
+   * Périodicité applicable, par ordre de précision décroissante :
+   * le protocole de vaccin choisi, puis le réglage propre au cheval, puis
+   * la valeur par défaut du type.
+   *
+   * Le protocole passe devant le réglage du cheval parce qu'il est plus
+   * spécifique : une primo-vaccination se rappelle à 30 jours quel que
+   * soit le rythme annuel réglé pour ce cheval.
+   *
+   * `undefined` dans `intervalles` veut dire « pas de réglage » ; `null`
+   * veut dire « rappel coupé », et ne propose alors aucune date.
+   */
+  const intervalleDe = (type, protocole) => {
+    if (type === 'vaccin' && protocole) return PROTOCOLES_VACCIN[protocole]?.intervalleJours
+    if (type in intervalles) return intervalles[type]
+    return TYPES_SOIN[type]?.intervalleJours
+  }
 
   function recalculer(champs) {
     setValeurs((v) => {

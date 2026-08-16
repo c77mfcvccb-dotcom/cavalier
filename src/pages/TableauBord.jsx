@@ -38,7 +38,10 @@ export default function TableauBord() {
         ])
 
         if (annule) return
-        setEcheances(prochainesEcheances.filter((e) => e.statut !== 'ok'))
+        // Les échéances à jour restent affichées : le code couleur n'a de
+        // sens que si le vert existe. Sans lui, un carnet en règle est
+        // indistinguable d'un carnet vide.
+        setEcheances(prochainesEcheances)
         setCreneaux(prochainsCreneaux.slice(0, 5))
       } catch (e) {
         if (!annule) setErreur(e.message || 'Chargement impossible')

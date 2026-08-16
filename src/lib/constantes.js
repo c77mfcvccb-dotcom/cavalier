@@ -27,13 +27,21 @@ export const TYPES_CRENEAU = {
 }
 
 // Intervalle habituel avant la prochaine échéance, en jours.
-// Sert à pré-remplir le champ « prochaine échéance » à la saisie d'un soin.
+//
+// Ce sont les valeurs PAR DÉFAUT, reprises de la fonction SQL
+// intervalle_soin_defaut() (migration 0011) : les deux doivent rester
+// alignées, sinon le formulaire propose une date que le rappel par email
+// ne confirmera pas. Un réglage par cheval peut les remplacer
+// (« Rappels » sur la fiche du cheval).
+//
+// Vétérinaire et « autre » n'en ont pas : une visite n'appelle pas
+// mécaniquement la suivante.
 export const TYPES_SOIN = {
-  ferrure: { libelle: 'Ferrure', emoji: '🔨', intervalleJours: 42 },
-  veterinaire: { libelle: 'Vétérinaire', emoji: '🩺', intervalleJours: 365 },
+  ferrure: { libelle: 'Ferrure', emoji: '🔨', intervalleJours: 49 },
+  veterinaire: { libelle: 'Vétérinaire', emoji: '🩺', intervalleJours: null },
   vaccin: { libelle: 'Vaccin', emoji: '💉', intervalleJours: 365 },
-  vermifuge: { libelle: 'Vermifuge', emoji: '💊', intervalleJours: 90 },
-  osteopathe: { libelle: 'Ostéopathe', emoji: '🖐️', intervalleJours: 180 },
+  vermifuge: { libelle: 'Vermifuge', emoji: '💊', intervalleJours: 120 },
+  osteopathe: { libelle: 'Ostéopathe', emoji: '🖐️', intervalleJours: 365 },
   dentiste: { libelle: 'Dentiste', emoji: '🦷', intervalleJours: 365 },
   autre: { libelle: 'Autre', emoji: '📋', intervalleJours: null },
 }
@@ -103,10 +111,17 @@ export const CATEGORIES_DEPENSE = {
   autre: { libelle: 'Autre', emoji: '💶' },
 }
 
+/**
+ * Trois états, calés sur la vue v_echeances (migration 0011) : dépassé,
+ * à prévoir sous 14 jours, ou rien à signaler.
+ *
+ * Le palier « ce mois-ci » a été retiré : une échéance à 29 jours
+ * n'appelle aucune action, et la signaler apprend à ignorer les
+ * signalements.
+ */
 export const STATUTS_ECHEANCE = {
   retard: { libelle: 'En retard', classe: 'retard' },
-  urgent: { libelle: 'Cette semaine', classe: 'urgent' },
-  bientot: { libelle: 'Ce mois-ci', classe: 'bientot' },
+  urgent: { libelle: 'À prévoir', classe: 'urgent' },
   ok: { libelle: 'À jour', classe: 'ok' },
 }
 
@@ -116,4 +131,4 @@ export const SEXES = {
   entier: 'Entier',
 }
 
-export const ORDRE_STATUTS = ['retard', 'urgent', 'bientot', 'ok']
+export const ORDRE_STATUTS = ['retard', 'urgent', 'ok']

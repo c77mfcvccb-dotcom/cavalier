@@ -16,6 +16,7 @@ import CalendrierGlobal from './pages/CalendrierGlobal'
 import Profil from './pages/Profil'
 import Premium from './pages/Premium'
 import CarnetSante from './pages/CarnetSante'
+import ReglagesRappels from './pages/ReglagesRappels'
 import FichePublique from './pages/FichePublique'
 import Cgv from './pages/legales/Cgv'
 import MentionsLegales from './pages/legales/MentionsLegales'
@@ -92,6 +93,7 @@ export default function App() {
         <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
         <Route path="/chevaux/:id" element={<FicheCheval />} />
         <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
+        <Route path="/chevaux/:id/rappels" element={<ReglagesRappels />} />
         <Route path="/depenses" element={<Depenses />} />
         <Route path="/depenses/soins" element={<ClubDepenses />} />
         <Route path="/profil" element={<Profil />} />
