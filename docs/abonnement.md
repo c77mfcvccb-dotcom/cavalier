@@ -87,18 +87,67 @@ compte, pour ne pas transformer une fonction utilitaire en sonde.
 ## Montage RevenueCat
 
 L'application est une PWA : le SDK mobile de RevenueCat ne s'applique pas.
-C'est **RevenueCat Web Billing** qui est utilisé, via un **Web Purchase Link**
-— une URL hébergée par RevenueCat, ce qui évite d'embarquer un SDK de paiement
-dans le bundle.
+C'est **RevenueCat Web Billing** qui est utilisé, avec le SDK
+[`@revenuecat/purchases-js`](https://www.npmjs.com/package/@revenuecat/purchases-js).
+Le paiement se déroule **dans la page**, dans un tunnel hébergé par
+RevenueCat (Stripe derrière) : le cavalier ne quitte plus l'application.
 
-1. Créer dans RevenueCat deux produits : `premium_mensuel` (4,99 €) et
-   `premium_annuel` (39,99 €), avec 7 jours d'essai, rattachés à une même
-   entitlement.
-2. Générer un Web Purchase Link et le renseigner dans
-   `VITE_REVENUECAT_LIEN_ACHAT`. L'écran d'abonnement y ajoute
-   `app_user_id=<identifiant Supabase>` : **c'est indispensable**, sinon le
-   webhook ne saura pas quel compte créditer.
-3. Déployer le webhook :
+C'est ce qui a remplacé le **Web Purchase Link**, une simple redirection. Le
+gain n'est pas cosmétique : sur une PWA installée, partir vers un domaine
+tiers puis revenir signifiait rouvrir l'application, souvent sur un écran
+froid, avec un `?achat=ok` en guise de fil d'Ariane. Les anciens liens
+restent accueillis (le paramètre est encore lu), mais plus personne n'en
+fabrique.
+
+Surtout, `app_user_id` n'est plus un paramètre d'URL : il est porté par le
+SDK, configuré avec l'identifiant Supabase du compte connecté. Le webhook
+sait donc toujours quel compte créditer, sans dépendre d'une URL que
+n'importe qui pouvait réécrire.
+
+### Catalogue
+
+| Dans RevenueCat | Valeur |
+|---|---|
+| Entitlement | `premium` — le seul droit vendu |
+| Offering | `default` |
+| Package `$rc_monthly` | produit `premium_mensuel`, 4,99 €/mois |
+| Package `$rc_annual` | produit `premium_annuel`, 39,99 €/an, mis en avant |
+| Essai gratuit | 7 jours, sur les deux produits |
+
+Les identifiants produits sont repris à trois endroits : dans `OFFRES`
+(`src/lib/abonnement.js`), dans le webhook, et dans la contrainte `check` de
+la colonne `abonnements.produit` (migration 0005). Un renommage côté
+RevenueCat casse les trois — pas seulement l'affichage.
+
+Les **prix affichés viennent de RevenueCat**, avec la devise et le format du
+visiteur. Ceux de `OFFRES` ne servent que de repli si le catalogue n'a pas pu
+être chargé ; dans ce cas le bouton d'achat reste désactivé, puisqu'il n'y a
+aucun package à acheter.
+
+### Clés
+
+La clé publique du SDK vit dans `VITE_REVENUECAT_CLE_PUBLIQUE`
+(RevenueCat → API keys → **SDK API keys**). Elle est faite pour le front :
+elle ne permet que de lire le catalogue et de démarrer un achat.
+
+Sans variable renseignée, le code retombe sur la **clé de bac à sable**, et
+l'écran d'abonnement affiche un bandeau qui le dit. C'est le bon défaut : un
+oubli de configuration ne facture personne. La clé de production est en
+commentaire dans `.env.example` — la bascule consiste à la déclarer dans les
+variables d'environnement Vercel, puis à redéployer.
+
+> La clé secrète (**Secret API keys**) n'a rien à faire ici, ni dans le
+> front, ni dans le webhook : celui-ci n'appelle pas l'API RevenueCat, il la
+> reçoit.
+
+### Mise en place
+
+1. Créer l'entitlement `premium`, les deux produits, et l'offering `default`
+   avec ses deux packages, tel que décrit ci-dessus.
+2. Dans **Web → Web Billing**, autoriser le domaine de l'application : le SDK
+   refuse de démarrer un achat depuis une origine non déclarée.
+3. Renseigner `VITE_REVENUECAT_CLE_PUBLIQUE`.
+4. Déployer le webhook :
 
    ```bash
    supabase functions deploy revenuecat-webhook --no-verify-jwt
@@ -108,16 +157,33 @@ dans le bundle.
    `--no-verify-jwt` est nécessaire — RevenueCat n'envoie pas de JWT Supabase.
    L'authentification repose entièrement sur le secret partagé, transmis dans
    l'en-tête `Authorization`.
-4. Dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la fonction
+5. Dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la fonction
    et ce même secret.
-5. Configurer l'URL de retour après paiement vers `/premium?achat=ok`.
 6. Renseigner `VITE_REVENUECAT_LIEN_PORTAIL` avec l'URL du portail client,
    qui sert de repli tant que le webhook n'a pas transmis l'URL propre au
    compte.
 
-Le webhook peut mettre quelques secondes : l'écran d'abonnement interroge la
-base toutes les trois secondes pendant trente secondes après le retour de
-paiement, plutôt que d'afficher un état faussement négatif.
+### Le SDK encaisse, il ne donne aucun droit
+
+`customerInfo.entitlements.active.premium` ne déverrouille rien. L'accès
+premium est lu dans la table `abonnements`, que seul le webhook écrit, et sur
+laquelle s'appuient les politiques RLS. Un front complaisant — ou trafiqué —
+n'obtient donc rien de la base.
+
+D'où l'attente après paiement : le SDK a rendu la main, mais la ligne n'est
+pas encore écrite. L'écran interroge la base toutes les trois secondes
+pendant trente secondes, puis propose une revérification manuelle plutôt que
+d'afficher un état faussement négatif. Le message distingue les deux cas —
+« paiement bien enregistré chez notre prestataire » quand RevenueCat, lui,
+confirme le droit.
+
+### Poids du bundle
+
+Le SDK pèse plus lourd que tout le reste de l'application (~220 ko gzip).
+Il est donc chargé en `import()` dynamique depuis `src/lib/revenuecat.js`,
+et Vite l'isole dans son propre *chunk* : il n'est téléchargé qu'à
+l'ouverture de l'écran d'abonnement, que la grande majorité des visites ne
+croise jamais.
 
 ## Résiliation
 
@@ -144,6 +210,31 @@ que la période en cours est due et déjà payée.
 jusqu'à `expire_le` ; c'est `EXPIRATION` qui met fin au service. Les trois
 statuts `actif`, `essai` et `annule` ouvrent donc l'accès, toujours sous
 réserve de la date.
+
+### Ce que le webhook fait de chaque événement
+
+| Événement RevenueCat | Statut écrit | Accès |
+|---|---|---|
+| `INITIAL_PURCHASE`, `RENEWAL`, `PRODUCT_CHANGE`, `UNCANCELLATION`, `SUBSCRIPTION_EXTENDED` | `essai` si `period_type = TRIAL`, sinon `actif` | ouvert |
+| `CANCELLATION`, `BILLING_ISSUE` | `annule` | ouvert jusqu'à `expire_le` |
+| `EXPIRATION` | `expire` | fermé |
+| `TRANSFER`, `SUBSCRIBER_ALIAS`, `TEST`… | rien | inchangé |
+
+`BILLING_ISSUE` était rangé avec `EXPIRATION`, et c'est le même piège qu'en
+0007 : RevenueCat l'émet dès le **premier échec de prélèvement**, alors que
+l'abonnement est encore valide — période payée non écoulée, ou délai de grâce
+en cours. Une carte arrivée à expiration fermait donc le carnet de santé d'un
+abonné parfaitement à jour, le temps qu'il la remplace. Il rejoint désormais
+`CANCELLATION` : le renouvellement est compromis, le service ne l'est pas
+encore.
+
+La date de fin retenue est la plus lointaine de `expiration_at_ms` et de
+`grace_period_expiration_at_ms`, précisément parce que le délai de grâce peut
+courir au-delà de l'échéance.
+
+Le webhook vérifie enfin que l'événement porte bien l'entitlement `premium`,
+quand RevenueCat le transmet : un futur produit vendu à côté ne doit pas
+ouvrir le carnet de santé au passage.
 
 ## Points à trancher
 
