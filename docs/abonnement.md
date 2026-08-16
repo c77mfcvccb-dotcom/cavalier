@@ -130,6 +130,39 @@ visiteur. Ceux de `OFFRES` ne servent que de repli si le catalogue n'a pas pu
 être chargé ; dans ce cas le bouton d'achat reste désactivé, puisqu'il n'y a
 aucun package à acheter.
 
+### Apple Pay et Google Pay
+
+Un bouton de paiement en un geste est posé sur l'écran d'abonnement, au-dessus
+du bouton classique : `presentExpressPurchaseButton` (SDK 1.52, marqué
+`@experimental`). Un appui ouvre la feuille native de l'appareil ; ni
+formulaire de carte, ni saisie d'adresse.
+
+**Il ne s'affiche que si le domaine est déclaré.** Apple Pay sur le web
+n'apparaît que sur un domaine vérifié auprès d'Apple. RevenueCat enregistre
+automatiquement ses propres domaines hébergés (`pay.rev.cat`, `signup.cat`) —
+mais l'achat se déroulant dans la page, c'est `licol.app` qu'il faut inscrire
+soi-même dans les *payment method domains* de Stripe, et **par mode** :
+l'enregistrement du mode test ne vaut pas pour le mode live.
+
+Le rappel `onButtonReady(updater, walletsAvailable)` donne le verdict de
+l'appareil. Il est écrit dans la console (`[Licol] Apple Pay / Google Pay …`)
+et, quand les portefeuilles sont indisponibles, affiché à l'écran en bac à
+sable ou sur `/premium?diag=1`. C'est le seul moyen de vérifier depuis un vrai
+téléphone que la déclaration du domaine a pris : le bouton absent ne distingue
+pas « domaine non déclaré » de « aucune carte dans le portefeuille ».
+
+Trois points de conception :
+
+- **Le bouton reste inerte tant que les CGV ne sont pas acceptées.** Il serait
+  sinon un contournement de la case à cocher, qui vaut consentement.
+- **Il disparaît dès qu'un code promo est appliqué.** `presentExpressPurchaseButton`
+  n'expose pas de `discountCode`, contrairement à `purchase()` : un appui
+  ferait payer plein tarif. Mieux vaut un geste de plus qu'une remise perdue.
+- **Un échec de montage n'est pas un échec de paiement.** La même promesse
+  porte les deux ; avant que `onButtonReady` n'ait répondu, personne n'a rien
+  tenté, et l'emplacement s'efface en silence plutôt que d'annoncer un
+  paiement raté.
+
 ### Clés
 
 La clé publique du SDK vit dans `VITE_REVENUECAT_CLE_PUBLIQUE`

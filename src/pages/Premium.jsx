@@ -21,6 +21,7 @@ import {
   estAnnulationClient,
   estDejaAbonne,
   infosClient,
+  presenterBoutonExpress,
 } from '../lib/revenuecat'
 import { VERSION_CGV } from '../lib/legal'
 
@@ -74,10 +75,22 @@ export default function Premium() {
   const [webhookAbandonne, setWebhookAbandonne] = useState(false)
   const [droitRevenueCat, setDroitRevenueCat] = useState(false)
 
+  // Paiement en un geste (Apple Pay / Google Pay). `null` tant que le SDK
+  // n'a pas répondu : « pas encore su » et « indisponible » n'appellent pas
+  // le même affichage.
+  const cibleExpress = useRef(null)
+  const majExpress = useRef(null)
+  const expressMonte = useRef(false)
+  const expressPret = useRef(false)
+  const [portefeuillesDispos, setPortefeuillesDispos] = useState(null)
+  const [cycleExpress, setCycleExpress] = useState(0)
+
   const motif = MOTIFS[parametres.get('motif')]
   // Ancien parcours par redirection : des liens peuvent encore traîner dans
   // des emails de RevenueCat. On continue de les accueillir.
   const retourAchat = parametres.get('achat') === 'ok'
+  /** `?diag=1` : révèle le verdict du SDK sur les portefeuilles. */
+  const diagnostic = parametres.get('diag') === '1'
   const sondage = useRef(null)
 
   /**
@@ -212,6 +225,120 @@ export default function Premium() {
   }
 
   const offreChoisie = offres?.find((offre) => offre.cle === choix) ?? offres?.[0] ?? null
+  const paquetChoisi = offreChoisie?.paquet ?? null
+
+  /** Suite commune aux deux chemins de paiement : tunnel classique et bouton express. */
+  const apresPaiement = useCallback(
+    (customerInfo) => {
+      setDroitRevenueCat(aDroitPremium(customerInfo))
+      attendreWebhook()
+    },
+    [attendreWebhook]
+  )
+
+  /** Renvoie ce qui s'est passé, pour que l'appelant sache s'il doit se relancer. */
+  const surEchecPaiement = useCallback(
+    async (erreur) => {
+      // Fermer la fenêtre de paiement n'est pas un incident.
+      if (await estAnnulationClient(erreur)) return 'annule'
+
+      // Déjà abonné ailleurs (autre onglet, achat rejoué) : l'accès viendra
+      // du webhook, il n'y a rien à réparer côté cavalier.
+      if (await estDejaAbonne(erreur)) {
+        setDroitRevenueCat(true)
+        attendreWebhook()
+        return 'deja_abonne'
+      }
+
+      console.error('Paiement RevenueCat impossible', erreur)
+      setErreurAchat(
+        erreur?.message ||
+          'Le paiement n’a pas pu aboutir. Réessayez dans un instant ; rien n’a été débité.'
+      )
+      return 'erreur'
+    },
+    [attendreWebhook]
+  )
+
+  /**
+   * Montage du bouton Apple Pay / Google Pay.
+   *
+   * Le bouton est rendu par le SDK dans un élément à nous, une seule fois :
+   * quand la formule change, on le met à jour plutôt que d'en poser un
+   * second. D'où les références plutôt que de l'état — remonter le bouton à
+   * chaque rendu le ferait clignoter.
+   */
+  useEffect(() => {
+    if (estPremium) return
+
+    // Un code promo ne passe pas par ce chemin (voir presenterBoutonExpress) :
+    // le bouton disparaît, et pourra se remonter si le code est retiré.
+    if (codeApplique) {
+      expressMonte.current = false
+      majExpress.current = null
+      return
+    }
+
+    const cible = cibleExpress.current
+    if (!cible || !paquetChoisi || expressMonte.current) return
+
+    expressMonte.current = true
+    presenterBoutonExpress({
+      idUtilisateur: utilisateur.id,
+      paquet: paquetChoisi,
+      cible,
+      email: utilisateur.email,
+      acceptationCgv: VERSION_CGV,
+      onPret: (updater, disponibles) => {
+        expressPret.current = true
+        majExpress.current = updater
+        setPortefeuillesDispos(disponibles)
+        // Trace volontairement laissée en clair : c'est le seul moyen, depuis
+        // un vrai téléphone, de distinguer « domaine non déclaré » de
+        // « aucune carte dans le portefeuille ».
+        console.info(
+          `[Licol] Apple Pay / Google Pay ${disponibles ? 'disponibles' : 'indisponibles'} sur cet appareil`
+        )
+      },
+    })
+      .then((resultat) => apresPaiement(resultat?.customerInfo))
+      .catch(async (erreur) => {
+        // Une même promesse porte deux échecs très différents. Avant que le
+        // bouton ne soit prêt, c'est le montage qui a échoué — Stripe
+        // injoignable, portefeuille non pris en charge : personne n'a rien
+        // tenté, et annoncer un paiement raté serait faux. On se contente
+        // alors d'effacer l'emplacement.
+        if (!expressPret.current) {
+          console.warn('Bouton de paiement express indisponible', erreur)
+          setPortefeuillesDispos(false)
+          return
+        }
+
+        // La promesse ne se résout qu'une fois. Après une feuille refermée,
+        // il faut donc reposer un bouton neuf, sans quoi le second appui
+        // n'aboutirait plus.
+        if ((await surEchecPaiement(erreur)) === 'annule') {
+          expressMonte.current = false
+          expressPret.current = false
+          majExpress.current = null
+          cible.replaceChildren()
+          setCycleExpress((tour) => tour + 1)
+        }
+      })
+  }, [
+    estPremium,
+    codeApplique,
+    paquetChoisi,
+    utilisateur,
+    apresPaiement,
+    surEchecPaiement,
+    cycleExpress,
+  ])
+
+  /** Changement de formule : le bouton existant vise la nouvelle. */
+  useEffect(() => {
+    if (majExpress.current && paquetChoisi) majExpress.current.updatePurchase(paquetChoisi)
+  }, [paquetChoisi])
 
   async function souscrire() {
     if (!offreChoisie?.paquet || achatEnCours) return
@@ -233,25 +360,9 @@ export default function Premium() {
         // par le prestataire de paiement et non par nous.
         acceptationCgv: VERSION_CGV,
       })
-      setDroitRevenueCat(aDroitPremium(customerInfo))
-      attendreWebhook()
+      apresPaiement(customerInfo)
     } catch (erreur) {
-      // Fermer la fenêtre de paiement n'est pas un incident.
-      if (await estAnnulationClient(erreur)) return
-
-      // Déjà abonné ailleurs (autre onglet, achat rejoué) : l'accès viendra
-      // du webhook, il n'y a rien à réparer côté cavalier.
-      if (await estDejaAbonne(erreur)) {
-        setDroitRevenueCat(true)
-        attendreWebhook()
-        return
-      }
-
-      console.error('Achat RevenueCat impossible', erreur)
-      setErreurAchat(
-        erreur?.message ||
-          'Le paiement n’a pas pu aboutir. Réessayez dans un instant ; rien n’a été débité.'
-      )
+      await surEchecPaiement(erreur)
     } finally {
       setAchatEnCours(false)
     }
@@ -482,6 +593,39 @@ export default function Premium() {
           </span>
         </label>
 
+        {/* Paiement en un geste : la feuille Apple ou Google s'ouvre
+            directement, sans formulaire de carte. Posé AVANT le bouton
+            classique, parce que c'est le chemin le plus court — mais après
+            la case des CGV, qu'il ne doit pas permettre de contourner. */}
+        {!codeApplique && (
+          <div
+            className={`paiement-express${cgvAcceptees ? '' : ' bloque'}`}
+            hidden={portefeuillesDispos === false}
+          >
+            <div ref={cibleExpress} />
+            {portefeuillesDispos && (
+              <>
+                {!cgvAcceptees && (
+                  <p className="aide centre" style={{ marginTop: 6 }}>
+                    Cochez la case ci-dessus pour payer en un geste.
+                  </p>
+                )}
+                <div className="separateur">ou</div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Un code promo appliqué renvoie au tunnel classique : le bouton
+            express n'a pas de quoi transporter la remise. Le dire, plutôt
+            que de faire disparaître une option déjà vue. */}
+        {codeApplique && portefeuillesDispos && (
+          <p className="aide centre" style={{ marginTop: 14 }}>
+            Apple Pay et Google Pay ne transmettent pas les codes promo :
+            passez par le bouton ci-dessous pour que la remise s’applique.
+          </p>
+        )}
+
         <button
           className="bouton pleine-largeur"
           style={{ marginTop: 14 }}
@@ -512,6 +656,18 @@ export default function Premium() {
               </>
             )}
             . Résiliable à tout moment pendant l'essai.
+          </p>
+        )}
+
+        {/* Diagnostic, pas message d'erreur : « indisponible » est le cas
+            normal sur un appareil sans portefeuille, et l'afficher à tout le
+            monde n'apprendrait rien. On le montre en bac à sable, ou sur
+            demande explicite avec ?diag=1, pour pouvoir vérifier depuis un
+            vrai téléphone que le domaine est bien déclaré chez Apple. */}
+        {portefeuillesDispos === false && (diagnostic || EN_BAC_A_SABLE) && (
+          <p className="aide centre" style={{ marginTop: 12 }}>
+            Apple Pay / Google Pay indisponibles sur cet appareil, ce
+            navigateur, ou pour ce domaine.
           </p>
         )}
       </main>

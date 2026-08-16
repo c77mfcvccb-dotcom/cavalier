@@ -130,6 +130,47 @@ export async function acheter({ idUtilisateur, paquet, email, acceptationCgv, co
   })
 }
 
+/**
+ * Bouton Apple Pay / Google Pay posé directement sur l'écran d'abonnement.
+ *
+ * Un appui ouvre la feuille native de l'appareil et saute entièrement le
+ * tunnel de RevenueCat : ni formulaire de carte, ni saisie d'adresse.
+ *
+ * `onPret(updater, portefeuillesDisponibles)` est rappelé une fois le bouton
+ * prêt. Le second argument est la seule réponse fiable à « Apple Pay est-il
+ * proposé ici ? » : il tient compte à la fois de l'appareil, du navigateur,
+ * des cartes présentes dans le portefeuille, et de l'enregistrement du
+ * domaine auprès d'Apple. Un `false` ne dit pas laquelle de ces conditions
+ * manque, mais il évite d'afficher un emplacement vide.
+ *
+ * ⚠️ Aucun code promo ne transite par ce chemin : `presentExpressPurchaseButton`
+ * n'expose pas de `discountCode`, contrairement à `purchase()`. L'écran
+ * masque donc le bouton dès qu'une remise est appliquée — mieux vaut un
+ * geste de plus qu'une remise silencieusement perdue.
+ *
+ * API marquée `@experimental` par RevenueCat (SDK 1.52) : à revoir lors des
+ * montées de version.
+ */
+export async function presenterBoutonExpress({
+  idUtilisateur,
+  paquet,
+  cible,
+  email,
+  acceptationCgv,
+  onPret,
+}) {
+  const purchases = await configurer(idUtilisateur)
+  return purchases.presentExpressPurchaseButton({
+    rcPackage: paquet,
+    htmlTarget: cible,
+    customerEmail: email || undefined,
+    selectedLocale: 'fr',
+    defaultLocale: 'fr',
+    ...(acceptationCgv ? { metadata: { cgv_version: acceptationCgv } } : {}),
+    onButtonReady: onPret,
+  })
+}
+
 /** État côté RevenueCat, utile pour rattraper un webhook perdu. */
 export async function infosClient(idUtilisateur) {
   const purchases = await configurer(idUtilisateur)

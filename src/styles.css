@@ -1005,6 +1005,19 @@ button {
    Replié par défaut : affiché d'emblée, un champ de code souffle à qui
    n'en a pas qu'il paie le prix fort, et le fait quitter l'écran pour
    aller en chercher un. */
+/* ── Paiement en un geste ──────────────────────────────────────
+   Le bouton lui-même est rendu par le SDK RevenueCat : on ne lui impose
+   que sa largeur et sa place. Tant que les CGV ne sont pas acceptées, il
+   reste visible mais inerte — le masquer ferait sauter la mise en page au
+   moment de cocher la case. */
+.paiement-express { margin-top: 16px; }
+.paiement-express > div { min-height: 0; }
+.paiement-express.bloque {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.paiement-express .separateur { margin: 14px 0 0; }
+
 .code-promo { margin-top: 16px; text-align: center; }
 
 .lien-discret {
