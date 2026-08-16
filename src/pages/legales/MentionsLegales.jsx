@@ -1,5 +1,11 @@
 import PageLegale from '../../composants/PageLegale'
-import { EDITEUR, MEDIATEUR, PRESTATAIRES, valeur } from '../../lib/legal'
+import {
+  directeurPublication,
+  EDITEUR,
+  MEDIATEUR,
+  PRESTATAIRES,
+  valeur,
+} from '../../lib/legal'
 
 /** Mentions légales — article 6 III de la LCEN. */
 export default function MentionsLegales() {
@@ -28,7 +34,7 @@ export default function MentionsLegales() {
         <dt>Téléphone</dt>
         <dd>{valeur(EDITEUR.telephone)}</dd>
         <dt>Directeur de la publication</dt>
-        <dd>{valeur(EDITEUR.directeurPublication)}</dd>
+        <dd>{valeur(directeurPublication)}</dd>
       </dl>
 
       <h2>Hébergement</h2>

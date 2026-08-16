@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Entete } from './Mise'
-import { DERNIERE_MAJ, mentionsIncompletes } from '../lib/legal'
+import { champsManquants, DERNIERE_MAJ, mentionsIncompletes } from '../lib/legal'
 
 /**
  * Habillage commun aux trois pages légales.
@@ -19,9 +19,13 @@ export default function PageLegale({ titre, children }) {
       <main className="contenu texte-legal">
         {mentionsIncompletes && (
           <div className="erreur" style={{ marginBottom: 18 }}>
-            <strong>Document incomplet.</strong> Certaines coordonnées
-            obligatoires ne sont pas renseignées&nbsp;: complétez
-            <code> src/lib/legal.js </code> avant toute mise en ligne.
+            <strong>Document incomplet.</strong> À renseigner dans{' '}
+            <code>src/lib/legal.js</code> avant toute mise en ligne&nbsp;:
+            <ul style={{ margin: '8px 0 0 18px' }}>
+              {champsManquants.map((champ) => (
+                <li key={champ}>{champ}</li>
+              ))}
+            </ul>
           </div>
         )}
 
