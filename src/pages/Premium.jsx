@@ -300,6 +300,20 @@ export default function Premium() {
       <main className="contenu">
         {motif && <div className="carte" style={{ marginBottom: 18 }}>{motif}</div>}
 
+        {/* Sur quel compte est-on ?
+            Question sans intérêt tant qu'on n'en a qu'un — et décisive dès
+            qu'on en a deux. Quelqu'un qui s'abonne avec son adresse, puis se
+            connecte ailleurs par « Continuer avec Google », retombe sur cet
+            écran sans comprendre pourquoi : son abonnement est intact, mais
+            sur l'autre compte. Sans ce rappel, le geste naturel est de
+            racheter — et de payer deux fois. */}
+        <p className="aide" style={{ marginBottom: 18 }}>
+          Compte connecté : <strong>{utilisateur.email}</strong>. Déjà abonné
+          avec une autre adresse ? L’abonnement suit le compte :{' '}
+          <Link to="/profil">déconnectez-vous</Link> et reconnectez-vous avec
+          celui-là plutôt que d’en reprendre un.
+        </p>
+
         {EN_BAC_A_SABLE && (
           <div className="carte doux" style={{ marginBottom: 18, fontSize: '0.85rem' }}>
             🧪 Mode bac à sable RevenueCat : aucun paiement réel n’est encaissé.
