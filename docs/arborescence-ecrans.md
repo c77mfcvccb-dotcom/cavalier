@@ -119,4 +119,12 @@ auquel un cavalier est lié apparaît dans les deux.
   impossible la simple consultation d'une journée, qui est l'usage le plus
   fréquent. Un « + » discret apparaît sur le jour choisi pour annoncer ce que
   fera le second appui.
+- **Les calendriers se tiennent à jour tout seuls.** Deux cavalières d'une même
+  demi-pension posent souvent leurs créneaux ensemble, chacune sur son
+  téléphone : ce que l'une enregistre apparaît chez l'autre sans rechargement
+  (`src/lib/temps-reel.js`, migration 0014). On recharge la liste plutôt que
+  d'appliquer l'événement reçu — un aller-retour de plus, mais aucune
+  divergence possible entre l'affichage et la base. Un retour au premier plan
+  resynchronise également, ce qui couvre le téléphone verrouillé, la coupure
+  de réseau, et la migration pas encore exécutée.
 - Aucun écran ne dépasse deux niveaux de profondeur depuis un onglet.

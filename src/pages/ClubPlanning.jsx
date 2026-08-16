@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexte/AuthContexte'
 import { chargerChevauxClub, chargerEvenements } from '../lib/requetes'
+import { useAgendaVivant } from '../lib/temps-reel'
 import { Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import LigneEvenement from '../composants/LigneEvenement'
@@ -17,33 +18,36 @@ export default function ClubPlanning() {
   const [semaine, setSemaine] = useState(() => debutSemaine(new Date()))
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
+  const [cavalerie, setCavalerie] = useState([])
 
-  useEffect(() => {
-    let annule = false
-    setChargement(true)
-
+  const recharger = useCallback(async () => {
     // Dernier instant du dimanche : la borne est un <= sur l'horodatage des
     // créneaux, un jour « pile » exclurait tout ce qui suit minuit.
     const fin = new Date(semaine)
     fin.setDate(fin.getDate() + 6)
     fin.setHours(23, 59, 59, 999)
 
-    chargerChevauxClub(profil.id)
-      .then(async (cavalerie) => {
-        const tous = await chargerEvenements({
-          chevauxIds: cavalerie.map((c) => c.id),
-          debut: semaine,
-          fin,
-        })
-        if (!annule) setEvenements(tous)
-      })
+    const chevaux = await chargerChevauxClub(profil.id)
+    setCavalerie(chevaux)
+    setEvenements(
+      await chargerEvenements({ chevauxIds: chevaux.map((c) => c.id), debut: semaine, fin })
+    )
+  }, [profil.id, semaine])
+
+  useEffect(() => {
+    let annule = false
+    setChargement(true)
+    recharger()
       .catch((e) => !annule && setErreur(e.message || 'Chargement impossible'))
       .finally(() => !annule && setChargement(false))
-
     return () => {
       annule = true
     }
-  }, [profil.id, semaine])
+  }, [recharger])
+
+  // Un cavalier qui pose son créneau depuis son téléphone apparaît sur le
+  // planning du club sans qu'on ait à le recharger.
+  useAgendaVivant(cavalerie.map((c) => c.id), recharger)
 
   const jours = useMemo(
     () =>

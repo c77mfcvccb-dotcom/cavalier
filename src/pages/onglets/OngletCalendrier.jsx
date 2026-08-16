@@ -3,6 +3,7 @@ import { Link as Lien, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerCreneaux } from '../../lib/requetes'
+import { useAgendaVivant } from '../../lib/temps-reel'
 import { Champ, Chargement, Erreur, Feuille } from '../../composants/Ui'
 import Calendrier from '../../composants/Calendrier'
 import { TYPES_CRENEAU } from '../../lib/constantes'
@@ -40,6 +41,10 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
   useEffect(() => {
     recharger()
   }, [recharger])
+
+  // Le co-cavalier qui saisit depuis son propre téléphone met cet écran à
+  // jour sans qu'on ait à le recharger.
+  useAgendaVivant([cheval.id], recharger)
 
   /**
    * Arrivée depuis le calendrier global, qui a désigné un jour et demandé la

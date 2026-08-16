@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { chargerEvenements, chargerMesChevaux } from '../lib/requetes'
+import { useAgendaVivant } from '../lib/temps-reel'
 import { Chargement, Erreur, EtatVide, Feuille, PhotoCheval } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import Calendrier from '../composants/Calendrier'
@@ -22,23 +23,25 @@ export default function CalendrierGlobal() {
   /** Jour en attente d'un cheval, quand le cavalier en a plusieurs. */
   const [jourAAttribuer, setJourAAttribuer] = useState(null)
 
+  const recharger = useCallback(async () => {
+    const mesChevaux = await chargerMesChevaux(utilisateur.id)
+    setChevaux(mesChevaux)
+    setEvenements(await chargerEvenements({ chevauxIds: mesChevaux.map((c) => c.id) }))
+  }, [utilisateur.id])
+
   useEffect(() => {
     let annule = false
-
-    chargerMesChevaux(utilisateur.id)
-      .then(async (mesChevaux) => {
-        if (annule) return
-        setChevaux(mesChevaux)
-        const tous = await chargerEvenements({ chevauxIds: mesChevaux.map((c) => c.id) })
-        if (!annule) setEvenements(tous)
-      })
+    recharger()
       .catch((e) => !annule && setErreur(e.message || 'Chargement impossible'))
       .finally(() => !annule && setChargement(false))
-
     return () => {
       annule = true
     }
-  }, [utilisateur.id])
+  }, [recharger])
+
+  // Un créneau posé par un co-cavalier, sur n'importe lequel de mes chevaux,
+  // apparaît ici sans rechargement.
+  useAgendaVivant(chevaux.map((c) => c.id), recharger)
 
   /**
    * Un créneau appartient à un cheval, et cette vue les mélange : le jour

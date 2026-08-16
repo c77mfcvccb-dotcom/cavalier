@@ -72,6 +72,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0011_rappels_soins.sql` | Périodicités de rappel réglables par cheval, et seuil d'alerte à 14 jours |
 | `0012_rappels_in_app.sql` | Rappels dans l'application plutôt que par email : cloche, marquage comme lu, retrait de l'envoi planifié |
 | `0013_participants_cheval.sql` | Borne haute du partage : dix cavaliers par cheval de particulier, aucune pour un cheval de club |
+| `0014_agenda_temps_reel.sql` | Diffusion temps réel des créneaux et des soins : le calendrier d'un co-cavalier se met à jour pendant qu'un autre écrit |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
