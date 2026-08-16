@@ -46,6 +46,13 @@ la seule ouverture de l'écran d'abonnement.
 - [`docs/abonnement.md`](docs/abonnement.md) — plan gratuit, premium, et
   montage RevenueCat
 
+> **Pages légales.** Les CGV/CGU, mentions légales et politique de
+> confidentialité vivent dans `src/pages/legales/`, et toutes les
+> coordonnées qu'elles affichent sont réunies dans
+> [`src/lib/legal.js`](src/lib/legal.js). **Ce fichier contient des valeurs
+> `À_COMPLETER` à renseigner avant toute mise en ligne** : tant qu'il en
+> reste une, les trois pages affichent un bandeau d'avertissement.
+
 ## Migrations SQL, dans l'ordre
 
 | Fichier | Contenu |

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { Champ, Erreur } from '../composants/Ui'
+import PiedDePage from '../composants/PiedDePage'
 
 export default function Connexion() {
   const { connexion, connexionGoogle } = useAuth()
@@ -71,6 +72,8 @@ export default function Connexion() {
       <p className="centre doux" style={{ marginTop: 22 }}>
         Pas encore de compte ? <Link to="/inscription" className="gras">Créer un compte</Link>
       </p>
+
+      <PiedDePage />
     </div>
   )
 }

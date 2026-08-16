@@ -98,13 +98,17 @@ export async function chargerOffre(idUtilisateur) {
  * `customerEmail` évite de redemander une adresse que l'on connaît déjà ;
  * sans elle, RevenueCat la réclame dans son formulaire.
  */
-export async function acheter({ idUtilisateur, paquet, email }) {
+export async function acheter({ idUtilisateur, paquet, email, acceptationCgv }) {
   const purchases = await configurer(idUtilisateur)
   return purchases.purchase({
     rcPackage: paquet,
     customerEmail: email || undefined,
     selectedLocale: 'fr',
     defaultLocale: 'fr',
+    // Propagée jusqu'à la transaction RevenueCat : la version des CGV
+    // acceptée est ainsi horodatée par le prestataire de paiement, et non
+    // par une déclaration de notre propre front.
+    ...(acceptationCgv ? { metadata: { cgv_version: acceptationCgv } } : {}),
   })
 }
 

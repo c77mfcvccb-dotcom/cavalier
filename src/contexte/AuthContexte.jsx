@@ -110,11 +110,23 @@ export function FournisseurAuth({ children }) {
       // écrit : l'écran d'abonnement rappelle cette fonction en boucle courte.
       rafraichirAbonnement: () => chargerAbonnement(session?.user),
 
-      async inscription({ email, motDePasse, nom, typeCompte }) {
+      /**
+       * `versionCgv` conserve la trace de l'acceptation : sans elle, une case
+       * cochée ne prouve rien une fois la page fermée. Elle vit dans les
+       * métadonnées du compte, ce qui évite une colonne et une migration.
+       */
+      async inscription({ email, motDePasse, nom, typeCompte, versionCgv }) {
         const { error } = await supabase.auth.signUp({
           email,
           password: motDePasse,
-          options: { data: { nom, type_compte: typeCompte } },
+          options: {
+            data: {
+              nom,
+              type_compte: typeCompte,
+              cgv_version: versionCgv ?? null,
+              cgv_acceptees_le: versionCgv ? new Date().toISOString() : null,
+            },
+          },
         })
         if (error) throw error
       },

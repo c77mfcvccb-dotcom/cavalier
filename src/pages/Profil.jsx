@@ -5,6 +5,7 @@ import { Avatar, Champ, Erreur, Succes } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import BlocAbonnement from '../composants/BlocAbonnement'
 import ChargeurPhoto from '../composants/ChargeurPhoto'
+import PiedDePage from '../composants/PiedDePage'
 
 export default function Profil() {
   const { profil, utilisateur, estClub, estPremium, rafraichirProfil, deconnexion } = useAuth()
@@ -138,6 +139,8 @@ export default function Profil() {
         >
           Se déconnecter
         </button>
+
+        <PiedDePage />
       </main>
     </>
   )
