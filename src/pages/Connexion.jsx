@@ -58,6 +58,12 @@ export default function Connexion() {
           />
         </Champ>
 
+        {/* Sous le champ concerné, là où l'oubli se constate — et non en bas
+            de page, après le bouton, où il faudrait le chercher. */}
+        <p className="ligne-oubli">
+          <Link to="/mot-de-passe-oublie">Mot de passe oublié ?</Link>
+        </p>
+
         <button className="bouton pleine-largeur" disabled={envoi}>
           {envoi ? 'Connexion…' : 'Se connecter'}
         </button>

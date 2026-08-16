@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './contexte/AuthContexte'
 import { configurationManquante } from './lib/supabase'
 import { Chargement } from './composants/Ui'
@@ -7,6 +7,8 @@ import { NavBas } from './composants/Mise'
 import Rappels from './composants/Rappels'
 import Connexion from './pages/Connexion'
 import Inscription from './pages/Inscription'
+import MotDePasseOublie from './pages/MotDePasseOublie'
+import Reinitialisation from './pages/Reinitialisation'
 import TableauBord from './pages/TableauBord'
 import MesChevaux from './pages/MesChevaux'
 import NouveauCheval from './pages/NouveauCheval'
@@ -45,9 +47,16 @@ function ConfigurationRequise() {
 
 export default function App() {
   const { session, profil, chargement, estClub } = useAuth()
+  const { pathname } = useLocation()
 
   if (configurationManquante) return <ConfigurationRequise />
   if (chargement) return <Chargement />
+
+  // Hors des deux arbres de routes, à dessein : le lien reçu par mail ouvre
+  // une session, l'application basculerait donc en mode connecté et
+  // renverrait vers l'accueil — avec sa barre de navigation — avant même que
+  // le nouveau mot de passe ait pu être saisi.
+  if (pathname === '/reinitialisation') return <Reinitialisation />
 
   if (!session) {
     return (
@@ -61,6 +70,7 @@ export default function App() {
         <Route path="/confidentialite" element={<Confidentialite />} />
         <Route path="/connexion" element={<Connexion />} />
         <Route path="/inscription" element={<Inscription />} />
+        <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
         <Route path="*" element={<Navigate to="/connexion" replace />} />
       </Routes>
     )
@@ -98,6 +108,10 @@ export default function App() {
         <Route path="/depenses/soins" element={<ClubDepenses />} />
         <Route path="/profil" element={<Profil />} />
         <Route path="/premium" element={<Premium />} />
+        {/* Accessible connecté : le lien « demander un nouveau lien » de
+            l'écran de réinitialisation peut être suivi alors qu'une session
+            est déjà ouverte. */}
+        <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
         <Route path="/cgv" element={<Cgv />} />
         <Route path="/mentions-legales" element={<MentionsLegales />} />
         <Route path="/confidentialite" element={<Confidentialite />} />

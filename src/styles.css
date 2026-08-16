@@ -651,6 +651,12 @@ button {
 .ecran-auth .marque h1 { margin-top: 12px; }
 .ecran-auth .marque p { color: var(--texte-doux); font-size: 0.9rem; margin-top: 4px; }
 
+/* Aligné à droite, sous le champ concerné : la place qu'un œil qui vient de
+   buter sur son mot de passe balaie en premier. */
+.ligne-oubli { text-align: right; margin: -6px 0 16px; }
+.ligne-oubli a { font-size: 0.84rem; color: var(--texte-doux); text-decoration: underline; }
+.ligne-oubli a:hover { color: var(--texte); }
+
 .choix-compte { display: grid; gap: 12px; margin-bottom: 18px; }
 
 .choix-compte button {

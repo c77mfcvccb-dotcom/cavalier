@@ -171,6 +171,27 @@ export function FournisseurAuth({ children }) {
         if (error) throw error
       },
 
+      /**
+       * Supabase répond 200 que l'adresse existe ou non : c'est voulu, et
+       * l'écran appelant affiche le même message dans les deux cas. Une
+       * erreur remontée ici est donc une panne réelle, jamais un « compte
+       * inconnu » — la distinguer ne révèle rien.
+       */
+      async demanderReinitialisation(email) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          // Doit figurer dans Supabase → Authentication → URL Configuration
+          // → Redirect URLs, sinon le lien du mail retombe sur la Site URL.
+          redirectTo: `${window.location.origin}/reinitialisation`,
+        })
+        if (error) throw error
+      },
+
+      /** Sur la session ouverte par le lien de réinitialisation, ou sur la sienne. */
+      async definirMotDePasse(motDePasse) {
+        const { error } = await supabase.auth.updateUser({ password: motDePasse })
+        if (error) throw error
+      },
+
       async deconnexion() {
         await supabase.auth.signOut()
         setProfil(null)

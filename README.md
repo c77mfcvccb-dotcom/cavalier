@@ -118,8 +118,11 @@ L'application est servie sur http://localhost:5173.
 3. Déployez. Le fichier `vercel.json` gère déjà la réécriture des routes
    côté client.
 4. Dans Supabase → **Authentication → URL Configuration**, ajoutez l'URL de
-   production dans « Site URL » et « Redirect URLs » pour que la connexion
-   Google fonctionne.
+   production dans « Site URL » et un motif large dans « Redirect URLs »
+   (`https://licol.app/**`). Sans cela, ni le retour de la connexion Google
+   ni le lien de réinitialisation de mot de passe
+   (`https://licol.app/reinitialisation`) n'aboutissent : Supabase renvoie
+   alors sur la Site URL.
 5. Pour l'abonnement, ajoutez `VITE_REVENUECAT_CLE_PUBLIQUE`. Sans cette
    variable, le paywall tourne en bac à sable et l'annonce à l'écran :
    voir [`docs/abonnement.md`](docs/abonnement.md).

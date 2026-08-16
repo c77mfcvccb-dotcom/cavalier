@@ -7,9 +7,24 @@ différente selon le type de compte. Tout est en français.
 
 ```
 /connexion            Email + mot de passe, bouton « Continuer avec Google »
+                      └─ lien « Mot de passe oublié ? »
 /inscription          Étape 1 : je suis CAVALIER ou CLUB
                       Étape 2 : nom, email, mot de passe
+/mot-de-passe-oublie  Saisie de l'email → même message de confirmation que
+                      l'adresse existe ou non, et rappel que la connexion
+                      Google ne demande aucun mot de passe
+/reinitialisation     Cible du lien reçu par mail : nouveau mot de passe,
+                      confirmation, 8 caractères minimum. Lien expiré ou
+                      déjà utilisé → message clair + nouvelle demande
 ```
+
+`/reinitialisation` est rendue **hors des deux arbres de routes** (voir
+`src/App.jsx`) : le lien du mail ouvre une session, l'application basculerait
+donc en mode connecté et renverrait vers l'accueil avant toute saisie.
+
+L'URL doit figurer dans Supabase → **Authentication → URL Configuration →
+Redirect URLs** (`https://licol.app/**` suffit), sinon le lien retombe sur la
+Site URL et l'écran n'est jamais atteint.
 
 ## Compte CAVALIER
 
