@@ -236,6 +236,31 @@ Le webhook vérifie enfin que l'événement porte bien l'entitlement `premium`,
 quand RevenueCat le transmet : un futur produit vendu à côté ne doit pas
 ouvrir le carnet de santé au passage.
 
+### D'où vient l'URL du portail
+
+Les événements Web Billing ne portent pas `management_url` — contrairement
+aux boutiques mobiles. Le bouton « Résilier mon abonnement » restait donc
+muet, et retombait sur `VITE_REVENUECAT_LIEN_PORTAIL`.
+
+Le webhook la demande maintenant à l'API REST : `GET
+https://api.revenuecat.com/v1/subscribers/{app_user_id}`, avec la clé
+secrète **V1** dans `REVENUECAT_CLE_SECRETE`. La valeur lue dans
+`subscriber.management_url` part dans `url_gestion`.
+
+Cet appel est en **meilleur effort**, et c'est délibéré : il est plafonné à
+cinq secondes et toute erreur est avalée. L'écriture du statut est ce qui
+ouvre l'accès premium — une panne chez RevenueCat ne peut pas avoir pour
+conséquence qu'un abonné qui vient de payer reste bloqué en gratuit. En cas
+d'échec, l'`upsert` conserve simplement l'URL déjà en base, et le prochain
+événement retentera.
+
+Sans `REVENUECAT_CLE_SECRETE`, l'appel est sauté et tout le reste fonctionne
+à l'identique.
+
+> Cette clé donne accès en lecture **et en écriture** à tous les abonnés du
+> projet. Elle vit dans les secrets de la fonction, jamais dans le front, et
+> jamais dans une variable `VITE_*` — celles-là finissent dans le bundle.
+
 ## Points à trancher
 
 - **Les comptes club** sont soumis aux mêmes limites que les cavaliers, faute

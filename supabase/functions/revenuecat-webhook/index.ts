@@ -10,6 +10,7 @@
  * Déploiement :
  *   supabase functions deploy revenuecat-webhook --no-verify-jwt
  *   supabase secrets set REVENUECAT_SECRET_WEBHOOK=<valeur choisie>
+ *   supabase secrets set REVENUECAT_CLE_SECRETE=<clé secrète V1 RevenueCat>
  *
  * Puis, dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la
  * fonction et la même valeur dans l'en-tête Authorization.
@@ -22,6 +23,17 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const SECRET = Deno.env.get('REVENUECAT_SECRET_WEBHOOK')
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!
 const CLE_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+/**
+ * Clé secrète RevenueCat (**API V1**), pour aller chercher l'URL du portail
+ * client quand l'événement ne la porte pas — ce qui est le cas courant en
+ * Web Billing. Sans elle, tout continue de fonctionner : seul le bouton de
+ * résiliation retombe sur `VITE_REVENUECAT_LIEN_PORTAIL`.
+ *
+ * Elle ne doit jamais rejoindre le front : elle donne accès en lecture et en
+ * écriture à tous les abonnés du projet.
+ */
+const CLE_API = Deno.env.get('REVENUECAT_CLE_SECRETE')
 
 /** Droit vendu par l'application, tel que nommé dans RevenueCat. */
 const ENTITLEMENT = 'premium'
@@ -68,6 +80,48 @@ function produitInterne(brut: string): string | null {
   return PRODUITS[brut] ?? PRODUITS[brut.split(':')[0]] ?? null
 }
 
+/** Au-delà, on abandonne l'appel à RevenueCat et on écrit sans l'URL. */
+const DELAI_API_MS = 5000
+
+/**
+ * URL du portail client, demandée à l'API REST RevenueCat.
+ *
+ * Les événements Web Billing ne portent pas `management_url` : sans cet
+ * appel, le bouton « Résilier mon abonnement » reste muet. L'objet abonné de
+ * l'API V1, lui, l'expose — c'est la même valeur que celle vue par les SDK.
+ *
+ * **Cet appel ne doit jamais faire échouer le webhook.** L'écriture du statut
+ * est ce qui ouvre l'accès premium ; une lenteur ou une panne chez RevenueCat
+ * ne peut pas avoir pour conséquence qu'un abonné reste bloqué en gratuit. En
+ * cas d'échec on renvoie donc null, l'upsert conserve l'URL déjà en base, et
+ * le prochain événement retentera. D'où aussi le délai maximal : sans lui, un
+ * appel qui traîne ferait expirer la fonction entière.
+ */
+async function urlGestionDepuisApi(profilId: string): Promise<string | null> {
+  if (!CLE_API) return null
+
+  try {
+    const reponse = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(profilId)}`,
+      {
+        headers: { Authorization: `Bearer ${CLE_API}`, Accept: 'application/json' },
+        signal: AbortSignal.timeout(DELAI_API_MS),
+      }
+    )
+
+    if (!reponse.ok) {
+      console.warn('RevenueCat : lecture de l’abonné refusée', reponse.status)
+      return null
+    }
+
+    const donnees = await reponse.json()
+    return (donnees?.subscriber?.management_url as string | undefined) ?? null
+  } catch (erreur) {
+    console.warn('RevenueCat : appel API impossible', erreur)
+    return null
+  }
+}
+
 Deno.serve(async (requete) => {
   if (requete.method !== 'POST') {
     return new Response('Méthode non autorisée', { status: 405 })
@@ -103,9 +157,10 @@ Deno.serve(async (requete) => {
   const expiration = finAcces > 0 ? new Date(finAcces).toISOString() : null
 
   // Portail client RevenueCat, d'où l'abonné résilie lui-même. Le nom du
-  // champ a varié selon les versions de l'API : on accepte les deux, et on
-  // conserve la valeur déjà en base si l'événement ne la porte pas.
-  const urlGestion =
+  // champ a varié selon les versions de l'API : on accepte les deux. En Web
+  // Billing, l'événement ne le porte généralement pas du tout — d'où le
+  // repli sur l'API REST, plus bas, une fois le statut connu.
+  const urlGestionEvenement =
     (evenement.management_url as string | undefined) ??
     (evenement.managementURL as string | undefined) ??
     null
@@ -141,6 +196,10 @@ Deno.serve(async (requete) => {
     // pour que RevenueCat cesse de réessayer.
     return new Response('Ignoré', { status: 200 })
   }
+
+  // Sur une expiration, le portail n'a plus d'objet : on s'épargne l'appel.
+  const urlGestion =
+    urlGestionEvenement ?? (statut === 'expire' ? null : await urlGestionDepuisApi(profilId))
 
   const supabase = createClient(URL_SUPABASE, CLE_SERVICE, {
     auth: { persistSession: false },
