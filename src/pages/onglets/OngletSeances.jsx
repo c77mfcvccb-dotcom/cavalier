@@ -4,7 +4,7 @@ import { useAuth } from '../../contexte/AuthContexte'
 import { chargerSeances } from '../../lib/requetes'
 import { Avatar, Champ, Chargement, Erreur, EtatVide, Feuille } from '../../composants/Ui'
 import { RESSENTIS, TYPES_SEANCE } from '../../lib/constantes'
-import { traitCavalier } from '../../lib/couleurs'
+import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
 import { cleJour, formatDate, joursRelatifs } from '../../lib/format'
 
 export default function OngletSeances({ cheval, cavaliers, estGestionnaire }) {
@@ -13,6 +13,10 @@ export default function OngletSeances({ cheval, cavaliers, estGestionnaire }) {
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [feuilleOuverte, setFeuilleOuverte] = useState(false)
+
+  // Même code couleur que le calendrier : le liseré d'une séance et celui
+  // d'un créneau désignent le même cavalier.
+  const repertoire = useMemo(() => repertoireCavaliers(cavaliers), [cavaliers])
 
   const recharger = useCallback(async () => {
     try {
@@ -111,7 +115,13 @@ export default function OngletSeances({ cheval, cavaliers, estGestionnaire }) {
                 <div key={seance.id} className="element">
                   <span
                     className="bordure-couleur"
-                    style={{ background: traitCavalier(seance.cavalier_id) }}
+                    style={{
+                      background: identiteCavalier(
+                        repertoire,
+                        seance.cavalier_id,
+                        seance.cavalier?.nom
+                      ).trait,
+                    }}
                   />
                   <div className="corps">
                     <div className="titre">

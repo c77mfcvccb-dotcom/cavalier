@@ -79,13 +79,35 @@ accède à ses chevaux via `club_id`).
 
 > La colonne `couleur` n'est plus lue par l'application. Elle attribuait une
 > couleur par paire (cheval, cavalier), si bien qu'un même cavalier changeait
-> de teinte d'un cheval à l'autre. La couleur est désormais dérivée de
-> l'identifiant du cavalier (`src/lib/couleurs.js`), donc identique partout.
+> de teinte d'un cheval à l'autre. La couleur est désormais calculée dans
+> `src/lib/couleurs.js` : dérivée de l'identifiant du cavalier — donc la même
+> partout — puis décalée si un co-cavalier du même cheval l'occupe déjà.
 > La colonne est conservée telle quelle : la supprimer n'apporterait rien et
 > demanderait une migration.
 
-Unicité sur `(cheval_id, cavalier_id)`. Un cheval peut être partagé entre
-2 cavaliers ou plus, sans limite.
+Unicité sur `(cheval_id, cavalier_id)`.
+
+#### Combien de cavaliers par cheval
+
+**Dix au plus pour un cheval de particulier ; aucune limite pour un cheval de
+club** (migration 0013, fonction `participants_max`). Rien n'obligeait à
+plafonner — la base tient sans peine un cheval à trente cavaliers, et six
+fonctionnaient déjà avant cette migration. La borne existe pour deux raisons
+plus concrètes : la palette du calendrier compte dix couleurs, et un code
+d'invitation qui circule dans un groupe de messagerie n'a plus de garde-fou
+sans elle. Une cavalerie d'école, elle, tourne couramment avec vingt
+cavaliers : c'est son usage normal, d'où l'exemption des chevaux de club.
+
+Le verrou est un trigger `BEFORE INSERT`, et non une politique RLS, pour la
+même raison qu'en 0006 : `rejoindre_par_code()` est en `security definer` et
+passe outre le RLS. `rejoindre_par_code()` et `generer_code_invitation()`
+vérifient en plus explicitement, ce qui évite de consommer une invitation
+vouée à échouer — un code émis avant que le cheval ne se remplisse reste
+valable si une place se libère.
+
+**Cette limite n'a rien à voir avec celle du plan gratuit.** L'une compte les
+cavaliers d'un cheval, l'autre les chevaux d'un compte : le plan gratuit
+reste à **un cheval par compte, créé ou rejoint** (migration 0006).
 
 ### `invitations`
 | colonne          | type   | notes                                     |

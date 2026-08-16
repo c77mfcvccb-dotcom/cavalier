@@ -1,7 +1,7 @@
 // Requêtes Supabase partagées. Le RLS filtre déjà les lignes accessibles :
 // ces fonctions ne refont donc pas de contrôle de droits côté client.
 import { supabase } from './supabase'
-import { COULEUR_SOIN, traitCavalier } from './couleurs'
+import { COULEUR_SOIN, identiteCavalier, repertoireCavaliers } from './couleurs'
 import { cleJour, enDateLocale } from './format'
 
 /** Chevaux d'un cavalier, via la table de liaison (rôle + couleur inclus). */
@@ -92,9 +92,37 @@ export async function chargerCavaliersDuCheval(chevalId) {
 }
 
 /**
- * Créneaux d'un ou plusieurs chevaux, enrichis de la couleur du cavalier.
- * La couleur se déduit de l'identifiant du cavalier : plus besoin de la
- * seconde requête sur cheval_cavaliers que faisait cette fonction.
+ * Répertoires des cavaliers, un par cheval : couleur et étiquette distinctes
+ * au sein de chaque cheval.
+ *
+ * Le calcul demande la liste complète des participants — et non les seuls
+ * cavaliers qui ont posé un créneau — sans quoi la couleur d'un cavalier
+ * changerait selon les créneaux affichés à l'écran.
+ */
+export async function chargerRepertoires(chevauxIds) {
+  if (!chevauxIds?.length) return new Map()
+
+  const { data, error } = await supabase
+    .from('cheval_cavaliers')
+    .select('cheval_id, cavalier_id, profil:profils(id, nom)')
+    .in('cheval_id', chevauxIds)
+
+  if (error) throw error
+
+  const parCheval = new Map()
+  for (const liaison of data || []) {
+    if (!parCheval.has(liaison.cheval_id)) parCheval.set(liaison.cheval_id, [])
+    parCheval.get(liaison.cheval_id).push(liaison)
+  }
+
+  return new Map(
+    [...parCheval].map(([chevalId, liaisons]) => [chevalId, repertoireCavaliers(liaisons)])
+  )
+}
+
+/**
+ * Créneaux d'un ou plusieurs chevaux, enrichis de l'identité d'affichage du
+ * cavalier : couleur du liseré, et étiquette pour la grille du mois.
  */
 export async function chargerCreneaux({ chevauxIds, debut, fin }) {
   if (!chevauxIds?.length) return []
@@ -108,13 +136,20 @@ export async function chargerCreneaux({ chevauxIds, debut, fin }) {
   if (debut) requete = requete.gte('debut', debut.toISOString())
   if (fin) requete = requete.lte('debut', fin.toISOString())
 
-  const { data: creneaux, error } = await requete
+  const [{ data: creneaux, error }, repertoires] = await Promise.all([
+    requete,
+    chargerRepertoires(chevauxIds),
+  ])
   if (error) throw error
 
-  return (creneaux || []).map((creneau) => ({
-    ...creneau,
-    couleur: traitCavalier(creneau.cavalier_id),
-  }))
+  return (creneaux || []).map((creneau) => {
+    const identite = identiteCavalier(
+      repertoires.get(creneau.cheval_id),
+      creneau.cavalier_id,
+      creneau.cavalier?.nom
+    )
+    return { ...creneau, couleur: identite.trait, etiquette: identite }
+  })
 }
 
 /**

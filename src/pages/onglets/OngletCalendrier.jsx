@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link as Lien, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
@@ -6,7 +6,7 @@ import { chargerCreneaux } from '../../lib/requetes'
 import { Champ, Chargement, Erreur, Feuille } from '../../composants/Ui'
 import Calendrier from '../../composants/Calendrier'
 import { TYPES_CRENEAU } from '../../lib/constantes'
-import { couleurCavalier, prenom } from '../../lib/couleurs'
+import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
 import { cleJour, formatDate, formatHeure, valeurDatetimeLocal } from '../../lib/format'
 import {
   creneauHorsPlanGratuit,
@@ -21,6 +21,10 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [feuilleOuverte, setFeuilleOuverte] = useState(false)
+
+  // Même répertoire que celui des créneaux : la légende ci-dessous doit
+  // porter exactement les couleurs et les prénoms lus dans la grille.
+  const repertoire = useMemo(() => repertoireCavaliers(cavaliers), [cavaliers])
 
   const recharger = useCallback(async () => {
     try {
@@ -95,18 +99,18 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
       <Calendrier evenements={creneaux} jourSelectionne={jour} onSelectionJour={setJour} />
 
       <div className="puces">
-        {cavaliers.map((liaison) => (
-          <span
-            key={liaison.id}
-            className="badge"
-            style={{
-              background: couleurCavalier(liaison.cavalier_id).fond,
-              color: couleurCavalier(liaison.cavalier_id).texte,
-            }}
-          >
-            {prenom(liaison.profil?.nom)}
-          </span>
-        ))}
+        {cavaliers.map((liaison) => {
+          const identite = identiteCavalier(repertoire, liaison.cavalier_id, liaison.profil?.nom)
+          return (
+            <span
+              key={liaison.id}
+              className="badge"
+              style={{ background: identite.fond, color: identite.texte }}
+            >
+              {identite.libelle}
+            </span>
+          )
+        })}
       </div>
 
       <FeuilleCreneau

@@ -7,6 +7,7 @@ import { Entete } from '../composants/Mise'
 import BloquePremium from '../composants/BloquePremium'
 import { chargerNbChevauxDuCompte } from '../lib/requetes'
 import { estErreurQuota, LIMITE_CHEVAUX_GRATUIT } from '../lib/abonnement'
+import { PARTICIPANTS_MAX } from '../lib/constantes'
 
 export default function RejoindreCheval() {
   const navigate = useNavigate()
@@ -42,6 +43,17 @@ export default function RejoindreCheval() {
       // consommé, il reste utilisable après l'abonnement.
       if (estErreurQuota(error)) {
         navigate('/premium?motif=chevaux')
+        return
+      }
+      // Le cheval s'est rempli entre l'émission du code et sa saisie. Le code
+      // n'est pas consommé pour autant : il redeviendra valable si une place
+      // se libère, d'où la formulation au présent plutôt qu'un « code
+      // invalide » qui ferait croire à une erreur de frappe.
+      if (error.message?.includes('CHEVAL_COMPLET')) {
+        setErreur(
+          `Ce cheval compte déjà ${PARTICIPANTS_MAX} cavaliers, le maximum. ` +
+            'Votre code reste valable si une place se libère.'
+        )
         return
       }
       setErreur(error.message.replace(/^.*?:\s*/, '') || 'Code invalide')

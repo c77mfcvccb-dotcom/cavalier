@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { Avatar, Champ, Erreur, Feuille, PhotoCheval } from '../../composants/Ui'
 import ChargeurPhoto from '../../composants/ChargeurPhoto'
-import { ROLES, SEXES } from '../../lib/constantes'
-import { traitCavalier } from '../../lib/couleurs'
+import { PARTICIPANTS_MAX, ROLES, SEXES } from '../../lib/constantes'
+import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
 import { formatDate, texteAge } from '../../lib/format'
 
 export default function OngletFiche({ cheval, cavaliers, estGestionnaire, recharger }) {
@@ -21,6 +21,13 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
   const [envoi, setEnvoi] = useState(false)
 
   const maLiaison = cavaliers.find((c) => c.cavalier_id === profil.id)
+
+  const repertoire = useMemo(() => repertoireCavaliers(cavaliers), [cavaliers])
+
+  // Un cheval de club n'est pas plafonné : une cavalerie d'école tourne avec
+  // bien plus de dix cavaliers, et le partage y est le mode normal.
+  const plafond = cheval.club_id ? null : PARTICIPANTS_MAX
+  const complet = plafond !== null && cavaliers.length >= plafond
 
   // Lien public actif éventuel — visible du seul propriétaire ou club (RLS)
   useEffect(() => {
@@ -69,7 +76,11 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
     setEnvoi(false)
 
     if (error) {
-      setErreur(error.message.replace(/^.*?:\s*/, ''))
+      setErreur(
+        error.message.includes('CHEVAL_COMPLET')
+          ? `Ce cheval compte déjà ${plafond} cavaliers, le maximum.`
+          : error.message.replace(/^.*?:\s*/, '')
+      )
       return
     }
     setCode(data)
@@ -137,8 +148,11 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
 
       <section>
         <div className="titre-section">
-          <h2>Cavaliers</h2>
-          {estGestionnaire && (
+          <h2>
+            Cavaliers
+            <span className="doux"> · {cavaliers.length}{plafond ? `/${plafond}` : ''}</span>
+          </h2>
+          {estGestionnaire && !complet && (
             <button className="lien" onClick={genererCode} disabled={envoi}>
               + Inviter
             </button>
@@ -152,7 +166,13 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
 
           {cavaliers.map((liaison) => (
             <div key={liaison.id} className="element">
-              <span className="bordure-couleur" style={{ background: traitCavalier(liaison.cavalier_id) }} />
+              <span
+                className="bordure-couleur"
+                style={{
+                  background: identiteCavalier(repertoire, liaison.cavalier_id, liaison.profil?.nom)
+                    .trait,
+                }}
+              />
               <Avatar profil={liaison.profil} />
               <div className="corps">
                 <div className="titre">
@@ -174,7 +194,9 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
         </div>
 
         <p className="aide" style={{ marginTop: 10 }}>
-          Chaque cavalier lié a sa couleur : elle sert de repère dans le calendrier partagé.
+          {complet
+            ? `Ce cheval a atteint le maximum de ${plafond} cavaliers. Retirez-en un pour inviter quelqu'un d'autre.`
+            : 'Chaque cavalier lié a sa couleur : elle sert de repère dans le calendrier partagé.'}
         </p>
       </section>
 
@@ -227,7 +249,10 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             À transmettre au cavalier
           </div>
           <div className="code">{code}</div>
-          <div style={{ fontSize: '0.82rem', opacity: 0.75 }}>Valable 30 jours, une seule utilisation</div>
+          <div style={{ fontSize: '0.82rem', opacity: 0.75 }}>
+            Valable 30 jours, une seule utilisation — recommencez pour inviter
+            quelqu'un d'autre
+          </div>
         </div>
 
         <div className="pile" style={{ marginTop: 16 }}>

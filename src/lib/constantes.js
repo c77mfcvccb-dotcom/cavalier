@@ -132,3 +132,20 @@ export const SEXES = {
 }
 
 export const ORDRE_STATUTS = ['retard', 'urgent', 'ok']
+
+/**
+ * Nombre maximal de cavaliers sur un cheval de particulier.
+ *
+ * Rien n'oblige techniquement à plafonner : la base tient sans peine un
+ * cheval à trente cavaliers. La borne existe pour deux raisons plus
+ * concrètes — la palette du calendrier compte dix couleurs, et un code
+ * d'invitation qui circule dans un groupe de messagerie n'a plus de garde-fou
+ * sans elle.
+ *
+ * Un cheval de club en est exempté : une cavalerie d'école tourne
+ * couramment avec vingt cavaliers, et c'est son usage normal.
+ *
+ * La limite qui fait foi reste celle de la base (migration 0013) ; cette
+ * constante ne sert qu'à l'annoncer avant de buter dessus.
+ */
+export const PARTICIPANTS_MAX = 10

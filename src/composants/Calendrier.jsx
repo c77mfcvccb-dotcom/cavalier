@@ -96,9 +96,12 @@ export default function Calendrier({ evenements = [], jourSelectionne, onSelecti
                     <span
                       key={etiquette.cle}
                       className="etiquette-jour"
+                      // La case tronque : le nom complet reste accessible au
+                      // survol, et sous la grille dans le détail du jour.
+                      title={etiquette.libelle}
                       style={{ background: etiquette.fond, color: etiquette.texte }}
                     >
-                      {etiquette.libelle}
+                      {etiquette.court}
                     </span>
                   ))}
 

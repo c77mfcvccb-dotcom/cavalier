@@ -71,6 +71,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0010_depenses_unifiees.sql` | Le coût d'un soin alimente `depenses` par trigger ; un soin s'écrit désormais à son propre nom |
 | `0011_rappels_soins.sql` | Périodicités de rappel réglables par cheval, et seuil d'alerte à 14 jours |
 | `0012_rappels_in_app.sql` | Rappels dans l'application plutôt que par email : cloche, marquage comme lu, retrait de l'envoi planifié |
+| `0013_participants_cheval.sql` | Borne haute du partage : dix cavaliers par cheval de particulier, aucune pour un cheval de club |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
@@ -145,6 +146,14 @@ L'application est servie sur http://localhost:5173.
    code**.
 3. Il est immédiatement lié au cheval, reçoit sa propre couleur, et voit le
    même calendrier, le même carnet de séances et le même suivi santé.
+
+Le partage n'est pas limité à deux : un cheval de particulier accepte
+**jusqu'à dix cavaliers**, un cheval de club autant qu'il en faut. Chaque code
+d'invitation ne sert qu'une fois — il faut donc en générer un par personne, ce
+qui évite qu'un code transmis dans un groupe ne fasse entrer un inconnu.
+
+Attention à ne pas confondre avec la limite du plan gratuit, qui n'a pas
+bougé : **un cheval par compte**, qu'il soit créé ou rejoint par code.
 
 La validation du code se fait dans une fonction Postgres `security definer` :
 un code invalide ne révèle jamais l'existence du cheval, et personne ne peut
