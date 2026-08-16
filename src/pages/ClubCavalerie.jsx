@@ -59,8 +59,8 @@ export default function ClubCavalerie() {
             : profil.nom
         }
         action={
-          <Link to="/depenses" className="bouton fantome petit">
-            Dépenses
+          <Link to="/depenses/soins" className="bouton fantome petit">
+            Coûts de soins
           </Link>
         }
       />
