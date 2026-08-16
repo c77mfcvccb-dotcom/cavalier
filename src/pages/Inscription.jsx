@@ -157,7 +157,13 @@ export default function Inscription() {
             type="button"
             className="bouton secondaire pleine-largeur"
             disabled={!cgvAcceptees}
-            onClick={() => connexionGoogle(typeCompte)}
+            onClick={async () => {
+              try {
+                await connexionGoogle(typeCompte)
+              } catch (e) {
+                setErreur(e.message || 'Connexion Google impossible')
+              }
+            }}
           >
             Continuer avec Google
           </button>

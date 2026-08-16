@@ -3,6 +3,9 @@ import { supabase, configurationManquante } from '../lib/supabase'
 
 const AuthContexte = createContext(null)
 
+/** Type de compte choisi avant une redirection OAuth, le temps de l'aller-retour. */
+const CLE_TYPE_COMPTE = 'licol.type-compte-souhaite'
+
 /**
  * Miroir local de est_premium() en SQL : la date prime sur le statut.
  * « annule » compte encore : la période déjà payée est due, l'accès ne
@@ -59,7 +62,10 @@ export function FournisseurAuth({ children }) {
         .from('profils')
         .insert({
           id: utilisateur.id,
-          type_compte: utilisateur.user_metadata?.type_compte || 'cavalier',
+          type_compte:
+            utilisateur.user_metadata?.type_compte ||
+            localStorage.getItem(CLE_TYPE_COMPTE) ||
+            'cavalier',
           nom:
             utilisateur.user_metadata?.nom ||
             utilisateur.user_metadata?.full_name ||
@@ -68,6 +74,9 @@ export function FournisseurAuth({ children }) {
         })
         .select()
         .single()
+      // Consommée une seule fois : sans cela, un club qui se reconnecte
+      // plus tard avec un autre compte hériterait de l'ancien choix.
+      localStorage.removeItem(CLE_TYPE_COMPTE)
       setProfil(cree ?? null)
       return
     }
@@ -140,12 +149,23 @@ export function FournisseurAuth({ children }) {
       },
 
       async connexionGoogle(typeCompte) {
+        // `options.data` n'existe PAS sur signInWithOAuth : c'est une option
+        // de signUp, silencieusement ignorée ici. Le type de compte choisi à
+        // l'inscription était donc perdu, et tout compte Google atterrissait
+        // en « cavalier », y compris un club.
+        //
+        // Il n'y a pas de canal pour transporter une métadonnée à travers la
+        // redirection OAuth : on la met de côté localement, et le repli de
+        // création de profil la relit au retour.
+        if (typeCompte) localStorage.setItem(CLE_TYPE_COMPTE, typeCompte)
+
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
+            // Doit figurer dans Supabase → Authentication → URL Configuration
+            // → Redirect URLs, sinon Supabase refuse la redirection retour.
             redirectTo: window.location.origin,
             queryParams: { prompt: 'select_account' },
-            data: typeCompte ? { type_compte: typeCompte } : undefined,
           },
         })
         if (error) throw error

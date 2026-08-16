@@ -65,7 +65,19 @@ export default function Connexion() {
 
       <div className="separateur">ou</div>
 
-      <button className="bouton secondaire pleine-largeur" onClick={() => connexionGoogle()}>
+      <button
+        className="bouton secondaire pleine-largeur"
+        onClick={async () => {
+          // Sans ce rattrapage, un provider Google désactivé ou mal
+          // configuré rejetait la promesse dans le vide : le bouton
+          // semblait ne rien faire.
+          try {
+            await connexionGoogle()
+          } catch (e) {
+            setErreur(e.message || 'Connexion Google impossible')
+          }
+        }}
+      >
         Continuer avec Google
       </button>
 
