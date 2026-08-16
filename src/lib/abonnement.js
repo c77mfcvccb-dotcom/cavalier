@@ -69,7 +69,62 @@ export function decrireOffre(paquet) {
     prix: produit?.price?.formattedPrice ?? repli.prix ?? '',
     periode: periodeLisible(produit?.period) ?? repli.periode ?? '',
     joursEssai: joursEssai(produit) ?? JOURS_ESSAI,
+    remise: decrireRemise(produit),
   }
+}
+
+/**
+ * Remise appliquée par un code promo, ou `null` si le catalogue n'en porte
+ * aucune — ce qui est aussi la façon de savoir qu'un code n'a pas pris.
+ *
+ * `discountPhase` n'appartient pas encore aux types publics du SDK, bien
+ * qu'il soit renseigné à l'exécution. On le lit donc défensivement : si la
+ * forme change à une prochaine version, on retombe sur « pas de remise »
+ * plutôt que sur un écran cassé — et le tunnel de paiement, lui, appliquera
+ * la remise de toute façon.
+ */
+function decrireRemise(produit) {
+  const phase = produit?.discountPhase
+  const prix = phase?.price?.formattedPrice
+  if (!phase || !prix) return null
+
+  return {
+    prix,
+    // « −20 % » quand RevenueCat le donne, sinon le nom de la promotion.
+    etiquette:
+      typeof phase.percentage === 'number' && phase.percentage > 0
+        ? `−${Math.round(phase.percentage)} %`
+        : phase.name || 'Remise',
+    duree: dureeRemise(phase),
+  }
+}
+
+/** Vrai pour une remise qui ne s'arrête jamais. */
+export const REMISE_PERMANENTE = 'toute la durée de l’abonnement'
+
+/**
+ * « toute la durée de l'abonnement », « le premier mois », « les 3 premiers
+ * mois »… sans préposition, pour que l'appelant compose sa phrase.
+ *
+ * La durée compte autant que le montant : une remise sur un seul mois et
+ * une remise à vie n'ont pas la même valeur, et l'afficher évite la
+ * mauvaise surprise au deuxième prélèvement.
+ */
+const DUREES = {
+  day: { premier: 'le premier jour', pluriel: 'premiers jours' },
+  week: { premier: 'la première semaine', pluriel: 'premières semaines' },
+  month: { premier: 'le premier mois', pluriel: 'premiers mois' },
+  year: { premier: 'la première année', pluriel: 'premières années' },
+}
+
+function dureeRemise(phase) {
+  if (phase.durationMode === 'forever') return REMISE_PERMANENTE
+
+  const duree = DUREES[phase.period?.unit]
+  if (!duree) return null
+
+  const cycles = phase.cycleCount || 1
+  return cycles === 1 ? duree.premier : `les ${cycles} ${duree.pluriel}`
 }
 
 /** Trie les packages de l'offering dans l'ordre voulu à l'écran. */

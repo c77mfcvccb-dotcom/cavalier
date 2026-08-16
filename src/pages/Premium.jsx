@@ -10,6 +10,7 @@ import {
   estResilie,
   JOURS_ESSAI,
   OFFRES,
+  REMISE_PERMANENTE,
   trierOffres,
 } from '../lib/abonnement'
 import {
@@ -58,6 +59,14 @@ export default function Premium() {
 
   const [choix, setChoix] = useState(null)
   const [cgvAcceptees, setCgvAcceptees] = useState(false)
+
+  // Le champ reste replié : un code promo visible d'emblée souffle à ceux
+  // qui n'en ont pas qu'ils paient le prix fort, et fait quitter l'écran
+  // pour aller en chercher un.
+  const [champCodeOuvert, setChampCodeOuvert] = useState(false)
+  const [codeSaisi, setCodeSaisi] = useState('')
+  const [codeApplique, setCodeApplique] = useState(null)
+  const [etatCode, setEtatCode] = useState('repos')
   const [achatEnCours, setAchatEnCours] = useState(false)
   const [erreurAchat, setErreurAchat] = useState(null)
 
@@ -112,17 +121,31 @@ export default function Premium() {
     if (retourAchat && !estPremium) attendreWebhook()
   }, [retourAchat, estPremium, attendreWebhook])
 
-  /** Catalogue RevenueCat : prix réels, devise du visiteur, essai configuré. */
+  /**
+   * Catalogue RevenueCat : prix réels, devise du visiteur, essai configuré,
+   * et remises si un code promo est transmis.
+   *
+   * Renvoie les offres plutôt que de se contenter de les poser dans l'état,
+   * pour que la vérification d'un code puisse juger du résultat.
+   */
+  const chargerCatalogue = useCallback(
+    async (codePromo = null) => {
+      const offering = await chargerOffre(utilisateur.id, codePromo)
+      const paquets = trierOffres(offering?.availablePackages ?? []).map(decrireOffre)
+      if (!paquets.length) throw new Error('Offering « default » vide')
+      return paquets
+    },
+    [utilisateur]
+  )
+
   useEffect(() => {
     if (!utilisateur || estPremium) return
     let abandonne = false
 
     setChargementOffres(true)
-    chargerOffre(utilisateur.id)
-      .then((offering) => {
+    chargerCatalogue()
+      .then((paquets) => {
         if (abandonne) return
-        const paquets = trierOffres(offering?.availablePackages ?? []).map(decrireOffre)
-        if (!paquets.length) throw new Error('Offering « default » vide')
         setOffres(paquets)
         setChoix((precedent) => precedent ?? paquets[paquets.length - 1].cle)
         setErreurCatalogue(null)
@@ -143,7 +166,50 @@ export default function Premium() {
     return () => {
       abandonne = true
     }
-  }, [utilisateur, estPremium])
+  }, [utilisateur, estPremium, chargerCatalogue])
+
+  /**
+   * Vérifie un code en redemandant le catalogue avec lui.
+   *
+   * C'est RevenueCat qui tranche, pas nous : si aucune formule ne revient
+   * avec une remise, le code est refusé — qu'il soit inexistant, expiré, ou
+   * simplement inapplicable à ces produits. Le distinguer plus finement
+   * demanderait une API que le SDK n'expose pas, et le message resterait le
+   * même pour le cavalier.
+   */
+  async function appliquerCode() {
+    const code = codeSaisi.trim().toUpperCase()
+    if (!code) return
+
+    setEtatCode('verification')
+    try {
+      const paquets = await chargerCatalogue(code)
+      if (!paquets.some((offre) => offre.remise)) {
+        setEtatCode('invalide')
+        return
+      }
+      setOffres(paquets)
+      setCodeApplique(code)
+      setEtatCode('applique')
+    } catch (erreur) {
+      // Un code refusé peut aussi remonter en erreur de requête selon la
+      // réponse du backend : on ne peut pas l'imputer au réseau sans plus
+      // d'information, et annoncer une panne serait pire qu'un code refusé.
+      console.error('Vérification du code promo impossible', erreur)
+      setEtatCode('invalide')
+    }
+  }
+
+  async function retirerCode() {
+    setCodeSaisi('')
+    setCodeApplique(null)
+    setEtatCode('repos')
+    try {
+      setOffres(await chargerCatalogue())
+    } catch (erreur) {
+      console.error('Rechargement du catalogue impossible', erreur)
+    }
+  }
 
   const offreChoisie = offres?.find((offre) => offre.cle === choix) ?? offres?.[0] ?? null
 
@@ -161,6 +227,7 @@ export default function Premium() {
         idUtilisateur: utilisateur.id,
         paquet: offreChoisie.paquet,
         email: utilisateur.email,
+        codePromo: codeApplique,
         // Trace de l'acceptation, attachée à la transaction elle-même :
         // c'est la preuve la moins contestable, puisqu'elle est horodatée
         // par le prestataire de paiement et non par nous.
@@ -221,6 +288,10 @@ export default function Premium() {
   }
 
   const joursEssaiAffiches = offreChoisie?.joursEssai ?? JOURS_ESSAI
+
+  /** Remise qui s'arrête un jour : le tarif plein doit alors être annoncé. */
+  const remiseTemporaire =
+    offreChoisie?.remise?.duree && offreChoisie.remise.duree !== REMISE_PERMANENTE
 
   return (
     <>
@@ -299,13 +370,83 @@ export default function Premium() {
                   <span className="desc">{offre.detail}</span>
                 </span>
                 <span style={{ textAlign: 'right' }}>
-                  <span className="gras" style={{ display: 'block' }}>{offre.prix}</span>
+                  {/* Le prix d'origine reste affiché, barré : une remise ne
+                      se comprend que rapportée à ce qu'elle remplace. */}
+                  {offre.remise && (
+                    <span className="prix-barre">{offre.prix}</span>
+                  )}
+                  <span className="gras" style={{ display: 'block' }}>
+                    {offre.remise ? offre.remise.prix : offre.prix}
+                  </span>
                   <span className="doux" style={{ fontSize: '0.76rem' }}>{offre.periode}</span>
                 </span>
               </button>
             ))}
           </div>
         )}
+
+        {/* Code promo — replié par défaut, et posé après les formules :
+            c'est un détour, pas une étape du parcours. */}
+        <div className="code-promo">
+          {!champCodeOuvert ? (
+            <button
+              type="button"
+              className="lien-discret"
+              onClick={() => setChampCodeOuvert(true)}
+            >
+              J’ai un code promo
+            </button>
+          ) : (
+            <>
+              <div className="saisie">
+                <input
+                  value={codeSaisi}
+                  onChange={(e) => {
+                    setCodeSaisi(e.target.value)
+                    if (etatCode === 'invalide') setEtatCode('repos')
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && appliquerCode()}
+                  placeholder="CODE PROMO"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck="false"
+                  disabled={etatCode === 'applique' || etatCode === 'verification'}
+                  aria-label="Code promo"
+                  aria-invalid={etatCode === 'invalide'}
+                />
+                {etatCode === 'applique' ? (
+                  <button type="button" className="bouton fantome petit" onClick={retirerCode}>
+                    Retirer
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="bouton secondaire petit"
+                    onClick={appliquerCode}
+                    disabled={!codeSaisi.trim() || etatCode === 'verification'}
+                  >
+                    {etatCode === 'verification' ? 'Vérification…' : 'Appliquer'}
+                  </button>
+                )}
+              </div>
+
+              {etatCode === 'applique' && offreChoisie?.remise && (
+                <p className="aide succes-code">
+                  Code <span className="gras">{codeApplique}</span> appliqué —{' '}
+                  {offreChoisie.remise.etiquette}
+                  {offreChoisie.remise.duree ? ` sur ${offreChoisie.remise.duree}` : ''}.
+                </p>
+              )}
+
+              {etatCode === 'invalide' && (
+                <p className="aide erreur-code">
+                  Ce code n’est pas valable, ou ne s’applique pas à cette formule.
+                  Vérifiez la saisie, ou essayez l’autre formule.
+                </p>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Acceptation demandée une seconde fois, juste avant le paiement :
             c'est ici que l'utilisateur a le tarif et la reconduction sous les
@@ -342,8 +483,21 @@ export default function Premium() {
 
         {offreChoisie && (
           <p className="aide centre" style={{ marginTop: 12 }}>
-            {joursEssaiAffiches} jours gratuits, puis {offreChoisie.prix}{' '}
-            {offreChoisie.periode}. Résiliable à tout moment pendant l'essai.
+            {joursEssaiAffiches} jours gratuits, puis{' '}
+            {/* Une remise limitée dans le temps doit dire ce qui vient
+                après, sinon le deuxième prélèvement est une surprise. */}
+            {remiseTemporaire ? (
+              <>
+                {offreChoisie.remise.prix} {offreChoisie.remise.duree}, puis{' '}
+                {offreChoisie.prix} {offreChoisie.periode}
+              </>
+            ) : (
+              <>
+                {offreChoisie.remise ? offreChoisie.remise.prix : offreChoisie.prix}{' '}
+                {offreChoisie.periode}
+              </>
+            )}
+            . Résiliable à tout moment pendant l'essai.
           </p>
         )}
       </main>
