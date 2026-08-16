@@ -968,3 +968,43 @@ button {
 }
 .actions-depense .bouton { padding: 4px 6px; min-height: 0; font-size: 0.76rem; }
 .actions-depense .bouton.danger { border: 0; }
+
+/* ── Code promo ────────────────────────────────────────────────
+   Replié par défaut : affiché d'emblée, un champ de code souffle à qui
+   n'en a pas qu'il paie le prix fort, et le fait quitter l'écran pour
+   aller en chercher un. */
+.code-promo { margin-top: 16px; text-align: center; }
+
+.lien-discret {
+  border: 0;
+  background: none;
+  padding: 4px;
+  font-size: 0.82rem;
+  color: var(--texte-doux);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.lien-discret:hover { color: var(--texte); }
+
+.code-promo .saisie { display: flex; gap: 8px; }
+.code-promo input {
+  flex: 1;
+  min-width: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.code-promo input[aria-invalid='true'] { border-color: var(--rouge); }
+.code-promo .saisie .bouton { flex-shrink: 0; }
+.code-promo .aide { display: block; margin-top: 8px; text-align: left; }
+.code-promo .succes-code { color: var(--vert); }
+.code-promo .erreur-code { color: var(--rouge); }
+
+/* Prix d'origine, conservé barré : une remise ne se comprend que
+   rapportée à ce qu'elle remplace. */
+.prix-barre {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--texte-doux);
+  text-decoration: line-through;
+}

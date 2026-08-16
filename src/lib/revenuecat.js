@@ -92,9 +92,15 @@ export async function configurer(idUtilisateur) {
  * courant, l'écran continue d'afficher celui que l'application connaît.
  * `current` reste le repli, pour ne jamais rendre une page vide.
  */
-export async function chargerOffre(idUtilisateur) {
+export async function chargerOffre(idUtilisateur, codePromo = null) {
   const purchases = await configurer(idUtilisateur)
-  const offerings = await purchases.getOfferings({ offeringIdentifier: OFFERING })
+  const offerings = await purchases.getOfferings({
+    offeringIdentifier: OFFERING,
+    // Transmis au catalogue, RevenueCat renvoie alors les produits assortis
+    // de leur phase de remise. C'est ce qui permet d'afficher le prix
+    // remisé AVANT d'ouvrir le tunnel de paiement.
+    ...(codePromo ? { discountCode: codePromo } : {}),
+  })
   return offerings.all?.[OFFERING] ?? offerings.current ?? null
 }
 
@@ -104,7 +110,7 @@ export async function chargerOffre(idUtilisateur) {
  * `customerEmail` évite de redemander une adresse que l'on connaît déjà ;
  * sans elle, RevenueCat la réclame dans son formulaire.
  */
-export async function acheter({ idUtilisateur, paquet, email, acceptationCgv }) {
+export async function acheter({ idUtilisateur, paquet, email, acceptationCgv, codePromo }) {
   const purchases = await configurer(idUtilisateur)
   return purchases.purchase({
     rcPackage: paquet,
@@ -115,6 +121,12 @@ export async function acheter({ idUtilisateur, paquet, email, acceptationCgv }) 
     // acceptée est ainsi horodatée par le prestataire de paiement, et non
     // par une déclaration de notre propre front.
     ...(acceptationCgv ? { metadata: { cgv_version: acceptationCgv } } : {}),
+    // Le code saisi chez nous arrive déjà appliqué dans le tunnel. Le champ
+    // natif de RevenueCat reste affiché : c'est lui qui fait foi sur la
+    // validité, et il permet de corriger une faute de frappe sans repartir
+    // en arrière.
+    ...(codePromo ? { discountCode: codePromo } : {}),
+    showDiscountCodeField: true,
   })
 }
 
