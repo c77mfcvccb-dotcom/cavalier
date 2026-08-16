@@ -130,11 +130,25 @@ La clé publique du SDK vit dans `VITE_REVENUECAT_CLE_PUBLIQUE`
 (RevenueCat → API keys → **SDK API keys**). Elle est faite pour le front :
 elle ne permet que de lire le catalogue et de démarrer un achat.
 
-Sans variable renseignée, le code retombe sur la **clé de bac à sable**, et
-l'écran d'abonnement affiche un bandeau qui le dit. C'est le bon défaut : un
-oubli de configuration ne facture personne. La clé de production est en
-commentaire dans `.env.example` — la bascule consiste à la déclarer dans les
-variables d'environnement Vercel, puis à redéployer.
+`.env.example` porte la clé de **production**. La bascule tient en deux
+gestes, et le second n'est pas facultatif&nbsp;: déclarer la variable dans
+Vercel → Settings → Environment Variables, **puis redéployer**. Vite lit les
+variables au moment du build et non à la requête&nbsp;; sans redéploiement,
+le site continue de tourner en bac à sable quoi qu'affiche le tableau de
+bord.
+
+Le repli du code, lui, reste **délibérément** celui du bac à sable. Une
+variable oubliée, un `.env` absent, une préproduction montée à la
+hâte&nbsp;: dans tous ces cas, le pire qui puisse arriver est qu'aucun
+paiement ne soit encaissé. L'inverse — débiter une vraie carte par accident
+de configuration — ne se rattrape pas d'un redéploiement.
+
+En local, pensez donc à décommenter la clé de bac à sable dans votre `.env`
+personnel&nbsp;: un achat de test depuis `npm run dev` avec la clé de
+production débite une vraie carte.
+
+Le bandeau 🧪 de l'écran d'abonnement est le témoin le plus simple&nbsp;: il
+disparaît dès que la clé active n'est plus une clé `rcb_sb_`.
 
 > La clé secrète (**Secret API keys**) n'a rien à faire ici, ni dans le
 > front, ni dans le webhook : celui-ci n'appelle pas l'API RevenueCat, il la
