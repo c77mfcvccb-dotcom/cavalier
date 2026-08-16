@@ -768,3 +768,203 @@ button {
 .tableau-infos dd { margin: 0; font-weight: 550; }
 
 .puces { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── Pages légales ─────────────────────────────────────────────
+   Un texte de loi se lit en continu, pas en survol : mesure limitée,
+   interlignage aéré, et hiérarchie de titres franche pour retrouver un
+   article sans relire la page entière. */
+.texte-legal { padding-bottom: 40px; line-height: 1.65; }
+.texte-legal h2 {
+  font-size: 1.02rem;
+  margin: 28px 0 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bordure);
+}
+.texte-legal h2:first-of-type { border-top: 0; padding-top: 0; margin-top: 8px; }
+.texte-legal h3 { font-size: 0.92rem; margin: 18px 0 6px; color: var(--vert-clair); }
+.texte-legal p { margin-bottom: 12px; font-size: 0.9rem; }
+.texte-legal ul { margin: 0 0 12px 18px; font-size: 0.9rem; }
+.texte-legal li { margin-bottom: 6px; }
+.texte-legal a { color: var(--bleu); text-decoration: underline; }
+.texte-legal .tableau-infos { margin-bottom: 14px; }
+.texte-legal code {
+  background: var(--sable);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.85em;
+}
+
+/* Les tableaux débordent sur un écran de téléphone : on les fait défiler
+   dans leur propre boîte plutôt que d'élargir la page entière. */
+.tableau-legal {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  margin-bottom: 14px;
+}
+.tableau-legal th,
+.tableau-legal td {
+  text-align: left;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--bordure);
+  vertical-align: top;
+}
+.tableau-legal th { color: var(--texte-doux); font-weight: 550; }
+
+/* ── Liens légaux en pied d'écran ──────────────────────────── */
+.liens-legaux {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bordure);
+}
+.liens-legaux a { font-size: 0.78rem; color: var(--texte-doux); }
+.liens-legaux a:hover { color: var(--texte); text-decoration: underline; }
+
+/* ── Case d'acceptation ────────────────────────────────────────
+   Zone de clic généreuse — la case seule fait 16 px, ce qui se rate au
+   pouce — et jamais cochée par défaut. */
+.case-acceptation {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 16px 0 6px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--texte-doux);
+  cursor: pointer;
+}
+.case-acceptation input[type='checkbox'] {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  accent-color: var(--vert);
+  cursor: pointer;
+}
+.case-acceptation a { color: var(--bleu); text-decoration: underline; }
+
+/* ── Module Dépenses ───────────────────────────────────────── */
+
+/* Le total du mois est l'information principale de l'écran : il est traité
+   comme un titre, avec des chiffres tabulaires pour que la valeur ne
+   sautille pas d'un mois à l'autre. */
+.total-mois { text-align: center; }
+.total-mois .montant {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin: 6px 0 2px;
+}
+
+.navigation-mois {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.navigation-mois button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--bordure);
+  background: var(--carte);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--texte);
+  cursor: pointer;
+}
+.navigation-mois button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.filtre-chevaux { margin-top: 12px; }
+.filtre-chevaux select { width: 100%; }
+
+/* ── Graphique mensuel ──────────────────────────────────────
+   Une seule série, donc une seule teinte : la hauteur porte
+   l'information, la couleur n'en porte aucune. Le mois sélectionné se
+   distingue par un contraste de ton, pas par une teinte nouvelle, qui
+   se lirait comme une seconde série. */
+.graphique-mois {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px; /* le filet de fond entre deux barres, qui les sépare sans trait */
+}
+.graphique-mois .barre {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  min-width: 0;
+}
+.graphique-mois .piste {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+.graphique-mois .remplissage {
+  width: 100%;
+  background: var(--vert-clair);
+  border-radius: 4px 4px 0 0; /* ergot arrondi côté valeur, pied à plat */
+  opacity: 0.45;
+  transition: opacity 0.15s, background 0.15s;
+}
+/* Un mois sans dépense garde un trait au ras de la ligne de base : il est
+   vide, pas absent — ce qui n'est pas la même lecture. */
+.graphique-mois .remplissage.vide { background: var(--bordure); opacity: 1; border-radius: 2px; }
+.graphique-mois .barre.actif .remplissage { opacity: 1; background: var(--vert); }
+.graphique-mois .barre:hover .remplissage { opacity: 0.75; }
+.graphique-mois .barre.actif:hover .remplissage { opacity: 1; }
+.graphique-mois .mois {
+  font-size: 0.68rem;
+  color: var(--texte-doux);
+}
+.graphique-mois .barre.actif .mois { color: var(--texte); font-weight: 650; }
+
+/* ── Répartition par catégorie ──────────────────────────────
+   Barres classées plutôt qu'un camembert : neuf parts en secteurs sont
+   illisibles, et une longueur se compare d'un coup d'œil quand un angle
+   ne se compare pas. */
+.repartition .poste + .poste { margin-top: 14px; }
+.repartition .entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.88rem;
+  margin-bottom: 5px;
+}
+.repartition .piste {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--sable);
+  overflow: hidden;
+}
+.repartition .remplissage {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--vert-clair);
+}
+.repartition .aide { display: block; margin-top: 3px; }
+
+.actions-depense {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.actions-depense .bouton { padding: 4px 6px; min-height: 0; font-size: 0.76rem; }
+.actions-depense .bouton.danger { border: 0; }

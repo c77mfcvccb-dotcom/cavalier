@@ -46,6 +46,13 @@ la seule ouverture de l'écran d'abonnement.
 - [`docs/abonnement.md`](docs/abonnement.md) — plan gratuit, premium, et
   montage RevenueCat
 
+> **Pages légales.** Les CGV/CGU, mentions légales et politique de
+> confidentialité vivent dans `src/pages/legales/`, et toutes les
+> coordonnées qu'elles affichent sont réunies dans
+> [`src/lib/legal.js`](src/lib/legal.js). **Ce fichier contient des valeurs
+> `À_COMPLETER` à renseigner avant toute mise en ligne** : tant qu'il en
+> reste une, les trois pages affichent un bandeau d'avertissement.
+
 ## Migrations SQL, dans l'ordre
 
 | Fichier | Contenu |
@@ -58,6 +65,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0006_limite_chevaux_partages.sql` | Le plan gratuit compte les chevaux rejoints par code, pas seulement les créés |
 | `0007_resiliation.sql` | URL du portail client, et accès maintenu jusqu'à l'échéance après résiliation |
 | `0008_ordre_evenements_webhook.sql` | Un événement RevenueCat rejoué dans le désordre ne défait plus un événement plus récent |
+| `0009_depenses.sql` | Table `depenses` et module de suivi du budget, réservé au premium |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
@@ -107,9 +115,8 @@ L'application est servie sur http://localhost:5173.
 4. Dans Supabase → **Authentication → URL Configuration**, ajoutez l'URL de
    production dans « Site URL » et « Redirect URLs » pour que la connexion
    Google fonctionne.
-5. Pour l'abonnement, ajoutez `VITE_REVENUECAT_CLE_PUBLIQUE` et déclarez le
-   domaine dans RevenueCat → **Web → Web Billing**. Sans variable, le paywall
-   tourne en bac à sable et l'annonce à l'écran :
+5. Pour l'abonnement, ajoutez `VITE_REVENUECAT_CLE_PUBLIQUE`. Sans cette
+   variable, le paywall tourne en bac à sable et l'annonce à l'écran :
    voir [`docs/abonnement.md`](docs/abonnement.md).
 
 ## Scripts

@@ -25,9 +25,15 @@
  * Clé publique du SDK (Web Billing). Elle est faite pour vivre dans le
  * front : elle ne permet que de lire le catalogue et de démarrer un achat.
  *
- * Bascule en production : renseigner `VITE_REVENUECAT_CLE_PUBLIQUE` avec la
- * clé `rcb_…` (voir `.env.example`). Sans variable, on reste en bac à sable,
- * ce qui est le bon défaut : un oubli de configuration ne facture personne.
+ * La clé de production vit dans `VITE_REVENUECAT_CLE_PUBLIQUE` — variables
+ * d'environnement Vercel pour le site en ligne, fichier `.env` en local.
+ *
+ * Le repli reste **délibérément** celui du bac à sable, et non celui de
+ * production. Une variable oubliée, un fichier `.env` absent, un
+ * environnement de préproduction monté à la hâte : dans tous ces cas, le
+ * pire qui puisse arriver est qu'aucun paiement ne soit encaissé. L'inverse
+ * — débiter une vraie carte par accident de configuration — ne se rattrape
+ * pas d'un redéploiement.
  */
 const CLE_BAC_A_SABLE = 'rcb_sb_GMMCEAyVBmaXZZrFpcYBDlqLT'
 
@@ -98,13 +104,17 @@ export async function chargerOffre(idUtilisateur) {
  * `customerEmail` évite de redemander une adresse que l'on connaît déjà ;
  * sans elle, RevenueCat la réclame dans son formulaire.
  */
-export async function acheter({ idUtilisateur, paquet, email }) {
+export async function acheter({ idUtilisateur, paquet, email, acceptationCgv }) {
   const purchases = await configurer(idUtilisateur)
   return purchases.purchase({
     rcPackage: paquet,
     customerEmail: email || undefined,
     selectedLocale: 'fr',
     defaultLocale: 'fr',
+    // Propagée jusqu'à la transaction RevenueCat : la version des CGV
+    // acceptée est ainsi horodatée par le prestataire de paiement, et non
+    // par une déclaration de notre propre front.
+    ...(acceptationCgv ? { metadata: { cgv_version: acceptationCgv } } : {}),
   })
 }
 

@@ -1,10 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 
+/**
+ * Onglets de la barre du bas.
+ *
+ * Cinq entrées est le maximum tenable sur un écran de téléphone : au-delà,
+ * les libellés passent sous la limite de lisibilité. « Chevaux » plutôt que
+ * « Mes chevaux » pour cette raison — à cinq colonnes, le libellé long
+ * revenait à la ligne.
+ */
 const ONGLETS_CAVALIER = [
   { to: '/', icone: '🏠', libelle: 'Accueil' },
-  { to: '/chevaux', icone: '🐴', libelle: 'Mes chevaux' },
+  { to: '/chevaux', icone: '🐴', libelle: 'Chevaux' },
   { to: '/calendrier', icone: '📅', libelle: 'Calendrier' },
+  { to: '/depenses', icone: '💶', libelle: 'Dépenses' },
   { to: '/profil', icone: '👤', libelle: 'Profil' },
 ]
 
@@ -12,6 +21,7 @@ const ONGLETS_CLUB = [
   { to: '/', icone: '🐴', libelle: 'Cavalerie' },
   { to: '/sante', icone: '🩺', libelle: 'Santé' },
   { to: '/planning', icone: '📅', libelle: 'Planning' },
+  { to: '/depenses', icone: '💶', libelle: 'Dépenses' },
   { to: '/profil', icone: '👤', libelle: 'Profil' },
 ]
 

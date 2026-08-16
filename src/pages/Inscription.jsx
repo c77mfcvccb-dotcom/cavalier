@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { Champ, Erreur, Succes } from '../composants/Ui'
+import PiedDePage from '../composants/PiedDePage'
+import { VERSION_CGV } from '../lib/legal'
 
 export default function Inscription() {
   const { inscription, connexionGoogle } = useAuth()
@@ -10,6 +12,7 @@ export default function Inscription() {
   const [nom, setNom] = useState('')
   const [email, setEmail] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
+  const [cgvAcceptees, setCgvAcceptees] = useState(false)
   const [erreur, setErreur] = useState('')
   const [message, setMessage] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -21,10 +24,20 @@ export default function Inscription() {
       setErreur('Le mot de passe doit contenir au moins 8 caractères')
       return
     }
+    if (!cgvAcceptees) {
+      setErreur('Vous devez accepter les conditions générales pour créer un compte')
+      return
+    }
 
     setEnvoi(true)
     try {
-      await inscription({ email: email.trim(), motDePasse, nom: nom.trim(), typeCompte })
+      await inscription({
+        email: email.trim(),
+        motDePasse,
+        nom: nom.trim(),
+        typeCompte,
+        versionCgv: VERSION_CGV,
+      })
       // Si la confirmation par email est activée, aucune session n'est ouverte.
       setMessage('Compte créé. Vérifiez votre boîte mail si une confirmation vous est demandée.')
     } catch (e) {
@@ -112,7 +125,29 @@ export default function Inscription() {
             />
           </Champ>
 
-          <button className="bouton pleine-largeur" disabled={envoi}>
+          {/* Case décochée par défaut et distincte de toute autre : une
+              acceptation pré-cochée ou noyée dans un paragraphe ne vaut pas
+              consentement. Elle conditionne les deux voies d'inscription. */}
+          <label className="case-acceptation">
+            <input
+              type="checkbox"
+              checked={cgvAcceptees}
+              onChange={(e) => setCgvAcceptees(e.target.checked)}
+            />
+            <span>
+              J’ai lu et j’accepte les{' '}
+              <Link to="/cgv" target="_blank" rel="noopener noreferrer">
+                conditions générales
+              </Link>{' '}
+              et la{' '}
+              <Link to="/confidentialite" target="_blank" rel="noopener noreferrer">
+                politique de confidentialité
+              </Link>
+              .
+            </span>
+          </label>
+
+          <button className="bouton pleine-largeur" disabled={envoi || !cgvAcceptees}>
             {envoi ? 'Création…' : 'Créer mon compte'}
           </button>
 
@@ -121,10 +156,17 @@ export default function Inscription() {
           <button
             type="button"
             className="bouton secondaire pleine-largeur"
+            disabled={!cgvAcceptees}
             onClick={() => connexionGoogle(typeCompte)}
           >
             Continuer avec Google
           </button>
+
+          {!cgvAcceptees && (
+            <p className="aide centre" style={{ marginTop: 8 }}>
+              Cochez la case ci-dessus pour continuer.
+            </p>
+          )}
 
           <button
             type="button"
@@ -140,6 +182,8 @@ export default function Inscription() {
       <p className="centre doux" style={{ marginTop: 22 }}>
         Déjà inscrit ? <Link to="/connexion" className="gras">Se connecter</Link>
       </p>
+
+      <PiedDePage />
     </div>
   )
 }

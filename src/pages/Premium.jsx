@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { Entete } from '../composants/Mise'
 import { Chargement, Erreur, Succes } from '../composants/Ui'
@@ -21,6 +21,7 @@ import {
   estDejaAbonne,
   infosClient,
 } from '../lib/revenuecat'
+import { VERSION_CGV } from '../lib/legal'
 
 /** Raison de l'arrivée sur cet écran, pour un message adapté. */
 const MOTIFS = {
@@ -56,6 +57,7 @@ export default function Premium() {
   const [erreurCatalogue, setErreurCatalogue] = useState(null)
 
   const [choix, setChoix] = useState(null)
+  const [cgvAcceptees, setCgvAcceptees] = useState(false)
   const [achatEnCours, setAchatEnCours] = useState(false)
   const [erreurAchat, setErreurAchat] = useState(null)
 
@@ -147,6 +149,10 @@ export default function Premium() {
 
   async function souscrire() {
     if (!offreChoisie?.paquet || achatEnCours) return
+    if (!cgvAcceptees) {
+      setErreurAchat('Vous devez accepter les conditions générales avant de payer.')
+      return
+    }
 
     setErreurAchat(null)
     setAchatEnCours(true)
@@ -155,6 +161,10 @@ export default function Premium() {
         idUtilisateur: utilisateur.id,
         paquet: offreChoisie.paquet,
         email: utilisateur.email,
+        // Trace de l'acceptation, attachée à la transaction elle-même :
+        // c'est la preuve la moins contestable, puisqu'elle est horodatée
+        // par le prestataire de paiement et non par nous.
+        acceptationCgv: VERSION_CGV,
       })
       setDroitRevenueCat(aDroitPremium(customerInfo))
       attendreWebhook()
@@ -297,11 +307,33 @@ export default function Premium() {
           </div>
         )}
 
+        {/* Acceptation demandée une seconde fois, juste avant le paiement :
+            c'est ici que l'utilisateur a le tarif et la reconduction sous les
+            yeux, ce qui n'était pas le cas au moment de l'inscription. */}
+        <label className="case-acceptation" style={{ marginTop: 18 }}>
+          <input
+            type="checkbox"
+            checked={cgvAcceptees}
+            onChange={(e) => setCgvAcceptees(e.target.checked)}
+          />
+          <span>
+            J’accepte les{' '}
+            <Link to="/cgv" target="_blank" rel="noopener noreferrer">
+              conditions générales de vente
+            </Link>{' '}
+            et je demande l’accès immédiat au service. Je suis informé que
+            l’abonnement se reconduit automatiquement à l’issue de l’essai, et
+            qu’il reste résiliable à tout moment depuis mon profil.
+          </span>
+        </label>
+
         <button
           className="bouton pleine-largeur"
-          style={{ marginTop: 18 }}
+          style={{ marginTop: 14 }}
           onClick={souscrire}
-          disabled={!offreChoisie?.paquet || achatEnCours || attenteWebhook}
+          disabled={
+            !offreChoisie?.paquet || !cgvAcceptees || achatEnCours || attenteWebhook
+          }
         >
           {achatEnCours
             ? 'Ouverture du paiement…'

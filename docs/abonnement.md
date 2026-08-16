@@ -7,6 +7,7 @@
 | Chevaux | 1 cheval **au total**, créé ou rejoint avec un code |
 | Carnet de santé | inaccessible, lecture comprise |
 | Calendrier | aucun créneau créé ni déplacé au-delà du dimanche courant |
+| Dépenses | module inaccessible, lecture comprise |
 
 Premium : **4,99 €/mois** ou **39,99 €/an**, après **7 jours d'essai gratuit**.
 
@@ -130,11 +131,25 @@ La clé publique du SDK vit dans `VITE_REVENUECAT_CLE_PUBLIQUE`
 (RevenueCat → API keys → **SDK API keys**). Elle est faite pour le front :
 elle ne permet que de lire le catalogue et de démarrer un achat.
 
-Sans variable renseignée, le code retombe sur la **clé de bac à sable**, et
-l'écran d'abonnement affiche un bandeau qui le dit. C'est le bon défaut : un
-oubli de configuration ne facture personne. La clé de production est en
-commentaire dans `.env.example` — la bascule consiste à la déclarer dans les
-variables d'environnement Vercel, puis à redéployer.
+`.env.example` porte la clé de **production**. La bascule tient en deux
+gestes, et le second n'est pas facultatif&nbsp;: déclarer la variable dans
+Vercel → Settings → Environment Variables, **puis redéployer**. Vite lit les
+variables au moment du build et non à la requête&nbsp;; sans redéploiement,
+le site continue de tourner en bac à sable quoi qu'affiche le tableau de
+bord.
+
+Le repli du code, lui, reste **délibérément** celui du bac à sable. Une
+variable oubliée, un `.env` absent, une préproduction montée à la
+hâte&nbsp;: dans tous ces cas, le pire qui puisse arriver est qu'aucun
+paiement ne soit encaissé. L'inverse — débiter une vraie carte par accident
+de configuration — ne se rattrape pas d'un redéploiement.
+
+En local, pensez donc à décommenter la clé de bac à sable dans votre `.env`
+personnel&nbsp;: un achat de test depuis `npm run dev` avec la clé de
+production débite une vraie carte.
+
+Le bandeau 🧪 de l'écran d'abonnement est le témoin le plus simple&nbsp;: il
+disparaît dès que la clé active n'est plus une clé `rcb_sb_`.
 
 > La clé secrète (**Secret API keys**) n'a rien à faire ici, ni dans le
 > front, ni dans le webhook : celui-ci n'appelle pas l'API RevenueCat, il la
@@ -144,24 +159,29 @@ variables d'environnement Vercel, puis à redéployer.
 
 1. Créer l'entitlement `premium`, les deux produits, et l'offering `default`
    avec ses deux packages, tel que décrit ci-dessus.
-2. Dans **Web → Web Billing**, autoriser le domaine de l'application : le SDK
-   refuse de démarrer un achat depuis une origine non déclarée.
-3. Renseigner `VITE_REVENUECAT_CLE_PUBLIQUE`.
-4. Déployer le webhook :
+2. Renseigner `VITE_REVENUECAT_CLE_PUBLIQUE`.
+3. Déployer le webhook :
 
    ```bash
    supabase functions deploy revenuecat-webhook --no-verify-jwt
    supabase secrets set REVENUECAT_SECRET_WEBHOOK=<une valeur longue et aléatoire>
+   supabase secrets set REVENUECAT_CLE_SECRETE=<clé secrète V1 RevenueCat>
    ```
 
    `--no-verify-jwt` est nécessaire — RevenueCat n'envoie pas de JWT Supabase.
    L'authentification repose entièrement sur le secret partagé, transmis dans
    l'en-tête `Authorization`.
-5. Dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la fonction
-   et ce même secret.
-6. Renseigner `VITE_REVENUECAT_LIEN_PORTAIL` avec l'URL du portail client,
-   qui sert de repli tant que le webhook n'a pas transmis l'URL propre au
-   compte.
+4. Dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la fonction
+   et ce même secret. Laisser l'environnement sur **All environments** : sur
+   `Production` seul, aucun achat de test en bac à sable n'arrive, et le
+   paywall tourne indéfiniment sur « activation en cours… ».
+5. Facultatif — renseigner `VITE_REVENUECAT_LIEN_PORTAIL` avec l'URL du
+   portail client. C'est un repli pour les comptes dont la ligne
+   d'abonnement est antérieure à la récupération de `url_gestion`.
+
+> Aucune origine à déclarer côté RevenueCat : la configuration Web Billing
+> ne comporte pas de liste de domaines autorisés, et le SDK démarre un achat
+> depuis n'importe quel hôte servant l'application.
 
 ### Le SDK encaisse, il ne donne aucun droit
 
