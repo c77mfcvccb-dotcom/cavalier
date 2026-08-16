@@ -144,12 +144,33 @@ mais l'achat se déroulant dans la page, c'est `licol.app` qu'il faut inscrire
 soi-même dans les *payment method domains* de Stripe, et **par mode** :
 l'enregistrement du mode test ne vaut pas pour le mode live.
 
-Le rappel `onButtonReady(updater, walletsAvailable)` donne le verdict de
-l'appareil. Il est écrit dans la console (`[Licol] Apple Pay / Google Pay …`)
-et, quand les portefeuilles sont indisponibles, affiché à l'écran en bac à
-sable ou sur `/premium?diag=1`. C'est le seul moyen de vérifier depuis un vrai
-téléphone que la déclaration du domaine a pris : le bouton absent ne distingue
-pas « domaine non déclaré » de « aucune carte dans le portefeuille ».
+### Diagnostic : `/premium?diag=1`
+
+Un bouton absent ne dit pas pourquoi. `?diag=1` affiche donc le relevé qui
+sépare les causes, lisibles ensemble :
+
+| Ligne | Ce qu'elle tranche |
+|---|---|
+| Domaine | celui à déclarer, tel que le navigateur le voit |
+| Mode d'encaissement | bac à sable ou production, avec le début de la clé |
+| Apple Pay sur l'appareil | `window.ApplePaySession` existe-t-il |
+| Apple Pay utilisable | `canMakePayments()` |
+| PaymentRequest | la voie de Google Pay |
+| Portefeuilles selon RevenueCat | le `walletsAvailable` de `onButtonReady` |
+
+La lecture croisée est le point : **Apple Pay présent sur l'appareil mais
+portefeuilles refusés par RevenueCat désigne le domaine ou le mode** — les
+deux seules choses qui se règlent dans un tableau de bord. Apple Pay absent de
+l'appareil désigne le navigateur ou le portefeuille, et aucun réglage n'y
+changera rien.
+
+Le piège le plus courant : **l'enregistrement du domaine vaut par mode.** Une
+application qui encaisse encore en bac à sable — c'est le repli quand
+`VITE_REVENUECAT_CLE_PUBLIQUE` manque — ne verra jamais un domaine déclaré en
+mode live.
+
+Le verdict part aussi dans la console (`[Licol] Apple Pay / Google Pay …`) à
+chaque ouverture de l'écran.
 
 Trois points de conception :
 

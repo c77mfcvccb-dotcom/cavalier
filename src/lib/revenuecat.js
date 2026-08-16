@@ -42,6 +42,38 @@ export const CLE_PUBLIQUE = import.meta.env.VITE_REVENUECAT_CLE_PUBLIQUE || CLE_
 /** Vrai tant qu'aucun paiement réel n'est encaissé. */
 export const EN_BAC_A_SABLE = CLE_PUBLIQUE.startsWith('rcb_sb_')
 
+/**
+ * Ce que l'appareil sait faire, indépendamment de RevenueCat.
+ *
+ * Sert à départager les deux raisons pour lesquelles Apple Pay n'apparaît
+ * pas, qui ne se corrigent pas au même endroit : ou bien l'appareil ne sait
+ * pas le faire — mauvais navigateur, aucune carte dans le portefeuille — ou
+ * bien il le sait mais le domaine n'est pas déclaré pour le mode utilisé.
+ * Sans cette distinction, un bouton absent ne dit rien.
+ */
+export function capacitesPaiement() {
+  const sessionApple = typeof window !== 'undefined' ? window.ApplePaySession : undefined
+  let cartesApple = null
+  try {
+    // Renvoie vrai dès qu'Apple Pay est utilisable sur l'appareil ; la
+    // présence d'une carte se vérifie séparément, et demande un identifiant
+    // marchand que nous n'avons pas.
+    cartesApple = sessionApple?.canMakePayments?.() ?? null
+  } catch {
+    cartesApple = null
+  }
+
+  return {
+    domaine: typeof window !== 'undefined' ? window.location.hostname : '',
+    mode: EN_BAC_A_SABLE ? 'bac à sable' : 'production',
+    cle: `${CLE_PUBLIQUE.slice(0, 10)}…`,
+    applePaySurAppareil: Boolean(sessionApple),
+    applePayUtilisable: cartesApple,
+    // Google Pay et les autres portefeuilles passent par cette interface.
+    paymentRequest: typeof window !== 'undefined' && 'PaymentRequest' in window,
+  }
+}
+
 /** Droit unique vendu par l'application, tel que nommé dans RevenueCat. */
 export const ENTITLEMENT = 'premium'
 

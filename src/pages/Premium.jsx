@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { Entete } from '../composants/Mise'
@@ -16,6 +16,7 @@ import {
 import {
   acheter,
   aDroitPremium,
+  capacitesPaiement,
   chargerOffre,
   EN_BAC_A_SABLE,
   estAnnulationClient,
@@ -664,13 +665,69 @@ export default function Premium() {
             monde n'apprendrait rien. On le montre en bac à sable, ou sur
             demande explicite avec ?diag=1, pour pouvoir vérifier depuis un
             vrai téléphone que le domaine est bien déclaré chez Apple. */}
-        {portefeuillesDispos === false && (diagnostic || EN_BAC_A_SABLE) && (
+        {portefeuillesDispos === false && !diagnostic && EN_BAC_A_SABLE && (
           <p className="aide centre" style={{ marginTop: 12 }}>
             Apple Pay / Google Pay indisponibles sur cet appareil, ce
             navigateur, ou pour ce domaine.
           </p>
         )}
+
+        {/* ?diag=1 — les quatre mesures qui séparent les causes possibles.
+            Un bouton absent ne dit pas laquelle : l'appareil peut ne pas
+            savoir faire, ou bien savoir et se heurter à un domaine déclaré
+            pour l'autre mode. La réponse tient dans ce tableau. */}
+        {diagnostic && <TableauDiagnostic portefeuilles={portefeuillesDispos} />}
       </main>
     </>
+  )
+}
+
+/**
+ * Relevé affiché sur `/premium?diag=1`.
+ *
+ * Quatre lignes, choisies pour être lues ensemble : la première dit dans
+ * quel mode l'application encaisse, les deux suivantes ce que l'appareil
+ * sait faire, la dernière le verdict de RevenueCat. Apple Pay présent sur
+ * l'appareil mais portefeuilles refusés par RevenueCat désigne le domaine ou
+ * le mode ; Apple Pay absent de l'appareil désigne le navigateur ou le
+ * portefeuille, et rien ne se règle alors dans un tableau de bord.
+ */
+function TableauDiagnostic({ portefeuilles }) {
+  const mesures = capacitesPaiement()
+
+  const lignes = [
+    ['Domaine', mesures.domaine],
+    ['Mode d’encaissement', `${mesures.mode} (${mesures.cle})`],
+    ['Apple Pay sur l’appareil', mesures.applePaySurAppareil ? 'oui' : 'non'],
+    [
+      'Apple Pay utilisable',
+      mesures.applePayUtilisable === null ? '—' : mesures.applePayUtilisable ? 'oui' : 'non',
+    ],
+    ['PaymentRequest (Google Pay)', mesures.paymentRequest ? 'oui' : 'non'],
+    [
+      'Portefeuilles selon RevenueCat',
+      portefeuilles === null ? 'pas encore répondu' : portefeuilles ? 'oui' : 'non',
+    ],
+  ]
+
+  return (
+    <div className="carte" style={{ marginTop: 18, fontSize: '0.82rem' }}>
+      <div className="gras" style={{ marginBottom: 8 }}>Diagnostic paiement</div>
+      <dl className="tableau-infos">
+        {lignes.map(([libelle, valeur]) => (
+          <Fragment key={libelle}>
+            <dt>{libelle}</dt>
+            <dd>{valeur}</dd>
+          </Fragment>
+        ))}
+      </dl>
+      <p className="aide" style={{ marginTop: 10 }}>
+        {mesures.mode === 'bac à sable'
+          ? 'Le domaine doit être déclaré côté test tant que l’application encaisse en bac à sable : un enregistrement en mode live ne vaut pas pour ce mode.'
+          : mesures.applePaySurAppareil && portefeuilles === false
+            ? 'L’appareil sait faire Apple Pay, mais RevenueCat ne le propose pas : c’est la déclaration du domaine, pour ce mode, qu’il faut vérifier.'
+            : 'Apple Pay n’est proposé que dans Safari, sur un appareil Apple, avec une carte enregistrée dans Wallet.'}
+      </p>
+    </div>
   )
 }
