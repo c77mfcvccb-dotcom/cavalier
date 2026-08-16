@@ -144,24 +144,29 @@ variables d'environnement Vercel, puis à redéployer.
 
 1. Créer l'entitlement `premium`, les deux produits, et l'offering `default`
    avec ses deux packages, tel que décrit ci-dessus.
-2. Dans **Web → Web Billing**, autoriser le domaine de l'application : le SDK
-   refuse de démarrer un achat depuis une origine non déclarée.
-3. Renseigner `VITE_REVENUECAT_CLE_PUBLIQUE`.
-4. Déployer le webhook :
+2. Renseigner `VITE_REVENUECAT_CLE_PUBLIQUE`.
+3. Déployer le webhook :
 
    ```bash
    supabase functions deploy revenuecat-webhook --no-verify-jwt
    supabase secrets set REVENUECAT_SECRET_WEBHOOK=<une valeur longue et aléatoire>
+   supabase secrets set REVENUECAT_CLE_SECRETE=<clé secrète V1 RevenueCat>
    ```
 
    `--no-verify-jwt` est nécessaire — RevenueCat n'envoie pas de JWT Supabase.
    L'authentification repose entièrement sur le secret partagé, transmis dans
    l'en-tête `Authorization`.
-5. Dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la fonction
-   et ce même secret.
-6. Renseigner `VITE_REVENUECAT_LIEN_PORTAIL` avec l'URL du portail client,
-   qui sert de repli tant que le webhook n'a pas transmis l'URL propre au
-   compte.
+4. Dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la fonction
+   et ce même secret. Laisser l'environnement sur **All environments** : sur
+   `Production` seul, aucun achat de test en bac à sable n'arrive, et le
+   paywall tourne indéfiniment sur « activation en cours… ».
+5. Facultatif — renseigner `VITE_REVENUECAT_LIEN_PORTAIL` avec l'URL du
+   portail client. C'est un repli pour les comptes dont la ligne
+   d'abonnement est antérieure à la récupération de `url_gestion`.
+
+> Aucune origine à déclarer côté RevenueCat : la configuration Web Billing
+> ne comporte pas de liste de domaines autorisés, et le SDK démarre un achat
+> depuis n'importe quel hôte servant l'application.
 
 ### Le SDK encaisse, il ne donne aucun droit
 

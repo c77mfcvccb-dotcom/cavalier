@@ -107,9 +107,8 @@ L'application est servie sur http://localhost:5173.
 4. Dans Supabase → **Authentication → URL Configuration**, ajoutez l'URL de
    production dans « Site URL » et « Redirect URLs » pour que la connexion
    Google fonctionne.
-5. Pour l'abonnement, ajoutez `VITE_REVENUECAT_CLE_PUBLIQUE` et déclarez le
-   domaine dans RevenueCat → **Web → Web Billing**. Sans variable, le paywall
-   tourne en bac à sable et l'annonce à l'écran :
+5. Pour l'abonnement, ajoutez `VITE_REVENUECAT_CLE_PUBLIQUE`. Sans cette
+   variable, le paywall tourne en bac à sable et l'annonce à l'écran :
    voir [`docs/abonnement.md`](docs/abonnement.md).
 
 ## Scripts
