@@ -111,16 +111,50 @@ dans le bundle.
 4. Dans RevenueCat → Integrations → Webhooks, renseigner l'URL de la fonction
    et ce même secret.
 5. Configurer l'URL de retour après paiement vers `/premium?achat=ok`.
+6. Renseigner `VITE_REVENUECAT_LIEN_PORTAIL` avec l'URL du portail client,
+   qui sert de repli tant que le webhook n'a pas transmis l'URL propre au
+   compte.
 
 Le webhook peut mettre quelques secondes : l'écran d'abonnement interroge la
 base toutes les trois secondes pendant trente secondes après le retour de
 paiement, plutôt que d'afficher un état faussement négatif.
+
+## Résiliation
+
+Le bouton « Résilier mon abonnement » vit dans **Profil → Abonnement**, sans
+détour par un email ni par un support. Il ouvre le **portail client
+RevenueCat**, qui est le seul endroit faisant foi : l'abonnement vit chez
+RevenueCat et Stripe, et **rien dans Supabase ne peut l'interrompre**. Écrire
+`statut = 'annule'` en base ne ferait qu'arrêter le service en continuant à
+prélever — exactement ce qu'il ne faut pas faire.
+
+L'URL du portail est celle transmise par le webhook (`url_gestion`), avec
+`VITE_REVENUECAT_LIEN_PORTAIL` en repli.
+
+Le trajet retour est le webhook : RevenueCat émet `CANCELLATION`, le statut
+passe à `annule`, et l'application affiche « Accès jusqu'au … ».
+
+### Résilié n'est pas expiré
+
+C'est le piège corrigé par la migration 0007. `est_premium()` excluait le
+statut `annule` : une résiliation coupait donc l'accès **sur-le-champ**, alors
+que la période en cours est due et déjà payée.
+
+`CANCELLATION` signifie seulement « ne sera pas renouvelé ». L'accès court
+jusqu'à `expire_le` ; c'est `EXPIRATION` qui met fin au service. Les trois
+statuts `actif`, `essai` et `annule` ouvrent donc l'accès, toujours sous
+réserve de la date.
 
 ## Points à trancher
 
 - **Les comptes club** sont soumis aux mêmes limites que les cavaliers, faute
   d'instruction contraire. Une écurie avec un seul cheval n'a pas grand
   intérêt : un plan club, facturé au nombre de chevaux, mériterait d'exister.
+- **La résiliation en trois clics** (article L215-1-1 du code de la
+  consommation) impose, pour un abonnement souscrit en ligne par un
+  consommateur, un chemin de résiliation aussi simple que la souscription.
+  Le bouton en profil va dans ce sens, mais le parcours réel se termine chez
+  RevenueCat : à faire valider par votre conseil.
 - **Un demi-pensionnaire gratuit ne voit pas les soins** du cheval, même si le
   propriétaire est premium. Le carnet est attaché au cheval, mais l'accès est
   vendu au compte. C'est cohérent avec « module bloqué en gratuit », et c'est

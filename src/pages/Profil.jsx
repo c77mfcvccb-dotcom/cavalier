@@ -3,8 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexte/AuthContexte'
 import { Avatar, Champ, Erreur, Succes } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
-import { Link } from 'react-router-dom'
-import { JOURS_ESSAI } from '../lib/abonnement'
+import BlocAbonnement from '../composants/BlocAbonnement'
 import ChargeurPhoto from '../composants/ChargeurPhoto'
 
 export default function Profil() {
@@ -130,13 +129,7 @@ export default function Profil() {
           </button>
         </form>
 
-        <Link
-          to="/premium"
-          className={`bouton pleine-largeur ${estPremium ? 'secondaire' : ''}`}
-          style={{ marginTop: 22 }}
-        >
-          {estPremium ? 'Gérer mon abonnement' : `Passer en Premium — ${JOURS_ESSAI} jours offerts`}
-        </Link>
+        <BlocAbonnement />
 
         <button
           className="bouton secondaire pleine-largeur"

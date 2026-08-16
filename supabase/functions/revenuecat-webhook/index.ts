@@ -65,6 +65,14 @@ Deno.serve(async (requete) => {
     ? new Date(Number(evenement.expiration_at_ms)).toISOString()
     : null
 
+  // Portail client RevenueCat, d'où l'abonné résilie lui-même. Le nom du
+  // champ a varié selon les versions de l'API : on accepte les deux, et on
+  // conserve la valeur déjà en base si l'événement ne la porte pas.
+  const urlGestion =
+    (evenement.management_url as string | undefined) ??
+    (evenement.managementURL as string | undefined) ??
+    null
+
   // app_user_id doit être l'identifiant Supabase du compte : c'est ce que
   // l'écran d'abonnement transmet dans le lien d'achat.
   if (!/^[0-9a-f-]{36}$/i.test(profilId)) {
@@ -96,6 +104,7 @@ Deno.serve(async (requete) => {
       produit: PRODUITS[String(evenement.product_id ?? '')] ?? null,
       expire_le: expiration,
       rc_app_user_id: profilId,
+      ...(urlGestion ? { url_gestion: urlGestion } : {}),
       maj_le: new Date().toISOString(),
     },
     { onConflict: 'profil_id' }

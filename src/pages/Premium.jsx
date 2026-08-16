@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { Entete } from '../composants/Mise'
 import { Erreur, Succes } from '../composants/Ui'
-import { AVANTAGES_PREMIUM, JOURS_ESSAI, OFFRES } from '../lib/abonnement'
-import { formatDate } from '../lib/format'
+import BlocAbonnement from '../composants/BlocAbonnement'
+import { AVANTAGES_PREMIUM, estResilie, JOURS_ESSAI, OFFRES } from '../lib/abonnement'
 
 const LIEN_ACHAT = import.meta.env.VITE_REVENUECAT_LIEN_ACHAT
 
@@ -71,27 +71,13 @@ export default function Premium() {
       <>
         <Entete titre="Licol Premium" retour />
         <main className="contenu">
-          <Succes>Votre abonnement est actif.</Succes>
+          <Succes>
+            {estResilie(abonnement)
+              ? 'Abonnement résilié — vous en gardez le bénéfice jusqu’à l’échéance.'
+              : 'Votre abonnement est actif.'}
+          </Succes>
 
-          <div className="carte">
-            <dl className="tableau-infos">
-              <dt>Formule</dt>
-              <dd>{OFFRES[abonnement?.produit]?.libelle || '—'}</dd>
-              <dt>Statut</dt>
-              <dd>{abonnement?.statut === 'essai' ? `Essai ${JOURS_ESSAI} jours` : 'Actif'}</dd>
-              {abonnement?.expire_le && (
-                <>
-                  <dt>{abonnement.statut === 'annule' ? 'Se termine le' : 'Renouvellement'}</dt>
-                  <dd>{formatDate(abonnement.expire_le)}</dd>
-                </>
-              )}
-            </dl>
-          </div>
-
-          <p className="aide" style={{ marginTop: 16 }}>
-            La gestion et la résiliation de l'abonnement se font depuis l'email de
-            confirmation reçu à la souscription.
-          </p>
+          <BlocAbonnement />
         </main>
       </>
     )

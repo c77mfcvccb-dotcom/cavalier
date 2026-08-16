@@ -3,10 +3,14 @@ import { supabase, configurationManquante } from '../lib/supabase'
 
 const AuthContexte = createContext(null)
 
-/** Miroir local de est_premium() en SQL : la date prime sur le statut. */
+/**
+ * Miroir local de est_premium() en SQL : la date prime sur le statut.
+ * « annule » compte encore : la période déjà payée est due, l'accès ne
+ * s'arrête qu'à l'échéance.
+ */
 function abonnementActif(abonnement) {
   if (!abonnement) return false
-  if (!['actif', 'essai'].includes(abonnement.statut)) return false
+  if (!['actif', 'essai', 'annule'].includes(abonnement.statut)) return false
   return !abonnement.expire_le || new Date(abonnement.expire_le) > new Date()
 }
 
@@ -25,7 +29,7 @@ export function FournisseurAuth({ children }) {
     // y touche, via la clé service_role.
     const { data } = await supabase
       .from('abonnements')
-      .select('statut, produit, expire_le')
+      .select('statut, produit, expire_le, url_gestion')
       .eq('profil_id', utilisateur.id)
       .maybeSingle()
     setAbonnement(data ?? null)

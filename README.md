@@ -52,6 +52,7 @@ Aucune dépendance UI externe : le poids du bundle reste sous 50 ko gzip.
 | `0004_correctif_token_lien_public.sql` | Génération du jeton sans pgcrypto (invisible depuis un `security definer` sur Supabase) |
 | `0005_abonnements_et_limites.sql` | Table `abonnements`, `est_premium()`, et limites du plan gratuit appliquées en RLS |
 | `0006_limite_chevaux_partages.sql` | Le plan gratuit compte les chevaux rejoints par code, pas seulement les créés |
+| `0007_resiliation.sql` | URL du portail client, et accès maintenu jusqu'à l'échéance après résiliation |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

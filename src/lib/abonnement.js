@@ -74,3 +74,24 @@ export const ERREUR_QUOTA = 'PLAN_GRATUIT_UN_CHEVAL'
 export function estErreurQuota(erreur) {
   return Boolean(erreur?.message?.includes(ERREUR_QUOTA))
 }
+
+/** Portail de gestion de repli, si le webhook n'a pas transmis l'URL propre au compte. */
+export const LIEN_PORTAIL = import.meta.env.VITE_REVENUECAT_LIEN_PORTAIL || ''
+
+/** URL où l'abonné gère et résilie lui-même son abonnement. */
+export function lienGestion(abonnement) {
+  return abonnement?.url_gestion || LIEN_PORTAIL || ''
+}
+
+/** Résilié mais encore dans la période payée. */
+export function estResilie(abonnement) {
+  return abonnement?.statut === 'annule'
+}
+
+export function libelleStatut(abonnement) {
+  if (!abonnement) return 'Plan gratuit'
+  if (abonnement.statut === 'essai') return `Essai ${JOURS_ESSAI} jours`
+  if (abonnement.statut === 'annule') return 'Résilié'
+  if (abonnement.statut === 'actif') return 'Actif'
+  return 'Plan gratuit'
+}
