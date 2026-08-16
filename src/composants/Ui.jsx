@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { initiales } from '../lib/format'
 
 export function Chargement({ texte = 'Chargement…' }) {
@@ -65,14 +66,21 @@ export function Feuille({ titre, ouverte, onFermer, children }) {
 
   if (!ouverte) return null
 
-  return (
+  // Rendue dans <body> par un portail, et non là où le composant est
+  // appelé. Sans cela, un ancêtre portant `backdrop-filter`, `transform`
+  // ou `filter` devient le bloc conteneur des descendants en
+  // `position: fixed` : la feuille se retrouve enfermée dans l'en-tête,
+  // haut de 80 px, et sort de l'écran. C'est ce qui est arrivé à la
+  // cloche, dont la feuille est appelée depuis <Entete>.
+  return createPortal(
     <div className="voile" onClick={onFermer}>
       <div className="feuille" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="poignee" />
         {titre && <h2>{titre}</h2>}
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

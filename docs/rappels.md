@@ -1,13 +1,13 @@
 # Rappels de soins
 
 Vermifuge, ferrure, vaccin : Licol calcule la prochaine échéance à partir de
-la date du soin, la signale à l'écran, et envoie un email à 14 jours, 7
-jours, puis le jour même.
+la date du soin, la signale sur l'accueil, et la remonte dans une cloche
+présente sur tous les écrans.
 
-Fonctionnalité **premium**, vérifiée en base et non dans l'interface — la
-fonction `rappels_du_jour()` (migration 0011) joint les abonnements, si bien
-qu'un abonnement expiré cesse de produire des emails sans qu'aucun code
-front n'ait à s'en soucier.
+Fonctionnalité **premium**, vérifiée en base et non dans l'interface : les
+vues s'appuient sur `soins`, dont les politiques RLS exigent déjà
+l'abonnement. Un compte qui repasse en gratuit cesse de voir la cloche sans
+qu'aucun code front n'ait à s'en soucier.
 
 ## Périodicités
 
@@ -36,8 +36,8 @@ un rythme de parage appartient au cheval.
 
 Les valeurs sont écrites à deux endroits — `TYPES_SOIN`
 (`src/lib/constantes.js`) et `intervalle_soin_defaut()` en SQL. Elles
-doivent rester alignées, sinon le formulaire propose une date que le rappel
-par email ne confirme pas.
+doivent rester alignées, sinon le formulaire propose une date que la cloche
+ne confirme pas.
 
 ### Ordre de précision
 
@@ -56,10 +56,10 @@ rappelle à 30 jours quel que soit le rythme annuel réglé par ailleurs.
 Enregistrer un soin ne demande **rien à effacer sur le précédent**. La vue
 `v_echeances` ne retient, pour chaque couple (cheval, type), que le soin le
 plus récent portant une échéance. Une ferrure de juillet supersède donc
-celle de juin, et l'ancienne échéance cesse d'exister pour l'affichage
-comme pour les emails.
+celle de juin, et l'ancienne échéance cesse d'exister — pour l'accueil comme
+pour la cloche.
 
-C'est aussi ce qui garantit qu'un cheval ne reçoit jamais deux rappels de
+C'est aussi ce qui garantit qu'un cheval ne produit jamais deux rappels de
 ferrure pour deux soins successifs.
 
 ## Code couleur
@@ -75,137 +75,76 @@ Une échéance à 29 jours n'appelle aucune action, et la signaler apprend à
 ignorer les signalements.
 
 Les échéances à jour **restent affichées** sur l'accueil. Sans le vert, un
-carnet en règle serait indistinguable d'un carnet vide.
+carnet en règle serait indistinguable d'un carnet vide. La cloche, elle, ne
+retient que le rouge et l'orange : une échéance à jour n'est pas un rappel.
 
-Un rappel coupé sur un cheval sort de la vue : un seul interrupteur, un seul
-effet. Le soin reste évidemment lisible dans le carnet.
+Un rappel coupé sur un cheval sort des deux vues : un seul interrupteur, un
+seul effet. Le soin reste évidemment lisible dans le carnet.
 
-## Emails
+## La cloche
 
-### Ce que reçoit le cavalier
+Dans l'en-tête, sur tous les écrans. Le badge compte les rappels **non
+lus** ; le panneau les montre tous, retards d'abord puis par date. Chaque
+ligne mène à l'onglet Soins du cheval concerné.
 
-Un **seul email par personne et par jour**, quel que soit le nombre
-d'échéances. Trois emails le même matin pour trois chevaux d'une même
-écurie, ce sont trois occasions de se désabonner.
+### Pourquoi pas l'email
 
-> **Ivoire — vermifuge à prévoir le 30 août 2026**
+Un envoi planifié supposait un prestataire d'emailing, un cron et quatre
+secrets — trois dépendances externes pour un service que la cloche rend sans
+aucune. L'email avait aussi un défaut propre : un rappel parti de travers ne
+se rattrape pas, quand un affichage se corrige au rechargement suivant.
 
-Tous ceux qui s'occupent du cheval sont prévenus : les cavaliers rattachés
-comme le club qui l'héberge.
+Le revers est assumé et figure dans les points à trancher : rien ne prévient
+plus en dehors de l'application.
 
-Le consentement est stocké dans `profils.rappels_email`, activé par défaut
-et coupable depuis **Profil**. Un rappel non sollicité reste un email non
-sollicité.
+### Marquer comme lu
 
-### Pas de doublon, jamais
+`rappels_lus` (migration 0012) porte les accusés de lecture. La clé comprend
+l'échéance elle-même : quand une ferrure est refaite, la nouvelle échéance
+n'a jamais été lue, et la cloche redevient légitimement active.
 
-La table `rappels_envoyes` journalise chaque envoi. Sans elle, un cron
-rejoué — reprise après incident, deux déclenchements le même jour —
-réexpédierait tout.
+Le marquage est **personnel**, contrairement aux périodicités qui
+appartiennent au cheval : sur un cheval en demi-pension, que l'un ait pris
+connaissance du rappel ne dit rien de l'autre.
 
-La clé porte l'échéance elle-même : si la date est corrigée, le rappel
-redevient légitime et repart. Le journal est écrit **après** l'envoi et
-seulement en cas de succès : un email qui n'est pas parti doit repartir
-demain.
+Marquer comme lu retire le rappel **du compteur, pas de la liste**. Une
+échéance reste à traiter tant que le soin n'est pas enregistré — « j'ai vu »
+n'est pas « c'est fait ».
+
+### Une seule définition de l'urgence
+
+`v_rappels` est bâtie sur `v_echeances`, où vivent déjà le seuil des 14
+jours, le dédoublonnage par type et le respect des rappels coupés. Deux
+définitions de « ce qui est urgent » auraient divergé au premier
+ajustement.
 
 ## Mise en place
 
-### 1. Migration
+Exécuter `0011_rappels_soins.sql` puis `0012_rappels_in_app.sql` dans le SQL
+Editor. **C'est tout** : aucun service tiers, aucun cron, aucun secret.
 
-Exécuter `0011_rappels_soins.sql` dans le SQL Editor.
-
-### 2. Service d'email
-
-Le code utilise **Resend**, pour sa compatibilité directe avec les Edge
-Functions Deno et son domaine de test immédiat. Changer de prestataire ne
-touche qu'au `fetch` de `supabase/functions/rappels-soins/index.ts`.
-
-1. Créer un compte sur [resend.com](https://resend.com) et une clé API.
-2. Vérifier le domaine d'envoi. Tant que ce n'est pas fait, Resend
-   n'autorise l'expédition que vers votre propre adresse, avec
-   `onboarding@resend.dev` en expéditeur — suffisant pour tester, pas pour
-   la production.
-
-### 3. Déployer la fonction
-
-```bash
-supabase functions deploy rappels-soins --no-verify-jwt
-supabase secrets set RESEND_API_KEY=<clé Resend>
-supabase secrets set RAPPELS_EXPEDITEUR="Licol <rappels@votre-domaine.fr>"
-supabase secrets set RAPPELS_SECRET=$(openssl rand -hex 32)
-supabase secrets set LICOL_URL=https://votre-domaine.fr
-```
-
-`--no-verify-jwt` est nécessaire : l'appel vient de pg_cron, pas d'un
-navigateur. L'authentification repose sur `RAPPELS_SECRET`, comparé à
-l'octet près à l'en-tête `Authorization` — sans préfixe `Bearer`.
-
-### 4. Planifier l'appel
-
-Dans le SQL Editor, activer les extensions puis programmer l'envoi. Le cron
-est en **UTC** : `0 7 * * *` correspond à 9 h en heure d'été française, 8 h
-en hiver.
+Si un cron `rappels-soins-quotidien` avait été planifié avant la bascule :
 
 ```sql
-create extension if not exists pg_cron with schema extensions;
-create extension if not exists pg_net with schema extensions;
-
-select cron.schedule(
-  'rappels-soins-quotidien',
-  '0 7 * * *',
-  $$
-  select net.http_post(
-    url     := 'https://<ref>.supabase.co/functions/v1/rappels-soins',
-    headers := jsonb_build_object(
-                 'Content-Type', 'application/json',
-                 'Authorization', '<RAPPELS_SECRET>'),
-    body    := '{}'::jsonb
-  );
-  $$
-);
+select cron.unschedule('rappels-soins-quotidien');
 ```
 
-> Le secret apparaît en clair dans la définition du job, lisible par tout
-> rôle ayant accès à `cron.job`. C'est acceptable ici — il ne protège qu'un
-> déclenchement d'envoi, pas des données — mais ne réutilisez pas cette
-> valeur ailleurs.
-
-### 5. Vérifier
+Contrôle :
 
 ```sql
--- Ce qui partirait aujourd'hui
-select * from rappels_du_jour();
-
--- Le job est-il planifié ?
-select jobname, schedule, active from cron.job;
-
--- Les derniers déclenchements
-select start_time, status, return_message
-from cron.job_run_details
-order by start_time desc limit 10;
+select * from v_rappels;            -- ce que la cloche affiche
+select count(*) from rappels_lus;   -- accusés de lecture
 ```
-
-Un déclenchement manuel, pour ne pas attendre le lendemain :
-
-```bash
-curl -i -X POST "https://<ref>.supabase.co/functions/v1/rappels-soins" \
-  -H "Authorization: <RAPPELS_SECRET>" \
-  -H 'Content-Type: application/json' -d '{}'
-```
-
-La réponse compte les destinataires, les envois et les échecs. `{"destinataires":0}`
-signifie simplement qu'aucune échéance ne tombe sur un jalon aujourd'hui —
-`rappels_du_jour()` le confirme.
 
 ## Points à trancher
 
-- **Les jalons sont figés** à 14 / 7 / 0 jours. Les rendre réglables
-  supposerait une colonne de plus et un écran ; l'usage dira si le besoin
-  existe.
-- **Aucun rappel de relance après l'échéance.** Un vermifuge oublié cesse
-  d'être signalé par email le lendemain, alors qu'il reste rouge à l'écran.
-  Une relance hebdomadaire tant que le soin n'est pas fait se défend.
-- **Le club reçoit un email par cheval de sa cavalerie**, regroupés en un
-  seul message. Sur une écurie de trente chevaux, le message peut être
-  long : un format tableau, ou une périodicité hebdomadaire pour les
-  comptes club, mériterait d'être étudié.
+- **Le seuil est figé à 14 jours.** Le rendre réglable supposerait une
+  colonne de plus et un écran ; l'usage dira si le besoin existe.
+- **Rien ne prévient hors de l'application.** La cloche suppose une visite ;
+  un vermifuge oublié trois semaines ne se rappelle à personne. C'est le
+  prix de l'abandon de l'email.
+- **Redondance avec le bandeau de rappel** (`src/composants/Rappels.jsx`),
+  qui affiche le même décompte en haut de l'écran à l'ouverture. Le
+  supprimer au profit de la seule cloche se défend — il porte toutefois la
+  pastille de l'icône PWA et les notifications locales, que la cloche ne
+  fait pas.

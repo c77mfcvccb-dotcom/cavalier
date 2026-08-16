@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
+import Cloche from './Cloche'
 
 /**
  * Onglets de la barre du bas.
@@ -61,6 +62,10 @@ export function Entete({ titre, sousTitre, retour = false, action }) {
         {sousTitre && <div className="sous-titre">{sousTitre}</div>}
       </div>
       {action}
+      {/* Posée dans l'en-tête commun plutôt qu'écran par écran : un rappel
+          de soin doit être atteignable d'où qu'on soit. Le composant se
+          retire de lui-même hors session et en plan gratuit. */}
+      <Cloche />
     </header>
   )
 }

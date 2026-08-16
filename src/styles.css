@@ -1102,3 +1102,80 @@ button {
   accent-color: var(--vert);
   cursor: pointer;
 }
+
+/* ── Cloche de rappels ─────────────────────────────────────── */
+.cloche {
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  background: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+/* La pastille se lit avant le chiffre : c'est sa présence qui informe,
+   pas sa valeur exacte. D'où le « 9+ » plutôt qu'un nombre qui
+   déborderait. */
+.cloche .pastille {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--rouge);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+}
+
+.liste-rappels { display: flex; flex-direction: column; gap: 8px; }
+.liste-rappels .rappel {
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon);
+  background: var(--carte);
+  overflow: hidden;
+}
+/* Un rappel lu s'efface sans disparaître : l'échéance reste à traiter,
+   seul le compteur l'oublie. */
+.liste-rappels .rappel.lu { opacity: 0.55; }
+.liste-rappels .corps {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+.liste-rappels .emoji { font-size: 1.3rem; flex-shrink: 0; }
+.liste-rappels .texte { flex: 1; min-width: 0; }
+.liste-rappels .titre {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.liste-rappels .meta {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--texte-doux);
+  margin-top: 2px;
+}
+.liste-rappels .badge { flex-shrink: 0; }
+.liste-rappels .marquer {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: 0;
+  border-top: 1px solid var(--bordure);
+  background: transparent;
+  color: var(--vert-clair);
+  font-size: 0.78rem;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+}
+.liste-rappels .marquer:hover { background: var(--fond); }

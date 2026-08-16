@@ -18,7 +18,6 @@ export default function Profil() {
     ville: profil.ville || '',
     bio: profil.bio || '',
     seuil_inactivite_jours: profil.seuil_inactivite_jours ?? 7,
-    rappels_email: profil.rappels_email ?? true,
   })
   const [erreur, setErreur] = useState('')
   const [message, setMessage] = useState('')
@@ -42,7 +41,6 @@ export default function Profil() {
         ville: valeurs.ville || null,
         bio: valeurs.bio || null,
         seuil_inactivite_jours: Number(valeurs.seuil_inactivite_jours) || 7,
-        rappels_email: Boolean(valeurs.rappels_email),
       })
       .eq('id', profil.id)
 
@@ -126,20 +124,6 @@ export default function Profil() {
               ))}
             </select>
           </Champ>
-
-          {/* Un rappel non sollicité reste un email non sollicité : il doit
-              se couper sans quitter le premium. */}
-          <label className="case-acceptation">
-            <input
-              type="checkbox"
-              checked={valeurs.rappels_email}
-              onChange={(e) => setValeurs((v) => ({ ...v, rappels_email: e.target.checked }))}
-            />
-            <span>
-              Recevoir les rappels de soins par email, à 14 jours, 7 jours puis
-              le jour de l’échéance.
-            </span>
-          </label>
 
           <button className="bouton pleine-largeur" disabled={envoi}>
             {envoi ? 'Enregistrement…' : 'Enregistrer'}

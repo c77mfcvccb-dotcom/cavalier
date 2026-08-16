@@ -46,7 +46,7 @@ la seule ouverture de l'écran d'abonnement.
 - [`docs/abonnement.md`](docs/abonnement.md) — plan gratuit, premium, et
   montage RevenueCat
 - [`docs/rappels.md`](docs/rappels.md) — rappels de soins, périodicités, et
-  mise en place du cron et des emails
+  fonctionnement de la cloche
 
 > **Pages légales.** Les CGV/CGU, mentions légales et politique de
 > confidentialité vivent dans `src/pages/legales/`, et toutes les
@@ -69,7 +69,8 @@ la seule ouverture de l'écran d'abonnement.
 | `0008_ordre_evenements_webhook.sql` | Un événement RevenueCat rejoué dans le désordre ne défait plus un événement plus récent |
 | `0009_depenses.sql` | Table `depenses` et module de suivi du budget, réservé au premium |
 | `0010_depenses_unifiees.sql` | Le coût d'un soin alimente `depenses` par trigger ; un soin s'écrit désormais à son propre nom |
-| `0011_rappels_soins.sql` | Périodicités de rappel réglables par cheval, seuil d'alerte à 14 jours, et alimentation des emails planifiés |
+| `0011_rappels_soins.sql` | Périodicités de rappel réglables par cheval, et seuil d'alerte à 14 jours |
+| `0012_rappels_in_app.sql` | Rappels dans l'application plutôt que par email : cloche, marquage comme lu, retrait de l'envoi planifié |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
