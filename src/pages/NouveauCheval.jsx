@@ -7,7 +7,7 @@ import { Entete } from '../composants/Mise'
 import ChargeurPhoto from '../composants/ChargeurPhoto'
 import { SEXES } from '../lib/constantes'
 import { LIMITE_CHEVAUX_GRATUIT } from '../lib/abonnement'
-import { chargerNbChevauxCrees } from '../lib/requetes'
+import { chargerNbChevauxDuCompte } from '../lib/requetes'
 
 export default function NouveauCheval() {
   const { profil, estClub, estPremium } = useAuth()
@@ -18,8 +18,8 @@ export default function NouveauCheval() {
   // formulaire pour rien.
   useEffect(() => {
     if (estPremium) return
-    chargerNbChevauxCrees(profil.id).then((nb) => setQuotaAtteint(nb >= LIMITE_CHEVAUX_GRATUIT))
-  }, [estPremium, profil.id])
+    chargerNbChevauxDuCompte(profil).then((nb) => setQuotaAtteint(nb >= LIMITE_CHEVAUX_GRATUIT))
+  }, [estPremium, profil])
 
   const [valeurs, setValeurs] = useState({
     nom: '',

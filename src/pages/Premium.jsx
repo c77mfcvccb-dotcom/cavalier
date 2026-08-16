@@ -10,7 +10,8 @@ const LIEN_ACHAT = import.meta.env.VITE_REVENUECAT_LIEN_ACHAT
 
 /** Raison de l'arrivée sur cet écran, pour un message adapté. */
 const MOTIFS = {
-  chevaux: 'Le plan gratuit est limité à un cheval.',
+  chevaux:
+    'Le plan gratuit est limité à un cheval, qu’il soit créé ou rejoint avec un code de partage.',
   soins: 'Le carnet de santé fait partie de Licol Premium.',
   calendrier: 'En gratuit, le calendrier s’arrête au dimanche de la semaine en cours.',
   depenses: 'Le suivi des dépenses fait partie de Licol Premium.',

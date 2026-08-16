@@ -4,7 +4,7 @@
 
 | Limite | Règle |
 |---|---|
-| Chevaux | 1 cheval **créé** au maximum |
+| Chevaux | 1 cheval **au total**, créé ou rejoint avec un code |
 | Carnet de santé | inaccessible, lecture comprise |
 | Calendrier | aucun créneau créé ni déplacé au-delà du dimanche courant |
 
@@ -21,7 +21,7 @@ et s'imposent à `curl` comme à l'application.
 ```sql
 -- Création d'un cheval
 with check (cree_par = auth.uid()
-            and (est_premium(auth.uid()) or nb_chevaux_crees(auth.uid()) < 1))
+            and (est_premium(auth.uid()) or nb_chevaux_du_compte(auth.uid()) < 1))
 
 -- Créneau : insertion ET modification
 and (est_premium(auth.uid()) or debut < fin_semaine_courante())
@@ -43,17 +43,33 @@ d'afficher une erreur technique. Quand le serveur refuse malgré tout — décal
 d'horloge, fuseau différent, quota atteint dans un autre onglet — le refus est
 rattrapé et conduit à l'écran d'abonnement.
 
+### Rejoindre par code : pourquoi un trigger et non une politique
+
+`rejoindre_par_code()` est en `security definer` — elle **contourne le RLS**
+de `cheval_cavaliers` par construction, puisqu'elle doit écrire une liaison
+sur un cheval que l'appelant ne voit pas encore. Une politique n'aurait donc
+rien retenu.
+
+La limite est posée par un **trigger `BEFORE INSERT`** sur
+`cheval_cavaliers` : il s'applique à tous les chemins d'écriture — la
+fonction d'invitation, l'ajout direct par un gestionnaire, et tout appel qui
+serait ajouté plus tard.
+
+La fonction vérifie aussi le quota **avant** d'écrire, pour ne pas consommer
+une invitation à usage unique lors d'une tentative refusée : le code reste
+valable, et fonctionnera après l'abonnement.
+
 ## Ce qui reste possible en gratuit, volontairement
 
-- **Rejoindre le cheval d'un autre avec un code.** C'est une liaison, pas une
-  création : elle ne compte pas dans la limite. Bloquer cela casserait la
-  demi-pension, qui est la raison d'être de l'application.
 - **Lire et supprimer** les créneaux déjà posés au-delà de la semaine, par
   exemple après un retour au plan gratuit. Seules la création et la
   modification sont bornées.
 - **Conserver ses données de soins.** Un compte qui repasse en gratuit ne perd
   rien : les lignes restent en base et redeviennent visibles au retour en
   premium.
+- **Garder ses chevaux au-delà de la limite** après un retour au plan gratuit.
+  Un compte qui avait trois chevaux en premium les conserve ; il ne peut
+  simplement plus en ajouter. Aucune liaison n'est supprimée.
 
 ## Le premium ne peut pas s'auto-attribuer
 

@@ -1,14 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexte/AuthContexte'
 import { Champ, Erreur } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
+import BloquePremium from '../composants/BloquePremium'
+import { chargerNbChevauxDuCompte } from '../lib/requetes'
+import { estErreurQuota, LIMITE_CHEVAUX_GRATUIT } from '../lib/abonnement'
 
 export default function RejoindreCheval() {
   const navigate = useNavigate()
+  const { profil, estPremium } = useAuth()
   const [code, setCode] = useState('')
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
+  const [quotaAtteint, setQuotaAtteint] = useState(false)
+
+  // On vérifie avant la saisie : sinon on laisse taper un code pour rien,
+  // et l'invitation du propriétaire risquerait d'être perçue comme cassée.
+  useEffect(() => {
+    if (estPremium) return
+    chargerNbChevauxDuCompte(profil)
+      .then((nb) => setQuotaAtteint(nb >= LIMITE_CHEVAUX_GRATUIT))
+      .catch(() => setQuotaAtteint(false))
+  }, [estPremium, profil])
 
   async function surSoumission(evenement) {
     evenement.preventDefault()
@@ -22,12 +37,34 @@ export default function RejoindreCheval() {
     })
 
     if (error) {
-      setErreur(error.message.replace(/^.*?:\s*/, '') || 'Code invalide')
       setEnvoi(false)
+      // Quota du plan gratuit : on conduit vers l'offre. Le code n'a pas été
+      // consommé, il reste utilisable après l'abonnement.
+      if (estErreurQuota(error)) {
+        navigate('/premium?motif=chevaux')
+        return
+      }
+      setErreur(error.message.replace(/^.*?:\s*/, '') || 'Code invalide')
       return
     }
 
     navigate(`/chevaux/${data.cheval_id}`, { replace: true })
+  }
+
+  if (quotaAtteint) {
+    return (
+      <>
+        <Entete titre="Rejoindre un cheval" retour />
+        <main className="contenu">
+          <BloquePremium
+            emoji="🐴"
+            titre="Un cheval maximum"
+            texte="Le plan gratuit s'arrête à un cheval. Passez en Premium pour rejoindre celui-ci en plus du vôtre — le code qu'on vous a transmis restera valable."
+            motif="chevaux"
+          />
+        </main>
+      </>
+    )
   }
 
   return (

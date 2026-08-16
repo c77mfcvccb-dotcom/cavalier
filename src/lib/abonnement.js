@@ -27,7 +27,11 @@ export const OFFRES = {
 export const JOURS_ESSAI = 7
 
 export const AVANTAGES_PREMIUM = [
-  { emoji: '🐴', titre: 'Chevaux illimités', texte: 'Un seul cheval dans le plan gratuit.' },
+  {
+    emoji: '🐴',
+    titre: 'Chevaux illimités',
+    texte: 'Le plan gratuit s’arrête à un cheval, qu’il soit créé ou rejoint avec un code.',
+  },
   {
     emoji: '🩺',
     titre: 'Carnet de santé complet',
@@ -62,4 +66,11 @@ export function dernierJourGratuit(reference = new Date()) {
 
 export function creneauHorsPlanGratuit(debut, reference = new Date()) {
   return new Date(debut) >= finSemaineCourante(reference)
+}
+
+/** Message d'erreur levé par la base quand le quota gratuit est atteint. */
+export const ERREUR_QUOTA = 'PLAN_GRATUIT_UN_CHEVAL'
+
+export function estErreurQuota(erreur) {
+  return Boolean(erreur?.message?.includes(ERREUR_QUOTA))
 }
