@@ -8,8 +8,19 @@ const ETIQUETTES_MAX = 2
 /**
  * Grille mensuelle. Chaque jour porte des étiquettes lisibles plutôt que des
  * pastilles : prénom du cavalier qui monte, à sa couleur, ou emoji du soin.
+ *
+ * `onAjout` rend la grille active : un premier appui choisit le jour — c'est
+ * ce qui permet d'en lire le détail, affiché au-dessus — et un second sur le
+ * même jour ouvre la création d'un créneau. Ouvrir dès le premier appui
+ * empêcherait de simplement consulter une journée, ce qui est l'usage le
+ * plus fréquent. Sans `onAjout`, la grille reste un sélecteur.
  */
-export default function Calendrier({ evenements = [], jourSelectionne, onSelectionJour }) {
+export default function Calendrier({
+  evenements = [],
+  jourSelectionne,
+  onSelectionJour,
+  onAjout,
+}) {
   const [curseur, setCurseur] = useState(() => {
     const d = jourSelectionne ? new Date(jourSelectionne) : new Date()
     return new Date(d.getFullYear(), d.getMonth(), 1)
@@ -80,14 +91,29 @@ export default function Calendrier({ evenements = [], jourSelectionne, onSelecti
           if (cle === cleSelection) classes.push('selectionne')
 
           const resume = etiquettes.map((e) => e.libelle).join(', ')
+          const estSelectionne = cle === cleSelection
+          const ajoutPossible = Boolean(onAjout) && estSelectionne
 
           return (
             <button
               key={cle}
               className={classes.join(' ')}
-              onClick={() => onSelectionJour(date)}
-              aria-label={resume ? `${date.getDate()} — ${resume}` : String(date.getDate())}
+              onClick={() => (ajoutPossible ? onAjout(date) : onSelectionJour(date))}
+              aria-label={
+                [
+                  String(date.getDate()),
+                  resume || null,
+                  ajoutPossible ? 'appuyez à nouveau pour ajouter un créneau' : null,
+                ]
+                  .filter(Boolean)
+                  .join(' — ')
+              }
             >
+              {ajoutPossible && (
+                <span className="marque-ajout" aria-hidden="true">
+                  +
+                </span>
+              )}
               <span className="numero">{date.getDate()}</span>
 
               {etiquettes.length > 0 && (
@@ -114,6 +140,12 @@ export default function Calendrier({ evenements = [], jourSelectionne, onSelecti
           )
         })}
       </div>
+
+      {onAjout && (
+        <p className="aide centre" style={{ marginTop: 8 }}>
+          Touchez un jour, puis à nouveau pour y ajouter un créneau.
+        </p>
+      )}
     </div>
   )
 }

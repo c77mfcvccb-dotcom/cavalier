@@ -57,8 +57,9 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
    ├─ Fiche           photo, âge, race, robe, sexe, propriétaire,
    │                  cavaliers liés (avec leur couleur), bouton
    │                  « Inviter en demi-pension » → génère le code
-   ├─ Calendrier      mois avec pastilles de couleur par cavalier,
-   │                  tap sur un jour → créneaux du jour + ajout
+   ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
+   │                  un appui choisit le jour, un second sur le même
+   │                  jour ouvre la création d'un créneau
    ├─ Séances         carnet chronologique, ajout d'une séance
    └─ Soins           historique par type + prochaines échéances,
                       ajout d'un soin (échéance pré-remplie)
@@ -67,7 +68,9 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
                       vue mois puis détail du jour. Deux natures d'événement :
                       créneaux de monte (pastille ronde, couleur du cavalier)
                       et échéances de soins (marque carrée neutre + emoji du
-                      type de soin + badge d'urgence)
+                      type de soin + badge d'urgence).
+                      Second appui sur le jour choisi → création : direct
+                      avec un seul cheval, sinon on demande lequel
 
 /profil               Nom, photo, galop, ville, téléphone, déconnexion
 ```
@@ -110,4 +113,10 @@ auquel un cavalier est lié apparaît dans les deux.
 - Une seule action principale par écran, en bouton flottant ou en pied de carte.
 - Les formulaires s'ouvrent en feuille modale qui remonte du bas (réflexe mobile).
 - Codes couleur cavaliers repris partout : calendrier, séances, planning club.
+- **Deux appuis pour créer un créneau, pas un.** Le premier choisit le jour —
+  c'est ce qui permet d'en lire le détail, affiché au-dessus de la grille — et
+  le second ouvre le formulaire. Ouvrir dès le premier appui rendrait
+  impossible la simple consultation d'une journée, qui est l'usage le plus
+  fréquent. Un « + » discret apparaît sur le jour choisi pour annoncer ce que
+  fera le second appui.
 - Aucun écran ne dépasse deux niveaux de profondeur depuis un onglet.

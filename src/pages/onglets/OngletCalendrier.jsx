@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link as Lien, useNavigate } from 'react-router-dom'
+import { Link as Lien, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerCreneaux } from '../../lib/requetes'
@@ -7,7 +7,7 @@ import { Champ, Chargement, Erreur, Feuille } from '../../composants/Ui'
 import Calendrier from '../../composants/Calendrier'
 import { TYPES_CRENEAU } from '../../lib/constantes'
 import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
-import { cleJour, formatDate, formatHeure, valeurDatetimeLocal } from '../../lib/format'
+import { cleJour, enDateLocale, formatDate, formatHeure, valeurDatetimeLocal } from '../../lib/format'
 import {
   creneauHorsPlanGratuit,
   dernierJourGratuit,
@@ -16,6 +16,7 @@ import {
 
 export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire }) {
   const { profil } = useAuth()
+  const [parametres, setParametres] = useSearchParams()
   const [creneaux, setCreneaux] = useState([])
   const [jour, setJour] = useState(() => new Date())
   const [chargement, setChargement] = useState(true)
@@ -39,6 +40,28 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
   useEffect(() => {
     recharger()
   }, [recharger])
+
+  /**
+   * Arrivée depuis le calendrier global, qui a désigné un jour et demandé la
+   * création. Les paramètres sont consommés une fois puis retirés de l'URL :
+   * sans cela, un retour en arrière rouvrirait la feuille, et un partage du
+   * lien ferait de même chez le destinataire.
+   */
+  useEffect(() => {
+    const cible = parametres.get('jour')
+    const creation = parametres.get('nouveau') === '1'
+    if (!cible && !creation) return
+
+    if (cible) setJour(enDateLocale(cible))
+    if (creation) setFeuilleOuverte(true)
+
+    const suite = new URLSearchParams(parametres)
+    suite.delete('jour')
+    suite.delete('nouveau')
+    setParametres(suite, { replace: true })
+    // Une seule fois, à l'ouverture : les dépendances rejoueraient l'effet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const cleSelection = cleJour(jour)
   const creneauxDuJour = creneaux.filter((c) => cleJour(c.debut) === cleSelection)
@@ -96,7 +119,15 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
         )}
       </section>
 
-      <Calendrier evenements={creneaux} jourSelectionne={jour} onSelectionJour={setJour} />
+      <Calendrier
+        evenements={creneaux}
+        jourSelectionne={jour}
+        onSelectionJour={setJour}
+        onAjout={(date) => {
+          setJour(date)
+          setFeuilleOuverte(true)
+        }}
+      />
 
       <div className="puces">
         {cavaliers.map((liaison) => {
