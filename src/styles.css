@@ -19,7 +19,17 @@
   --rayon-sm: 10px;
   --ombre: 0 1px 2px rgba(27, 26, 23, 0.06), 0 6px 20px rgba(27, 26, 23, 0.05);
   --nav-hauteur: 62px;
+
+  /* Zones sûres de l'appareil.
+     `viewport-fit=cover` (index.html) étend la page sous la barre d'état, le
+     menton et l'encoche : sans ces marges, l'en-tête passe DERRIÈRE l'heure
+     et la batterie une fois l'application installée sur l'écran d'accueil,
+     et le contenu disparaît sous l'encoche en paysage. Seule la marge basse
+     existait ; les trois autres manquaient. */
+  --safe-haut: env(safe-area-inset-top, 0px);
   --safe-bas: env(safe-area-inset-bottom, 0px);
+  --safe-gauche: env(safe-area-inset-left, 0px);
+  --safe-droite: env(safe-area-inset-right, 0px);
 }
 
 * {
@@ -37,6 +47,9 @@ body {
   font-size: 16px;
   line-height: 1.45;
   overscroll-behavior-y: none;
+  /* Un mot indivisible plus large que l'écran — une adresse email, un nom de
+     cheval sans espace — pousserait sinon toute la page vers la droite. */
+  overflow-wrap: break-word;
 }
 
 h1, h2, h3, h4 { margin: 0; font-weight: 650; letter-spacing: -0.01em; }
@@ -57,6 +70,9 @@ button {
 
 /* ---------- Mise en page ---------- */
 .app {
+  /* Deux déclarations, pas une : `dvh` est ignoré par les navigateurs
+     d'avant iOS 15.4, qui retomberaient sinon sur une hauteur automatique. */
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -67,7 +83,8 @@ button {
 
 .contenu {
   flex: 1;
-  padding: 16px 16px calc(var(--nav-hauteur) + var(--safe-bas) + 24px);
+  padding: 16px calc(16px + var(--safe-droite))
+    calc(var(--nav-hauteur) + var(--safe-bas) + 24px) calc(16px + var(--safe-gauche));
 }
 
 .entete {
@@ -77,7 +94,11 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px 12px;
+  padding: calc(14px + var(--safe-haut)) calc(16px + var(--safe-droite)) 12px
+    calc(16px + var(--safe-gauche));
+  /* Fond opaque d'abord : `color-mix` est inconnu avant Safari 16.2, et la
+     barre deviendrait alors transparente, le contenu défilant au travers. */
+  background: var(--fond);
   background: color-mix(in srgb, var(--fond) 88%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--bordure);
@@ -108,7 +129,8 @@ button {
   display: flex;
   max-width: 640px;
   margin: 0 auto;
-  padding-bottom: var(--safe-bas);
+  padding: 0 var(--safe-droite) var(--safe-bas) var(--safe-gauche);
+  background: var(--carte);
   background: color-mix(in srgb, var(--carte) 94%, transparent);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--bordure);
@@ -266,7 +288,7 @@ button {
 
 .bouton-flottant {
   position: fixed;
-  right: max(16px, calc(50vw - 320px + 16px));
+  right: max(calc(16px + var(--safe-droite)), calc(50vw - 320px + 16px));
   bottom: calc(var(--nav-hauteur) + var(--safe-bas) + 16px);
   z-index: 25;
   width: 54px;
@@ -345,11 +367,13 @@ button {
 .feuille {
   width: 100%;
   max-width: 640px;
+  max-height: 92vh;
   max-height: 92dvh;
   overflow-y: auto;
   background: var(--fond);
   border-radius: 20px 20px 0 0;
-  padding: 8px 16px calc(20px + var(--safe-bas));
+  padding: 8px calc(16px + var(--safe-droite)) calc(20px + var(--safe-bas))
+    calc(16px + var(--safe-gauche));
   animation: remontee 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -637,11 +661,13 @@ button {
 
 /* ---------- Écran de connexion ---------- */
 .ecran-auth {
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 24px 20px calc(24px + var(--safe-bas));
+  padding: calc(24px + var(--safe-haut)) calc(20px + var(--safe-droite))
+    calc(24px + var(--safe-bas)) calc(20px + var(--safe-gauche));
   max-width: 440px;
   margin: 0 auto;
 }

@@ -2,10 +2,10 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1"
-    />
+    <!-- `maximum-scale=1` retiré : il interdisait d'agrandir à deux doigts,
+         c'est-à-dire le geste même de quelqu'un qui ne lit pas quelque chose.
+         iOS l'ignore depuis longtemps, Android l'appliquait. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Licol</title>
     <meta name="description" content="Licol — le carnet partagé de votre cheval : planning de demi-pension, séances et suivi santé." />
     <meta name="theme-color" content="#1f3a2e" />
@@ -13,7 +13,12 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icone-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- `default` et non `black-translucent` : cette dernière fait passer la
+         page SOUS la barre d'état une fois l'application installée sur
+         l'écran d'accueil — l'en-tête se retrouvait derrière l'heure et la
+         batterie — et y écrit en blanc, illisible sur un fond clair. Elle
+         convient à une interface sombre en pleine page, pas à celle-ci. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Licol" />
   </head>
   <body>
