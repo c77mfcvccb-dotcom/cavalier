@@ -31,6 +31,7 @@ PWA installable sur l'écran d'accueil. Interface entièrement en français.
 | Hébergement  | Vercel                                            |
 | Paiement     | RevenueCat Web Billing (`@revenuecat/purchases-js`) |
 | Style        | CSS, une feuille unique, mobile-first             |
+| Vérification | Playwright, en français (`npm run verif`)         |
 
 Aucune dépendance UI externe : tout l'habillage tient dans une feuille de
 style. Le SDK de paiement, lui, pèse plus lourd que le reste de
@@ -137,6 +138,33 @@ L'application est servie sur http://localhost:5173.
 | `npm run build`   | Build de production dans `dist/`                  |
 | `npm run preview` | Prévisualise le build                             |
 | `npm run icones`  | Régénère les icônes PNG de la PWA                 |
+| `npm run verif`   | Vérifications de fumée sur le build de production  |
+
+### Avant chaque mise en ligne
+
+```bash
+npm run verif
+```
+
+Construit l'application, la sert, et ouvre **quinze écrans en 320 et 390 px de
+large** dans un vrai navigateur : chacun doit s'afficher, sans erreur
+JavaScript et sans déborder de l'écran. S'y ajoutent le carnet de santé sur
+ses trois paliers d'échéance, la création d'un créneau depuis le calendrier,
+et le repli du plan gratuit. Supabase n'est jamais appelé : les réponses sont
+simulées dans [`tests/fumee.mjs`](tests/fumee.mjs), avec les données qui
+piègent — un cheval partagé entre trois cavaliers dont deux homonymes.
+
+Ce n'est pas une couverture complète : c'est le filet qui attrape ce qu'un
+abonné verrait tout de suite. La sortie est en français, et un échec dit de
+ne pas déployer.
+
+Première fois, sur un poste neuf :
+
+```bash
+npm install
+npx playwright install chromium
+```
+
 
 ## Comment fonctionne le partage en demi-pension
 

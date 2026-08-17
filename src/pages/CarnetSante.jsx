@@ -104,7 +104,7 @@ export default function CarnetSante() {
               <h1>{cheval.nom}</h1>
               <p className="doux">Carnet de santé — édité le {formatDate(new Date())}</p>
             </div>
-            {cheval.photo_url && <img src={cheval.photo_url} alt="" />}
+            {cheval.photo_url && <img src={cheval.photo_url} alt="" decoding="async" />}
           </header>
 
           <section>

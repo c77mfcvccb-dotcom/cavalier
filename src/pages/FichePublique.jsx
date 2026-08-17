@@ -74,7 +74,7 @@ export default function FichePublique() {
               <h1>{cheval.nom}</h1>
               <p className="doux">Carnet de santé — consultation en lecture seule</p>
             </div>
-            {cheval.photo_url && <img src={cheval.photo_url} alt="" />}
+            {cheval.photo_url && <img src={cheval.photo_url} alt="" decoding="async" />}
           </header>
 
           {identite.length > 0 && (

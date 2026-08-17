@@ -34,10 +34,24 @@ export function Succes({ children }) {
   return <div className="succes">{children}</div>
 }
 
+/**
+ * `loading="lazy"` et `decoding="async"` sur les photos : elles arrivent en
+ * listes — dix chevaux, autant d'avatars sur un carnet de séances — et rien
+ * n'oblige à télécharger puis décoder celles qui sont hors de l'écran avant
+ * que la page ne s'affiche.
+ */
 export function Avatar({ profil, taille = 'normal' }) {
   const classe = `avatar${taille === 'grand' ? ' grand' : ''}`
   if (profil?.photo_url) {
-    return <img className={classe} src={profil.photo_url} alt={profil.nom || ''} />
+    return (
+      <img
+        className={classe}
+        src={profil.photo_url}
+        alt={profil.nom || ''}
+        loading="lazy"
+        decoding="async"
+      />
+    )
   }
   return <div className={classe}>{initiales(profil?.nom)}</div>
 }
@@ -45,7 +59,15 @@ export function Avatar({ profil, taille = 'normal' }) {
 export function PhotoCheval({ cheval, grande = false }) {
   const classe = `photo-cheval${grande ? ' grande' : ''}`
   if (cheval?.photo_url) {
-    return <img className={classe} src={cheval.photo_url} alt={cheval.nom} />
+    return (
+      <img
+        className={classe}
+        src={cheval.photo_url}
+        alt={cheval.nom}
+        loading="lazy"
+        decoding="async"
+      />
+    )
   }
   return <div className={`${classe} vide`}>🐴</div>
 }

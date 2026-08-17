@@ -1,34 +1,54 @@
+import { Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './contexte/AuthContexte'
 import { configurationManquante } from './lib/supabase'
 import { Chargement } from './composants/Ui'
 import LimiteErreur from './composants/LimiteErreur'
+import { ecranDiffere } from './lib/ecrans'
 import { NavBas } from './composants/Mise'
 
 import Rappels from './composants/Rappels'
 import Connexion from './pages/Connexion'
-import Inscription from './pages/Inscription'
-import MotDePasseOublie from './pages/MotDePasseOublie'
-import Reinitialisation from './pages/Reinitialisation'
 import TableauBord from './pages/TableauBord'
 import MesChevaux from './pages/MesChevaux'
-import NouveauCheval from './pages/NouveauCheval'
 import FicheCheval from './pages/FicheCheval'
-import RejoindreCheval from './pages/RejoindreCheval'
-import CalendrierGlobal from './pages/CalendrierGlobal'
 import Profil from './pages/Profil'
-import Premium from './pages/Premium'
-import CarnetSante from './pages/CarnetSante'
-import ReglagesRappels from './pages/ReglagesRappels'
-import FichePublique from './pages/FichePublique'
-import Cgv from './pages/legales/Cgv'
-import MentionsLegales from './pages/legales/MentionsLegales'
-import Confidentialite from './pages/legales/Confidentialite'
-import ClubCavalerie from './pages/ClubCavalerie'
-import ClubSante from './pages/ClubSante'
-import ClubPlanning from './pages/ClubPlanning'
-import ClubDepenses from './pages/ClubDepenses'
-import Depenses from './pages/Depenses'
+
+/**
+ * Écrans chargés à la demande.
+ *
+ * Le premier écran d'un cavalier n'a besoin ni des pages légales, ni de
+ * l'abonnement, ni des trois écrans de club — soit un tiers du code de
+ * l'application. Les charger d'avance retarde l'affichage de l'accueil sur
+ * un téléphone en 4G, pour des écrans que beaucoup n'ouvriront jamais.
+ *
+ * Restent chargés d'emblée : l'accueil, la liste des chevaux, la fiche du
+ * cheval et ses quatre onglets. C'est la boucle quotidienne, et y faire
+ * clignoter un indicateur de chargement coûterait plus que ce qu'il
+ * rapporte.
+ *
+ * Un chunk qui ne se télécharge pas — réseau coupé, déploiement en cours —
+ * lève une erreur attrapée par LimiteErreur : écran lisible et bouton de
+ * rechargement, pas page blanche.
+ */
+const Inscription = ecranDiffere(() => import('./pages/Inscription'))
+const MotDePasseOublie = ecranDiffere(() => import('./pages/MotDePasseOublie'))
+const Reinitialisation = ecranDiffere(() => import('./pages/Reinitialisation'))
+const Premium = ecranDiffere(() => import('./pages/Premium'))
+const CarnetSante = ecranDiffere(() => import('./pages/CarnetSante'))
+const ReglagesRappels = ecranDiffere(() => import('./pages/ReglagesRappels'))
+const FichePublique = ecranDiffere(() => import('./pages/FichePublique'))
+const Cgv = ecranDiffere(() => import('./pages/legales/Cgv'))
+const MentionsLegales = ecranDiffere(() => import('./pages/legales/MentionsLegales'))
+const Confidentialite = ecranDiffere(() => import('./pages/legales/Confidentialite'))
+const ClubCavalerie = ecranDiffere(() => import('./pages/ClubCavalerie'))
+const ClubSante = ecranDiffere(() => import('./pages/ClubSante'))
+const ClubPlanning = ecranDiffere(() => import('./pages/ClubPlanning'))
+const ClubDepenses = ecranDiffere(() => import('./pages/ClubDepenses'))
+const Depenses = ecranDiffere(() => import('./pages/Depenses'))
+const NouveauCheval = ecranDiffere(() => import('./pages/NouveauCheval'))
+const RejoindreCheval = ecranDiffere(() => import('./pages/RejoindreCheval'))
+const CalendrierGlobal = ecranDiffere(() => import('./pages/CalendrierGlobal'))
 
 function ConfigurationRequise() {
   return (
@@ -57,7 +77,13 @@ export default function App() {
   // une session, l'application basculerait donc en mode connecté et
   // renverrait vers l'accueil — avec sa barre de navigation — avant même que
   // le nouveau mot de passe ait pu être saisi.
-  if (pathname === '/reinitialisation') return <Reinitialisation />
+  if (pathname === '/reinitialisation') {
+    return (
+      <Suspense fallback={<Chargement />}>
+        <Reinitialisation />
+      </Suspense>
+    )
+  }
 
   // Le lien de récupération n'atterrit pas toujours sur /reinitialisation :
   // si l'URL de retour n'est pas dans la liste blanche du projet Supabase,
@@ -68,7 +94,8 @@ export default function App() {
 
   if (!session) {
     return (
-      <Routes>
+      <Suspense fallback={<Chargement />}>
+        <Routes>
         {/* La fiche partagée s'ouvre sans compte : elle précède la redirection. */}
         <Route path="/public/:token" element={<FichePublique />} />
         {/* Les pages légales aussi : elles doivent être lisibles AVANT de
@@ -79,8 +106,9 @@ export default function App() {
         <Route path="/connexion" element={<Connexion />} />
         <Route path="/inscription" element={<Inscription />} />
         <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
-        <Route path="*" element={<Navigate to="/connexion" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/connexion" replace />} />
+        </Routes>
+      </Suspense>
     )
   }
 
@@ -94,40 +122,42 @@ export default function App() {
       {/* Remonté à chaque changement d'écran : sans cette clé, une erreur
           survenue sur un onglet condamnerait tous les suivants. */}
       <LimiteErreur key={pathname}>
-        <Routes>
-          {estClub ? (
-            <>
-              <Route path="/" element={<ClubCavalerie />} />
-              <Route path="/sante" element={<ClubSante />} />
-              <Route path="/planning" element={<ClubPlanning />} />
-            </>
-          ) : (
-            <>
-              <Route path="/" element={<TableauBord />} />
-              <Route path="/chevaux" element={<MesChevaux />} />
-              <Route path="/calendrier" element={<CalendrierGlobal />} />
-              <Route path="/rejoindre" element={<RejoindreCheval />} />
-            </>
-          )}
+        <Suspense fallback={<Chargement />}>
+          <Routes>
+            {estClub ? (
+              <>
+                <Route path="/" element={<ClubCavalerie />} />
+                <Route path="/sante" element={<ClubSante />} />
+                <Route path="/planning" element={<ClubPlanning />} />
+              </>
+            ) : (
+              <>
+                <Route path="/" element={<TableauBord />} />
+                <Route path="/chevaux" element={<MesChevaux />} />
+                <Route path="/calendrier" element={<CalendrierGlobal />} />
+                <Route path="/rejoindre" element={<RejoindreCheval />} />
+              </>
+            )}
 
-          <Route path="/public/:token" element={<FichePublique />} />
-          <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
-          <Route path="/chevaux/:id" element={<FicheCheval />} />
-          <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
-          <Route path="/chevaux/:id/rappels" element={<ReglagesRappels />} />
-          <Route path="/depenses" element={<Depenses />} />
-          <Route path="/depenses/soins" element={<ClubDepenses />} />
-          <Route path="/profil" element={<Profil />} />
-          <Route path="/premium" element={<Premium />} />
-          {/* Accessible connecté : le lien « demander un nouveau lien » de
-              l'écran de réinitialisation peut être suivi alors qu'une session
-              est déjà ouverte. */}
-          <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
-          <Route path="/cgv" element={<Cgv />} />
-          <Route path="/mentions-legales" element={<MentionsLegales />} />
-          <Route path="/confidentialite" element={<Confidentialite />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="/public/:token" element={<FichePublique />} />
+            <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
+            <Route path="/chevaux/:id" element={<FicheCheval />} />
+            <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
+            <Route path="/chevaux/:id/rappels" element={<ReglagesRappels />} />
+            <Route path="/depenses" element={<Depenses />} />
+            <Route path="/depenses/soins" element={<ClubDepenses />} />
+            <Route path="/profil" element={<Profil />} />
+            <Route path="/premium" element={<Premium />} />
+            {/* Accessible connecté : le lien « demander un nouveau lien » de
+                l'écran de réinitialisation peut être suivi alors qu'une session
+                est déjà ouverte. */}
+            <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+            <Route path="/cgv" element={<Cgv />} />
+            <Route path="/mentions-legales" element={<MentionsLegales />} />
+            <Route path="/confidentialite" element={<Confidentialite />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </LimiteErreur>
 
       <NavBas />
