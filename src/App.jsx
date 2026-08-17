@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './contexte/AuthContexte'
 import { configurationManquante } from './lib/supabase'
 import { Chargement } from './composants/Ui'
+import LimiteErreur from './composants/LimiteErreur'
 import { NavBas } from './composants/Mise'
 
 import Rappels from './composants/Rappels'
@@ -90,40 +91,44 @@ export default function App() {
     <div className="app">
       <Rappels />
 
-      <Routes>
-        {estClub ? (
-          <>
-            <Route path="/" element={<ClubCavalerie />} />
-            <Route path="/sante" element={<ClubSante />} />
-            <Route path="/planning" element={<ClubPlanning />} />
-          </>
-        ) : (
-          <>
-            <Route path="/" element={<TableauBord />} />
-            <Route path="/chevaux" element={<MesChevaux />} />
-            <Route path="/calendrier" element={<CalendrierGlobal />} />
-            <Route path="/rejoindre" element={<RejoindreCheval />} />
-          </>
-        )}
+      {/* Remonté à chaque changement d'écran : sans cette clé, une erreur
+          survenue sur un onglet condamnerait tous les suivants. */}
+      <LimiteErreur key={pathname}>
+        <Routes>
+          {estClub ? (
+            <>
+              <Route path="/" element={<ClubCavalerie />} />
+              <Route path="/sante" element={<ClubSante />} />
+              <Route path="/planning" element={<ClubPlanning />} />
+            </>
+          ) : (
+            <>
+              <Route path="/" element={<TableauBord />} />
+              <Route path="/chevaux" element={<MesChevaux />} />
+              <Route path="/calendrier" element={<CalendrierGlobal />} />
+              <Route path="/rejoindre" element={<RejoindreCheval />} />
+            </>
+          )}
 
-        <Route path="/public/:token" element={<FichePublique />} />
-        <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
-        <Route path="/chevaux/:id" element={<FicheCheval />} />
-        <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
-        <Route path="/chevaux/:id/rappels" element={<ReglagesRappels />} />
-        <Route path="/depenses" element={<Depenses />} />
-        <Route path="/depenses/soins" element={<ClubDepenses />} />
-        <Route path="/profil" element={<Profil />} />
-        <Route path="/premium" element={<Premium />} />
-        {/* Accessible connecté : le lien « demander un nouveau lien » de
-            l'écran de réinitialisation peut être suivi alors qu'une session
-            est déjà ouverte. */}
-        <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
-        <Route path="/cgv" element={<Cgv />} />
-        <Route path="/mentions-legales" element={<MentionsLegales />} />
-        <Route path="/confidentialite" element={<Confidentialite />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="/public/:token" element={<FichePublique />} />
+          <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
+          <Route path="/chevaux/:id" element={<FicheCheval />} />
+          <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
+          <Route path="/chevaux/:id/rappels" element={<ReglagesRappels />} />
+          <Route path="/depenses" element={<Depenses />} />
+          <Route path="/depenses/soins" element={<ClubDepenses />} />
+          <Route path="/profil" element={<Profil />} />
+          <Route path="/premium" element={<Premium />} />
+          {/* Accessible connecté : le lien « demander un nouveau lien » de
+              l'écran de réinitialisation peut être suivi alors qu'une session
+              est déjà ouverte. */}
+          <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
+          <Route path="/cgv" element={<Cgv />} />
+          <Route path="/mentions-legales" element={<MentionsLegales />} />
+          <Route path="/confidentialite" element={<Confidentialite />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </LimiteErreur>
 
       <NavBas />
     </div>

@@ -74,6 +74,13 @@ Trois états au lieu de quatre : le palier « ce mois-ci » diluait l'alerte.
 Une échéance à 29 jours n'appelle aucune action, et la signaler apprend à
 ignorer les signalements.
 
+> Le seuil des 14 jours vit dans `SEUIL_URGENCE_JOURS`
+> (`src/lib/constantes.js`) et dans `v_echeances`. Il a été écrit en clair
+> dans deux fichiers avec deux valeurs différentes — 7 d'un côté, 14 de
+> l'autre — et l'onglet Soins produisait en plus un quatrième statut qui
+> n'existait plus, ce qui vidait l'écran. D'où la constante partagée, et le
+> repli sur « à jour » partout où un libellé est lu.
+
 Les échéances à jour **restent affichées** sur l'accueil. Sans le vert, un
 carnet en règle serait indistinguable d'un carnet vide. La cloche, elle, ne
 retient que le rouge et l'orange : une échéance à jour n'est pas un rappel.

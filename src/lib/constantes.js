@@ -125,6 +125,16 @@ export const STATUTS_ECHEANCE = {
   ok: { libelle: 'À jour', classe: 'ok' },
 }
 
+/**
+ * Seuil de l'état « à prévoir », en jours.
+ *
+ * Doit rester égal à celui de `v_echeances` (migration 0011). Il vivait
+ * jusqu'ici en clair dans deux fichiers, avec deux valeurs différentes —
+ * 7 d'un côté, 14 de l'autre : la fiche d'un cheval annonçait « à jour »
+ * une échéance que l'accueil signalait en orange.
+ */
+export const SEUIL_URGENCE_JOURS = 14
+
 export const SEXES = {
   jument: 'Jument',
   hongre: 'Hongre',

@@ -5,18 +5,30 @@ import { useAuth } from '../../contexte/AuthContexte'
 import { chargerSoins } from '../../lib/requetes'
 import { Champ, Chargement, Erreur, EtatVide, Feuille } from '../../composants/Ui'
 import BloquePremium from '../../composants/BloquePremium'
-import { PROTOCOLES_VACCIN, STATUTS_ECHEANCE, TYPES_SOIN } from '../../lib/constantes'
+import {
+  PROTOCOLES_VACCIN,
+  SEUIL_URGENCE_JOURS,
+  STATUTS_ECHEANCE,
+  TYPES_SOIN,
+} from '../../lib/constantes'
 import { ajouterJours, cleJour, formatDate, joursRelatifs } from '../../lib/format'
 
-/** Statut calculé côté client, avec les mêmes seuils que la vue v_echeances. */
+/**
+ * Statut calculé côté client, avec les mêmes seuils que la vue v_echeances.
+ *
+ * Trois états, comme partout ailleurs. Cette fonction en rendait un
+ * quatrième, « bientot », disparu des libellés quand le palier « ce mois-ci »
+ * a été retiré : la lecture des libellés renvoyait alors `undefined`, et
+ * l'onglet Soins se vidait à l'écran dès qu'une échéance tombait entre 8 et
+ * 30 jours.
+ */
 function statutEcheance(dateEcheance) {
   if (!dateEcheance) return null
   const jours = Math.round(
     (new Date(dateEcheance) - new Date(cleJour(new Date()))) / 86400000
   )
   if (jours < 0) return { cle: 'retard', jours }
-  if (jours <= 7) return { cle: 'urgent', jours }
-  if (jours <= 30) return { cle: 'bientot', jours }
+  if (jours <= SEUIL_URGENCE_JOURS) return { cle: 'urgent', jours }
   return { cle: 'ok', jours }
 }
 
@@ -168,6 +180,9 @@ export default function OngletSoins({ cheval }) {
             {echeances.map((soin) => {
               const type = TYPES_SOIN[soin.type] || TYPES_SOIN.autre
               const statut = statutEcheance(soin.prochaine_echeance)
+              // Repli, comme partout ailleurs : un libellé manquant doit
+              // dégrader l'affichage, pas effacer l'écran.
+              const libelle = STATUTS_ECHEANCE[statut.cle] || STATUTS_ECHEANCE.ok
               return (
                 <div key={`echeance-${soin.id}`} className="element">
                   <span style={{ fontSize: '1.4rem' }}>{type.emoji}</span>
@@ -178,9 +193,7 @@ export default function OngletSoins({ cheval }) {
                       {joursRelatifs(statut.jours)}
                     </div>
                   </div>
-                  <span className={`badge ${STATUTS_ECHEANCE[statut.cle].classe}`}>
-                    {STATUTS_ECHEANCE[statut.cle].libelle}
-                  </span>
+                  <span className={`badge ${libelle.classe}`}>{libelle.libelle}</span>
                 </div>
               )
             })}
