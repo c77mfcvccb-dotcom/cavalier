@@ -150,6 +150,18 @@ export const CATEGORIES_DOCUMENT = {
   autre: { libelle: 'Autre', emoji: '📎' },
 }
 
+/**
+ * Nombre maximal de documents par cheval, selon le plan de celui qui ajoute.
+ *
+ * Le quota se compte par cheval — c'est son carnet qui se remplit — mais la
+ * limite applicable dépend du plan de l'ajouteur : sur un cheval partagé,
+ * la cavalière gratuite bute à 10 quand la premium peut aller à 50.
+ *
+ * La limite qui fait foi est le trigger de la migration 0016 ; ces
+ * constantes ne servent qu'à l'annoncer avant de buter dessus.
+ */
+export const QUOTA_DOCUMENTS = { gratuit: 10, premium: 50 }
+
 export const SEXES = {
   jument: 'Jument',
   hongre: 'Hongre',

@@ -103,6 +103,28 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
 
   async function supprimerCheval() {
     if (!window.confirm(`Supprimer définitivement ${cheval.nom} et tout son suivi ?`)) return
+
+    // Les fichiers du bucket d'abord, tant qu'on a encore accès au cheval :
+    // supprimer la ligne efface les métadonnées en cascade, mais seule l'API
+    // Storage détruit réellement un fichier — et une fois le cheval parti,
+    // le RLS de stockage ne laisse plus y toucher. En meilleur effort : un
+    // raté ici ne doit pas bloquer la suppression, le script
+    // scripts/nettoyer-documents.mjs rattrape les orphelins.
+    try {
+      const chemins = []
+      for (let page = 0; ; page++) {
+        const { data, error } = await supabase.storage
+          .from('documents')
+          .list(cheval.id, { limit: 100, offset: page * 100 })
+        if (error || !data?.length) break
+        chemins.push(...data.map((f) => `${cheval.id}/${f.name}`))
+        if (data.length < 100) break
+      }
+      if (chemins.length) await supabase.storage.from('documents').remove(chemins)
+    } catch (e) {
+      console.warn('Purge des documents impossible avant suppression', e)
+    }
+
     const { error } = await supabase.from('chevaux').delete().eq('id', cheval.id)
     if (error) setErreur(error.message)
     else navigate('/', { replace: true })

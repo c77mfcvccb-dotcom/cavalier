@@ -8,7 +8,7 @@
 | Carnet de santé | inaccessible, lecture comprise |
 | Calendrier | aucun créneau créé ni déplacé au-delà du dimanche courant |
 | Dépenses | module inaccessible, lecture comprise |
-| Documents | module inaccessible, lecture comprise — fichiers déjà envoyés compris |
+| Documents | 10 documents par cheval (50 en Premium) — 5 Mo par fichier |
 
 > Les dépenses sont **cloisonnées par compte** : sur un cheval en
 > demi-pension, chaque cavalier ne voit et ne totalise que ce qu'il a

@@ -121,8 +121,27 @@ reste à **un cheval par compte, créé ou rejoint** (migration 0006).
 | `type_mime`     | text    |                                                       |
 | `ajoute_par`    | uuid FK | profil de l'auteur                                    |
 
-Fonctionnalité **premium** (migration 0015), sur le même modèle que le
-carnet de soins : la politique RLS conditionne l'accès, pas l'interface.
+Module **freemium** (migrations 0015 puis 0016) : accessible à tous les
+cavaliers liés au cheval, borné par un quota — **10 documents par cheval en
+gratuit, 50 en premium**. Le quota se compte par cheval, la limite dépend du
+plan de celui qui ajoute ; c'est un trigger `BEFORE INSERT`
+(`verifier_quota_documents`, code d'erreur `QUOTA_DOCUMENTS`) qui l'impose,
+pour les mêmes raisons qu'en 0006 : il couvre tous les chemins d'écriture et
+son message se traduit à l'écran.
+
+**5 Mo par fichier**, verrouillés par le `file_size_limit` du bucket — la
+borne de l'interface n'est qu'un message plus aimable. Les images (JPG, PNG,
+WebP, HEIC) sont compressées côté client avant l'envoi : 1200 px sur le plus
+grand côté, JPEG qualité 80. Une photo de téléphone de 8 Mo finit à quelques
+centaines de kilooctets ; la limite ne mord en pratique que sur les PDF, qui
+partent tels quels.
+
+**Suppression et orphelins.** Supprimer un cheval efface ses lignes en
+cascade, mais seule l'API Storage détruit réellement un fichier :
+l'application purge donc le dossier du cheval **avant** de le supprimer
+(tant que le RLS de stockage l'y autorise encore), en meilleur effort. Le
+script `scripts/nettoyer-documents.mjs` (clé service_role) liste puis, avec
+`--supprimer`, efface les fichiers orphelins et les lignes fantômes.
 
 **Bucket privé**, à la différence de `photos` : une carte d'immatriculation
 n'a pas vocation à être accessible par une URL publique devinable. Le

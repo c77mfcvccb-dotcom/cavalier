@@ -231,16 +231,17 @@ export async function verifier(base) {
       await page.close()
     }
 
-    // ── Documents : le plan gratuit renvoie à l'abonnement ────────────
+    // ── Documents : accessibles en gratuit, quota annoncé ─────────────
     {
       const { page } = await ouvrirPage(navigateur, base, { premium: false })
       await page.goto(`${base}/chevaux/${CHEVAL}?onglet=documents`, { waitUntil: 'domcontentloaded' })
-      // `body` plutôt que `main` : si l'écran reste bloqué sur le chargement,
-      // `main` n'existe pas et le test expirerait au lieu d'échouer proprement.
       await page.waitForTimeout(1200)
-      const texte = await page.locator('body').innerText()
-      noter('Documents — plan gratuit renvoie à l’abonnement',
-        /[Pp]remium/.test(texte), texte.replace(/\s+/g, ' ').slice(0, 80))
+      const lignes = await page.locator('.liste .element').count()
+      const texte = (await page.locator('body').innerText()).replace(/\s+/g, ' ')
+      noter('Documents — la liste s’affiche en plan gratuit', lignes === 2, `${lignes} ligne(s)`)
+      noter('Documents — le quota gratuit est annoncé', texte.includes('/10 documents'), texte.slice(0, 100))
+      noter('Documents — l’ajout reste possible sous le quota',
+        (await page.getByRole('button', { name: /Ajouter un document/ }).count()) === 1)
       await page.close()
     }
 

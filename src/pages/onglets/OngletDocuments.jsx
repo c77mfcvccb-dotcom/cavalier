@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerDocuments } from '../../lib/requetes'
+import { Link } from 'react-router-dom'
 import { Champ, Chargement, Erreur, EtatVide, Feuille } from '../../composants/Ui'
-import BloquePremium from '../../composants/BloquePremium'
-import { CATEGORIES_DOCUMENT } from '../../lib/constantes'
+import { CATEGORIES_DOCUMENT, QUOTA_DOCUMENTS } from '../../lib/constantes'
 import { formatDate } from '../../lib/format'
 
-const TAILLE_MAX_OCTETS = 15 * 1024 * 1024 // doit rester égal au bucket (migration 0015)
+const TAILLE_MAX_OCTETS = 5 * 1024 * 1024 // doit rester égal au bucket (migration 0016)
 
 /** « 2,3 Mo », pas d'octets bruts : lisible sans faire le calcul. */
 function tailleLisible(octets) {
@@ -18,19 +18,21 @@ function tailleLisible(octets) {
 }
 
 /**
- * Redimensionne une photo de papier avant l'envoi, comme ChargeurPhoto.
+ * Compresse une image de papier avant l'envoi : 1200 px sur le plus grand
+ * côté, JPEG qualité 80. C'est ce qui fait qu'une photo de 8 Mo prise au
+ * téléphone finit à quelques centaines de kilooctets — et passe donc très
+ * en dessous de la limite de 5 Mo, qui ne s'applique en pratique qu'aux
+ * fichiers anormaux et aux PDF.
  *
- * Un côté plus grand qu'une photo d'avatar (1600 plutôt que 900) : un
- * document doit rester lisible en zoomant, pas seulement reconnaissable.
- * Un PDF, lui, traverse sans y toucher — le compresser casserait sa mise
- * en page, et il est déjà d'une taille raisonnable la plupart du temps.
+ * Un PDF traverse sans y toucher : le compresser casserait sa mise en page.
+ * JPG, PNG, WebP, HEIC passent tous par le canvas et ressortent en JPEG.
  */
 async function fichierAEnvoyer(fichier) {
   if (!fichier.type.startsWith('image/')) return fichier
 
   try {
     const bitmap = await createImageBitmap(fichier)
-    const echelle = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height))
+    const echelle = Math.min(1, 1200 / Math.max(bitmap.width, bitmap.height))
     const largeur = Math.round(bitmap.width * echelle)
     const hauteur = Math.round(bitmap.height * echelle)
 
@@ -39,12 +41,13 @@ async function fichierAEnvoyer(fichier) {
     canvas.height = hauteur
     canvas.getContext('2d').drawImage(bitmap, 0, 0, largeur, hauteur)
 
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.86))
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.8))
     return blob ? new File([blob], fichier.name, { type: 'image/jpeg' }) : fichier
   } catch (e) {
     // HEIC mal supporté par ce navigateur, fichier corrompu… : mieux vaut
-    // envoyer l'original que perdre le document.
-    console.warn('Redimensionnement impossible, envoi du fichier original', e)
+    // tenter l'original que perdre le document — la limite de taille le
+    // jugera ensuite.
+    console.warn('Compression impossible, envoi du fichier original', e)
     return fichier
   }
 }
@@ -54,18 +57,19 @@ async function fichierAEnvoyer(fichier) {
  * traité par `fichierAEnvoyer`, pas celui choisi dans le sélecteur. Une
  * photo HEIC recompressée en JPEG doit finir en `.jpg`, pas en `.heic`.
  */
-function extensionEnvoyee(fichierOriginal, aEnvoyer) {
+function extensionEnvoyee(fichier) {
   const PAR_TYPE = {
     'application/pdf': 'pdf',
     'image/jpeg': 'jpg',
     'image/png': 'png',
+    'image/webp': 'webp',
     'image/heic': 'heic',
     'image/heif': 'heif',
   }
-  if (PAR_TYPE[aEnvoyer.type]) return PAR_TYPE[aEnvoyer.type]
+  if (PAR_TYPE[fichier.type]) return PAR_TYPE[fichier.type]
 
-  const point = fichierOriginal.name.lastIndexOf('.')
-  return point > 0 ? fichierOriginal.name.slice(point + 1).toLowerCase() : 'bin'
+  const point = fichier.name.lastIndexOf('.')
+  return point > 0 ? fichier.name.slice(point + 1).toLowerCase() : 'bin'
 }
 
 export default function OngletDocuments({ cheval }) {
@@ -75,11 +79,13 @@ export default function OngletDocuments({ cheval }) {
   const [erreur, setErreur] = useState('')
   const [feuilleOuverte, setFeuilleOuverte] = useState(false)
 
+  // Le quota se compte par cheval, la limite dépend du plan de celui qui
+  // ajoute. Celle qui fait foi est le trigger de la migration 0016 ; ici on
+  // l'annonce avant de buter dessus.
+  const limite = estPremium ? QUOTA_DOCUMENTS.premium : QUOTA_DOCUMENTS.gratuit
+  const quotaAtteint = documents.length >= limite
+
   const recharger = useCallback(async () => {
-    if (!estPremium) {
-      setChargement(false)
-      return
-    }
     try {
       setDocuments(await chargerDocuments(cheval.id))
     } catch (e) {
@@ -87,7 +93,7 @@ export default function OngletDocuments({ cheval }) {
     } finally {
       setChargement(false)
     }
-  }, [cheval.id, estPremium])
+  }, [cheval.id])
 
   useEffect(() => {
     recharger()
@@ -129,26 +135,40 @@ export default function OngletDocuments({ cheval }) {
     else recharger()
   }
 
-  if (!estPremium) {
-    return (
-      <BloquePremium
-        emoji="🪪"
-        titre="Documents du cheval"
-        texte="Papiers d'identification, contrat de demi-pension, attestation d'assurance : rangés une fois, visibles par tous les cavaliers liés au cheval."
-        motif="documents"
-      />
-    )
-  }
-
   if (chargement) return <Chargement />
 
   return (
     <div className="pile" style={{ gap: 18 }}>
       <Erreur>{erreur}</Erreur>
 
-      <button className="bouton pleine-largeur" onClick={() => setFeuilleOuverte(true)}>
-        + Ajouter un document
-      </button>
+      {quotaAtteint ? (
+        // L'invite remplace le bouton plutôt que de le griser : un bouton
+        // gris dit « ça ne marche pas », celle-ci dit quoi faire.
+        <div className="carte">
+          <p className="gras">Limite de {limite} documents atteinte pour ce cheval</p>
+          <p className="doux" style={{ marginTop: 6 }}>
+            {estPremium
+              ? 'Supprimez des documents pour pouvoir en ajouter de nouveaux.'
+              : `Supprimez des documents, ou passez en Premium pour en ranger jusqu'à ${QUOTA_DOCUMENTS.premium} par cheval.`}
+          </p>
+          {!estPremium && (
+            <Link to="/premium?motif=documents" className="bouton" style={{ marginTop: 12 }}>
+              Découvrir Premium
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div>
+          <button className="bouton pleine-largeur" onClick={() => setFeuilleOuverte(true)}>
+            + Ajouter un document
+          </button>
+          {documents.length > 0 && (
+            <p className="aide centre" style={{ marginTop: 6 }}>
+              {documents.length}/{limite} documents pour ce cheval
+            </p>
+          )}
+        </div>
+      )}
 
       {documents.length === 0 ? (
         <EtatVide
@@ -203,6 +223,7 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
   const [fichier, setFichier] = useState(null)
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
+  const [preparation, setPreparation] = useState(false)
 
   const [etaitOuverte, setEtaitOuverte] = useState(false)
   if (ouverte !== etaitOuverte) {
@@ -235,16 +256,43 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
     }
   }
 
-  function surSelection(evenement) {
+  /**
+   * La compression se fait DÈS la sélection, pas à l'envoi, et le contrôle
+   * de taille porte sur ce qui partira réellement. L'ordre compte : une
+   * photo de 8 Mo prise au téléphone finit à quelques centaines de
+   * kilooctets une fois ramenée à 1200 px — la refuser sur son poids
+   * d'origine reviendrait à refuser à peu près toutes les photos récentes.
+   * Un PDF, lui, part tel quel : 5 Mo est sa vraie limite.
+   */
+  async function surSelection(evenement) {
     const choisi = evenement.target.files?.[0]
+    // Rechoisir le même fichier doit redéclencher l'événement.
+    evenement.target.value = ''
     if (!choisi) return
-    if (choisi.size > TAILLE_MAX_OCTETS) {
-      setErreur('Ce fichier dépasse 15 Mo. Une photo plutôt qu’un scan haute résolution passe en général largement en dessous.')
-      evenement.target.value = ''
+
+    setErreur('')
+    setFichier(null)
+
+    if (choisi.type !== 'application/pdf' && !choisi.type.startsWith('image/')) {
+      setErreur('Seuls les PDF et les images sont acceptés.')
       return
     }
-    setErreur('')
-    setFichier(choisi)
+
+    setPreparation(true)
+    try {
+      const prepare = await fichierAEnvoyer(choisi)
+      if (prepare.size > TAILLE_MAX_OCTETS) {
+        setErreur(
+          prepare.type === 'application/pdf'
+            ? 'Fichier trop lourd (max 5 Mo). Une photo du document, plutôt qu’un scan haute résolution, passe largement en dessous.'
+            : 'Fichier trop lourd (max 5 Mo), même après compression.'
+        )
+        return
+      }
+      setFichier(prepare)
+    } finally {
+      setPreparation(false)
+    }
   }
 
   async function enregistrer(evenement) {
@@ -267,12 +315,12 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
     setErreur('')
     setEnvoi(true)
     try {
-      const aEnvoyer = await fichierAEnvoyer(fichier)
-      const chemin = `${cheval.id}/${crypto.randomUUID()}.${extensionEnvoyee(fichier, aEnvoyer)}`
+      // Déjà compressé et jaugé à la sélection : rien à refaire ici.
+      const chemin = `${cheval.id}/${crypto.randomUUID()}.${extensionEnvoyee(fichier)}`
 
       const { error: erreurEnvoi } = await supabase.storage
         .from('documents')
-        .upload(chemin, aEnvoyer, { contentType: aEnvoyer.type, upsert: false })
+        .upload(chemin, fichier, { contentType: fichier.type, upsert: false })
       if (erreurEnvoi) throw erreurEnvoi
 
       const { error } = await supabase.from('documents').insert({
@@ -280,8 +328,8 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
         categorie,
         nom: nom.trim() || CATEGORIES_DOCUMENT[categorie].libelle,
         chemin,
-        taille_octets: aEnvoyer.size,
-        type_mime: aEnvoyer.type,
+        taille_octets: fichier.size,
+        type_mime: fichier.type,
         ajoute_par: profilId,
       })
       if (error) {
@@ -293,7 +341,15 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
 
       onAjoute()
     } catch (e) {
-      setErreur(e.message || "L'envoi a échoué")
+      // Refus du trigger de quota (0016) : le co-cavalier a pu remplir le
+      // carnet pendant que cette feuille était ouverte.
+      if (e.message?.includes('QUOTA_DOCUMENTS')) {
+        setErreur('La limite de documents de ce cheval est atteinte. Fermez cette fenêtre : la liste vous dira quoi faire.')
+      } else if (/exceeded the maximum allowed size|Payload too large/i.test(e.message || '')) {
+        setErreur('Fichier trop lourd (max 5 Mo).')
+      } else {
+        setErreur(e.message || "L'envoi a échoué")
+      }
     } finally {
       setEnvoi(false)
     }
@@ -360,13 +416,14 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
               </Champ>
             )}
 
-            <Champ label="Fichier" aide="PDF, photo ou scan — 15 Mo maximum">
+            <Champ label="Fichier" aide="PDF ou photo — 5 Mo maximum, les images sont compressées automatiquement">
               <button
                 type="button"
                 className="bouton secondaire pleine-largeur"
                 onClick={() => champRef.current?.click()}
+                disabled={preparation}
               >
-                {fichier ? fichier.name : 'Choisir un fichier'}
+                {preparation ? 'Préparation…' : fichier ? fichier.name : 'Choisir un fichier'}
               </button>
             </Champ>
           </>
