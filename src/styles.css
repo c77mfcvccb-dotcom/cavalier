@@ -709,6 +709,23 @@ button {
 .ligne-oubli a { font-size: 0.84rem; color: var(--texte-doux); text-decoration: underline; }
 .ligne-oubli a:hover { color: var(--texte); }
 
+/* Rangée de puces pour un choix court (motif, discipline) : la version
+   compacte de .choix-compte, quand cinq ou six options en grille de grandes
+   cartes pousseraient le bouton d'envoi hors de l'écran. */
+.choix-puces { display: flex; flex-wrap: wrap; gap: 8px; }
+.choix-puces button {
+  border: 1px solid var(--bordure);
+  background: var(--carte);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+}
+.choix-puces button.actif {
+  border-color: var(--vert);
+  background: #f2f7f4;
+  font-weight: 600;
+}
+
 .choix-compte { display: grid; gap: 12px; margin-bottom: 18px; }
 
 .choix-compte button {

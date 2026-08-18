@@ -19,7 +19,11 @@ se régénèrent avec `npm run icones`.
   un carnet de séances, le suivi santé avec alertes d'échéances, et les
   documents administratifs du cheval rangés une fois pour toutes.
 - **Côté club** : le pilotage de la cavalerie, le même suivi santé en vue
-  globale triée par urgence, et le planning « qui monte quel cheval quand ».
+  globale triée par urgence, et le planning complet — les cours avec leurs
+  inscriptions et leur liste d'attente, l'attribution des chevaux éclairée
+  par la charge de travail et les indisponibilités, et les créneaux « qui
+  monte quel cheval quand ». Côté cavalier, l'écran **Cours** montre le
+  planning de son club, l'inscription en un appui, et le cheval attribué.
 
 PWA installable sur l'écran d'accueil. Interface entièrement en français.
 
@@ -77,6 +81,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0014_agenda_temps_reel.sql` | Diffusion temps réel des créneaux et des soins : le calendrier d'un co-cavalier se met à jour pendant qu'un autre écrit |
 | `0015_documents.sql` | Table `documents` et bucket de stockage privé pour les papiers du cheval (identification, contrat DP, assurance) |
 | `0016_documents_quotas.sql` | Documents ouverts au plan gratuit avec quota (10 par cheval, 50 en premium), 5 Mo par fichier, WebP accepté |
+| `0017_cours_et_indisponibilites.sql` | L'outil écurie : planning des cours avec inscriptions et liste d'attente, attribution des chevaux, indisponibilités et charge de travail |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
@@ -150,11 +155,12 @@ L'application est servie sur http://localhost:5173.
 npm run verif
 ```
 
-Construit l'application, la sert, et ouvre **quinze écrans en 320 et 390 px de
-large** dans un vrai navigateur : chacun doit s'afficher, sans erreur
+Construit l'application, la sert, et ouvre **dix-sept écrans en 320 et 390 px
+de large** dans un vrai navigateur : chacun doit s'afficher, sans erreur
 JavaScript et sans déborder de l'écran. S'y ajoutent le carnet de santé sur
 ses trois paliers d'échéance, la création d'un créneau depuis le calendrier,
-et le repli du plan gratuit. Supabase n'est jamais appelé : les réponses sont
+les cours du club (statut, cheval attribué, désinscription), le cheval au
+repos signalé sur sa fiche, et le repli du plan gratuit. Supabase n'est jamais appelé : les réponses sont
 simulées dans [`tests/fumee.mjs`](tests/fumee.mjs), avec les données qui
 piègent — un cheval partagé entre trois cavaliers dont deux homonymes.
 

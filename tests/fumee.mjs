@@ -16,8 +16,11 @@
 import { chromium } from 'playwright'
 
 const CHEVAL = 'cccccccc-0000-4000-8000-00000000000a'
+const CHEVAL_CLUB = 'cccccccc-0000-4000-8000-00000000000b'
+const CLUB = '11111111-2222-4333-8444-555555555550'
 const MOI = '11111111-2222-4333-8444-555555555551'
 const AUTRE = '11111111-2222-4333-8444-555555555552'
+const COURS = 'dddddddd-0000-4000-8000-00000000000a'
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const dans = (n) => {
@@ -30,6 +33,25 @@ const jourDuMois = (n, h = 10) => {
   d.setDate(n)
   d.setHours(h, 0, 0, 0)
   return d.toISOString()
+}
+const demain = (h = 18) => {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  d.setHours(h, 0, 0, 0)
+  return d.toISOString()
+}
+
+/**
+ * Applique les filtres `colonne=eq.valeur` de l'URL PostgREST aux lignes
+ * simulées. Sans cela, la liste des cavaliers d'un cheval ramènerait aussi
+ * ceux de l'autre — le vrai serveur, lui, filtre.
+ */
+const filtrerEq = (url, lignes, colonnes) => {
+  for (const colonne of colonnes) {
+    const m = new RegExp(`[?&]${colonne}=eq\\.([^&]+)`).exec(url)
+    if (m) lignes = lignes.filter((l) => String(l[colonne]) === decodeURIComponent(m[1]))
+  }
+  return lignes
 }
 
 /** Réponses simulées de Supabase, calquées sur les formes réelles. */
@@ -57,12 +79,14 @@ function reponse(url, methode, premium) {
   }
   if (url.includes('/rest/v1/cheval_cavaliers')) {
     // Deux prénoms identiques : le cas qui exige de désambiguïser les
-    // étiquettes du calendrier.
-    return [
-      { id: 'l0', cheval_id: CHEVAL, cavalier_id: AUTRE, role: 'proprietaire', couleur: '#6366f1', cree_le: '2024-01-01', profil: { id: AUTRE, nom: 'Marie Leroy' }, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, cree_par: AUTRE } },
-      { id: 'l1', cheval_id: CHEVAL, cavalier_id: MOI, role: 'demi_pension', couleur: '#e11d48', cree_le: '2024-02-01', profil: { id: MOI, nom: 'Alice Martin' }, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, cree_par: AUTRE } },
-      { id: 'l2', cheval_id: CHEVAL, cavalier_id: 'x3', role: 'demi_pension', couleur: '#059669', cree_le: '2024-03-01', profil: { id: 'x3', nom: 'Marie Dupont' }, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, cree_par: AUTRE } },
-    ]
+    // étiquettes du calendrier. Et un cheval de club en plus : c'est lui qui
+    // rattache Alice au club et fait exister l'écran des cours.
+    return filtrerEq(url, [
+      { id: 'l0', cheval_id: CHEVAL, cavalier_id: AUTRE, role: 'proprietaire', couleur: '#6366f1', cree_le: '2024-01-01', profil: { id: AUTRE, nom: 'Marie Leroy' }, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, cree_par: AUTRE, club: null } },
+      { id: 'l1', cheval_id: CHEVAL, cavalier_id: MOI, role: 'demi_pension', couleur: '#e11d48', cree_le: '2024-02-01', profil: { id: MOI, nom: 'Alice Martin' }, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, cree_par: AUTRE, club: null } },
+      { id: 'l2', cheval_id: CHEVAL, cavalier_id: 'x3', role: 'demi_pension', couleur: '#059669', cree_le: '2024-03-01', profil: { id: 'x3', nom: 'Marie Dupont' }, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, cree_par: AUTRE, club: null } },
+      { id: 'l3', cheval_id: CHEVAL_CLUB, cavalier_id: MOI, role: 'cavalier_club', couleur: '#0ea5e9', cree_le: '2024-04-01', profil: { id: MOI, nom: 'Alice Martin' }, cheval: { id: CHEVAL_CLUB, nom: 'Quenotte', club_id: CLUB, cree_par: CLUB, club: { id: CLUB, nom: 'Écuries du Vallon' } } },
+    ], ['cheval_id', 'cavalier_id'])
   }
   if (url.includes('/rest/v1/creneaux')) {
     if (methode === 'POST') return []
@@ -102,6 +126,37 @@ function reponse(url, methode, premium) {
   }
   if (url.includes('/rest/v1/v_echeances') || url.includes('/rest/v1/v_rappels')) {
     return [{ id: 'e1', cheval_id: CHEVAL, cheval_nom: 'Ivoire de la Bergerie', type: 'vermifuge', prochaine_echeance: dans(-4), jours_restants: -4, statut: 'retard', praticien: null, lu: false }]
+  }
+  if (url.includes('/rest/v1/inscriptions_cours')) {
+    return []
+  }
+  if (url.includes('/rest/v1/cours')) {
+    if (methode === 'POST') return []
+    // Un cours demain soir : Alice inscrite avec son cheval attribué, une
+    // autre cavalière inscrite, une troisième en liste d'attente.
+    return [{
+      id: COURS, club_id: CLUB, debut: demain(18), fin: demain(19),
+      discipline: 'obstacle', niveau: 'Galop 3-4', places: 2, moniteur: 'Julie', notes: null,
+      club: { id: CLUB, nom: 'Écuries du Vallon' },
+      inscriptions: [
+        { id: 'i1', cavalier_id: MOI, cheval_id: CHEVAL_CLUB, statut: 'inscrit', present: null, cree_le: '2024-05-01', cavalier: { id: MOI, nom: 'Alice Martin', niveau_galop: 4 }, cheval: { id: CHEVAL_CLUB, nom: 'Quenotte' } },
+        { id: 'i2', cavalier_id: 'x4', cheval_id: null, statut: 'inscrit', present: null, cree_le: '2024-05-02', cavalier: { id: 'x4', nom: 'Nina Fabre', niveau_galop: 3 }, cheval: null },
+        { id: 'i3', cavalier_id: 'x5', cheval_id: null, statut: 'attente', present: null, cree_le: '2024-05-03', cavalier: { id: 'x5', nom: 'Sacha Blanc', niveau_galop: 2 }, cheval: null },
+      ],
+    }]
+  }
+  if (url.includes('/rest/v1/indisponibilites')) {
+    if (methode === 'POST') return []
+    // Ivoire au repos : le badge doit se voir sur sa fiche.
+    return [
+      { id: 'ind1', cheval_id: CHEVAL, motif: 'osteo', debut: dans(-2), fin: dans(5), note: 'Séance ostéo lundi', cree_par: AUTRE, cree_le: dans(-2), profil: { id: AUTRE, nom: 'Marie Leroy' } },
+    ]
+  }
+  if (url.includes('/rest/v1/v_charge_chevaux')) {
+    return [
+      { cheval_id: CHEVAL, aujourd_hui: 1, semaine: 3 },
+      { cheval_id: CHEVAL_CLUB, aujourd_hui: 0, semaine: 2 },
+    ]
   }
   return []
 }
@@ -155,6 +210,7 @@ const ECRANS = [
   ['/', 'Accueil'],
   ['/chevaux', 'Mes chevaux'],
   ['/calendrier', 'Calendrier'],
+  ['/cours', 'Cours du club'],
   ['/depenses', 'Dépenses'],
   ['/profil', 'Profil'],
   ['/premium', 'Abonnement'],
@@ -262,6 +318,44 @@ export async function verifier(base) {
       await page.waitForTimeout(400)
       noter('Calendrier — le second appui ouvre la création',
         (await page.locator('.feuille').count()) === 1)
+      await page.close()
+    }
+
+    // ── Cours du club : statut, attribution et liste d'attente ────────
+    {
+      const { page } = await ouvrirPage(navigateur, base)
+      await page.goto(`${base}/cours`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Cours — le cours du club est affiché', texte.includes('Obstacle') && texte.includes('Galop 3-4'), texte.slice(0, 120))
+      noter('Cours — le statut « Inscrit » est visible', texte.includes('Inscrit'), texte.slice(0, 120))
+      noter('Cours — le cheval attribué est annoncé', texte.includes('Quenotte'), texte.slice(0, 120))
+      // Le détail s'ouvre au premier appui et propose la désinscription
+      await page.locator('.carte .element').first().click()
+      await page.waitForTimeout(300)
+      noter('Cours — le détail propose la désinscription',
+        (await page.getByRole('button', { name: /Me désinscrire/ }).count()) === 1)
+      await page.close()
+    }
+
+    // ── L'accueil annonce les cours du club ───────────────────────────
+    {
+      const { page } = await ouvrirPage(navigateur, base)
+      await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Accueil — la section « Cours du club » apparaît', texte.includes('Cours du club'), texte.slice(0, 120))
+      await page.close()
+    }
+
+    // ── La fiche signale le cheval au repos ───────────────────────────
+    {
+      const { page } = await ouvrirPage(navigateur, base)
+      await page.goto(`${base}/chevaux/${CHEVAL}?onglet=fiche`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Fiche — l\'indisponibilité en cours est signalée', texte.includes('Ostéopathie'), texte.slice(0, 120))
+      noter('Fiche — la section Disponibilité liste le repos', texte.includes('Disponibilité'), texte.slice(0, 120))
       await page.close()
     }
 

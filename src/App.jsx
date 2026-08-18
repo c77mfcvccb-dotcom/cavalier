@@ -49,6 +49,7 @@ const Depenses = ecranDiffere(() => import('./pages/Depenses'))
 const NouveauCheval = ecranDiffere(() => import('./pages/NouveauCheval'))
 const RejoindreCheval = ecranDiffere(() => import('./pages/RejoindreCheval'))
 const CalendrierGlobal = ecranDiffere(() => import('./pages/CalendrierGlobal'))
+const MesCours = ecranDiffere(() => import('./pages/MesCours'))
 
 function ConfigurationRequise() {
   return (
@@ -135,6 +136,7 @@ export default function App() {
                 <Route path="/" element={<TableauBord />} />
                 <Route path="/chevaux" element={<MesChevaux />} />
                 <Route path="/calendrier" element={<CalendrierGlobal />} />
+                <Route path="/cours" element={<MesCours />} />
                 <Route path="/rejoindre" element={<RejoindreCheval />} />
               </>
             )}

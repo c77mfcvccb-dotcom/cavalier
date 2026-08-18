@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
-import { chargerCreneaux, chargerEcheances, chargerMesChevaux } from '../lib/requetes'
+import { chargerCours, chargerCreneaux, chargerEcheances, chargerMesChevaux } from '../lib/requetes'
 import { Chargement, EtatVide, Erreur, PhotoCheval } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import CarteEcheance from '../composants/CarteEcheance'
 import { formatDate, formatHeure } from '../lib/format'
-import { TYPES_CRENEAU } from '../lib/constantes'
+import { DISCIPLINES_COURS, TYPES_CRENEAU } from '../lib/constantes'
 
 export default function TableauBord() {
   const { profil, utilisateur } = useAuth()
   const [chevaux, setChevaux] = useState([])
   const [echeances, setEcheances] = useState([])
   const [creneaux, setCreneaux] = useState([])
+  const [cours, setCours] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
 
@@ -28,16 +29,22 @@ export default function TableauBord() {
         const dans30Jours = new Date()
         dans30Jours.setDate(dans30Jours.getDate() + 30)
 
-        const [prochainesEcheances, prochainsCreneaux] = await Promise.all([
+        // Les cours du club n'existent que pour un cavalier rattaché à un
+        // club — inutile d'interroger la table pour les autres.
+        const estDuClub = mesChevaux.some((cheval) => cheval.club_id)
+
+        const [prochainesEcheances, prochainsCreneaux, prochainsCours] = await Promise.all([
           chargerEcheances({ limite: 6 }),
           chargerCreneaux({
             chevauxIds: mesChevaux.map((c) => c.id),
             debut: new Date(),
             fin: dans30Jours,
           }),
+          estDuClub ? chargerCours({ debut: new Date(), fin: dans30Jours }) : Promise.resolve([]),
         ])
 
         if (annule) return
+        setCours(prochainsCours.slice(0, 3))
         // Les échéances à jour restent affichées : le code couleur n'a de
         // sens que si le vert existe. Sans lui, un carnet en règle est
         // indistinguable d'un carnet vide.
@@ -132,6 +139,41 @@ export default function TableauBord() {
                 </div>
               )}
             </section>
+
+            {cours.length > 0 && (
+              <section className="section">
+                <div className="titre-section">
+                  <h2>Cours du club</h2>
+                  <Link to="/cours" className="lien">Tous les cours</Link>
+                </div>
+
+                <div className="liste">
+                  {cours.map((c) => {
+                    const maPlace = c.inscriptions?.find((i) => i.cavalier_id === profil.id)
+                    return (
+                      <Link key={c.id} to="/cours" className="element">
+                        <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
+                        <div className="corps">
+                          <div className="titre">
+                            {DISCIPLINES_COURS[c.discipline]?.emoji}{' '}
+                            {DISCIPLINES_COURS[c.discipline]?.libelle}
+                            {c.niveau ? ` · ${c.niveau}` : ''}
+                          </div>
+                          <div className="meta">
+                            {formatDate(c.debut, { court: true })} à {formatHeure(c.debut)}
+                            {maPlace?.cheval ? ` · sur ${maPlace.cheval.nom}` : ''}
+                          </div>
+                        </div>
+                        {maPlace?.statut === 'inscrit' && <span className="badge ok">Inscrit</span>}
+                        {maPlace?.statut === 'attente' && (
+                          <span className="badge urgent">Attente</span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
 
             <section className="section">
               <div className="titre-section">

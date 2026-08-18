@@ -214,6 +214,75 @@ vaccin, vermifuge, ostéo, dentiste.
 habituel du type (ferrure 6 semaines, vermifuge 3 mois, vaccin 1 an, dentiste
 1 an, ostéo 6 mois) — modifiable.
 
+### `indisponibilites` — le cheval au repos (migration 0017)
+
+| colonne     | type | notes                                                       |
+|-------------|------|-------------------------------------------------------------|
+| `cheval_id` | uuid |                                                             |
+| `motif`     | text | `boiterie` \| `repos` \| `osteo` \| `veterinaire` \| `autre` |
+| `debut`     | date | aujourd'hui par défaut                                      |
+| `fin`       | date | **nullable** — vide = jusqu'à nouvel ordre                  |
+| `note`, `cree_par` | |                                                       |
+
+En **dates**, pas en horodatages : « au repos jusqu'au 25 » est une réalité
+de journées. Tous les cavaliers du cheval la voient ; seul le gestionnaire
+(propriétaire ou club) la pose et la lève. « Lever » ferme l'indisponibilité
+(`fin` = aujourd'hui) au lieu de l'effacer : l'historique dira pourquoi le
+cheval n'a pas tourné cette semaine-là.
+
+### `cours` — le planning du club (migration 0017)
+
+| colonne      | type        | notes                                        |
+|--------------|-------------|----------------------------------------------|
+| `club_id`    | uuid FK     | profil de type `club`                        |
+| `debut`/`fin`| timestamptz |                                              |
+| `discipline` | text        | `dressage` \| `obstacle` \| `cross` \| `balade` \| `poney` \| `autre` |
+| `niveau`     | text        | libre — « Galop 3-4 »                        |
+| `places`     | int         | 1 à 30, 6 par défaut                         |
+| `moniteur`   | text        | simple texte : en faire un compte serait un troisième rôle, prématuré |
+| `notes`      | text        |                                              |
+
+Un cours n'est **pas** un créneau : le créneau lie un cavalier à un cheval,
+le cours est une **capacité** sur laquelle des cavaliers s'inscrivent et
+reçoivent chacun un cheval. Visible du club et de ses cavaliers — est « du
+club » quiconque est lié à au moins un de ses chevaux
+(`est_cavalier_du_club()`, pas de table d'adhésion : elle divergerait de la
+réalité au premier départ).
+
+### `inscriptions_cours` — inscriptions, attribution, pointage
+
+| colonne       | type | notes                                                 |
+|---------------|------|-------------------------------------------------------|
+| `cours_id`    | uuid |                                                       |
+| `cavalier_id` | uuid | unique par cours                                      |
+| `cheval_id`   | uuid | **l'attribution**, posée par le club, jamais par le cavalier |
+| `statut`      | text | `inscrit` \| `attente` — décidé par la base, pas par le client |
+| `present`     | bool | nullable — le pointage du jour J                      |
+
+Trois triggers portent les règles :
+
+- `placer_inscription` (BEFORE INSERT) compte les inscrits sous verrou de la
+  ligne du cours et place le nouveau venu — `inscrit` s'il reste une place,
+  `attente` sinon. Deux inscriptions simultanées sur la dernière place ne
+  peuvent pas passer toutes les deux.
+- `promouvoir_attente` (AFTER DELETE) : une place se libère → le plus ancien
+  de la liste d'attente monte, automatiquement.
+- `verifier_cheval_cours` (BEFORE INSERT/UPDATE de `cheval_id`) refuse un
+  cheval d'un autre club (`CHEVAL_HORS_CLUB`) ou indisponible à la date du
+  cours (`CHEVAL_INDISPONIBLE`) — l'interface prévient, la base tranche.
+
+Côté RLS, le cavalier s'inscrit lui-même **les mains vides** (ni cheval ni
+présence à l'insertion) et peut se désinscrire ; attribution, pointage et
+inscriptions d'office restent au club.
+
+### Vue `v_charge_chevaux`
+
+`security_invoker`, une ligne par cheval visible : `aujourd_hui` et
+`semaine` (de J−3 à J+4) comptent créneaux du calendrier **et** attributions
+de cours confondus. C'est le « Quenotte a déjà tourné trois fois » qui rend
+l'attribution intelligente, affiché sur la cavalerie du club et dans le
+sélecteur d'attribution.
+
 ### Vue `v_echeances`
 Vue en `security_invoker` (le RLS des tables sous-jacentes s'applique) qui
 expose chaque soin ayant une `prochaine_echeance`, avec le nom et la photo du

@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { Avatar, Champ, Erreur, Feuille, PhotoCheval } from '../../composants/Ui'
 import ChargeurPhoto from '../../composants/ChargeurPhoto'
-import { PARTICIPANTS_MAX, ROLES, SEXES } from '../../lib/constantes'
+import { MOTIFS_INDISPO, PARTICIPANTS_MAX, ROLES, SEXES } from '../../lib/constantes'
 import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
-import { formatDate, texteAge } from '../../lib/format'
+import { chargerIndisponibilites, indisponibiliteActive } from '../../lib/requetes'
+import { cleJour, formatDate, texteAge } from '../../lib/format'
 
 export default function OngletFiche({ cheval, cavaliers, estGestionnaire, recharger }) {
   const { profil } = useAuth()
@@ -15,6 +16,8 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
   const [editionOuverte, setEditionOuverte] = useState(false)
   const [invitationOuverte, setInvitationOuverte] = useState(false)
   const [partageOuvert, setPartageOuvert] = useState(false)
+  const [indispoOuverte, setIndispoOuverte] = useState(false)
+  const [indisponibilites, setIndisponibilites] = useState([])
   const [lienPublic, setLienPublic] = useState(null)
   const [code, setCode] = useState('')
   const [erreur, setErreur] = useState('')
@@ -42,6 +45,35 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
   }, [cheval.id, estGestionnaire])
 
   const urlPublique = lienPublic ? `${window.location.origin}/public/${lienPublic}` : null
+
+  const rechargerIndispos = useCallback(
+    () => chargerIndisponibilites([cheval.id]).then(setIndisponibilites).catch(() => {}),
+    [cheval.id]
+  )
+  useEffect(() => {
+    rechargerIndispos()
+  }, [rechargerIndispos])
+
+  const indispoEnCours = indisponibiliteActive(indisponibilites, cheval.id)
+
+  // « Lever » remet le cheval au travail aujourd'hui même : l'indisponibilité
+  // se ferme au lieu d'être effacée — l'historique dira un jour pourquoi il
+  // n'a pas tourné cette semaine-là. Une indisponibilité qui n'a pas encore
+  // commencé, elle, se supprime : il n'y a rien à archiver.
+  async function leverIndispo(indispo) {
+    const { error } = await supabase
+      .from('indisponibilites')
+      .update({ fin: cleJour(new Date()) })
+      .eq('id', indispo.id)
+    if (error) setErreur(error.message)
+    else rechargerIndispos()
+  }
+
+  async function supprimerIndispo(indispo) {
+    const { error } = await supabase.from('indisponibilites').delete().eq('id', indispo.id)
+    if (error) setErreur(error.message)
+    else rechargerIndispos()
+  }
 
   async function genererLienPublic() {
     setErreur('')
@@ -151,6 +183,20 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             <><dt>Propriétaire</dt><dd>{cheval.proprietaire_nom}</dd></>
           )}
           {cheval.club_id && (<><dt>Statut</dt><dd>Cheval de club</dd></>)}
+          {indispoEnCours && (
+            <>
+              <dt>Disponibilité</dt>
+              <dd>
+                <span className="badge retard">
+                  {MOTIFS_INDISPO[indispoEnCours.motif]?.emoji}{' '}
+                  {MOTIFS_INDISPO[indispoEnCours.motif]?.libelle || 'Indisponible'}
+                  {indispoEnCours.fin
+                    ? ` jusqu'au ${formatDate(indispoEnCours.fin, { court: true })}`
+                    : " jusqu'à nouvel ordre"}
+                </span>
+              </dd>
+            </>
+          )}
         </dl>
 
         {cheval.notes && (
@@ -221,6 +267,61 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             : 'Chaque cavalier lié a sa couleur : elle sert de repère dans le calendrier partagé.'}
         </p>
       </section>
+
+      {(estGestionnaire || indisponibilites.length > 0) && (
+        <section>
+          <div className="titre-section">
+            <h2>Disponibilité</h2>
+            {estGestionnaire && (
+              <button className="lien" onClick={() => setIndispoOuverte(true)}>
+                + Mettre au repos
+              </button>
+            )}
+          </div>
+
+          {indisponibilites.length === 0 ? (
+            <div className="carte centre doux">Disponible — aucune indisponibilité prévue</div>
+          ) : (
+            <div className="liste">
+              {indisponibilites.map((indispo) => {
+                // Clés « AAAA-MM-JJ » : l'ordre lexical est l'ordre des jours
+                const aVenir = indispo.debut > cleJour(new Date())
+                return (
+                  <div key={indispo.id} className="element">
+                    <div className="corps">
+                      <div className="titre">
+                        {MOTIFS_INDISPO[indispo.motif]?.emoji}{' '}
+                        {MOTIFS_INDISPO[indispo.motif]?.libelle || indispo.motif}
+                        {aVenir && <span className="doux"> (à venir)</span>}
+                      </div>
+                      <div className="meta">
+                        Du {formatDate(indispo.debut, { court: true })}
+                        {indispo.fin
+                          ? ` au ${formatDate(indispo.fin, { court: true })}`
+                          : " jusqu'à nouvel ordre"}
+                        {indispo.note ? ` · ${indispo.note}` : ''}
+                      </div>
+                    </div>
+                    {estGestionnaire && (
+                      <button
+                        className="bouton fantome petit"
+                        onClick={() => (aVenir ? supprimerIndispo(indispo) : leverIndispo(indispo))}
+                      >
+                        {aVenir ? 'Annuler' : 'Lever'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <p className="aide" style={{ marginTop: 10 }}>
+            Un cheval indisponible ne peut pas être attribué à un cours, et tous
+            ses cavaliers voient qu'il est au repos.
+          </p>
+        </section>
+      )}
 
       <section>
         <div className="titre-section">
@@ -351,7 +452,108 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           recharger()
         }}
       />
+
+      <FeuilleIndispo
+        cheval={cheval}
+        ouverte={indispoOuverte}
+        onFermer={() => setIndispoOuverte(false)}
+        onEnregistre={() => {
+          setIndispoOuverte(false)
+          rechargerIndispos()
+        }}
+      />
     </div>
+  )
+}
+
+function FeuilleIndispo({ cheval, ouverte, onFermer, onEnregistre }) {
+  const { profil } = useAuth()
+  const [motif, setMotif] = useState('repos')
+  const [debut, setDebut] = useState(() => cleJour(new Date()))
+  const [fin, setFin] = useState('')
+  const [note, setNote] = useState('')
+  const [erreur, setErreur] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+
+  // Chaque ouverture repart d'une feuille vierge datée d'aujourd'hui
+  const [etaitOuverte, setEtaitOuverte] = useState(false)
+  if (ouverte !== etaitOuverte) {
+    setEtaitOuverte(ouverte)
+    if (ouverte) {
+      setMotif('repos')
+      setDebut(cleJour(new Date()))
+      setFin('')
+      setNote('')
+      setErreur('')
+    }
+  }
+
+  async function enregistrer(evenement) {
+    evenement.preventDefault()
+    setErreur('')
+
+    if (fin && fin < debut) {
+      setErreur('La fin ne peut pas précéder le début.')
+      return
+    }
+
+    setEnvoi(true)
+    const { error } = await supabase.from('indisponibilites').insert({
+      cheval_id: cheval.id,
+      motif,
+      debut,
+      fin: fin || null,
+      note: note.trim() || null,
+      cree_par: profil.id,
+    })
+    setEnvoi(false)
+
+    if (error) setErreur(error.message)
+    else onEnregistre()
+  }
+
+  return (
+    <Feuille titre={`Mettre ${cheval.nom} au repos`} ouverte={ouverte} onFermer={onFermer}>
+      <form onSubmit={enregistrer}>
+        <Erreur>{erreur}</Erreur>
+
+        <Champ label="Motif">
+          <div className="choix-puces">
+            {Object.entries(MOTIFS_INDISPO).map(([cle, m]) => (
+              <button
+                key={cle}
+                type="button"
+                className={motif === cle ? 'actif' : undefined}
+                onClick={() => setMotif(cle)}
+              >
+                {m.emoji} {m.libelle}
+              </button>
+            ))}
+          </div>
+        </Champ>
+
+        <div className="ligne-champs">
+          <Champ label="Du">
+            <input type="date" value={debut} onChange={(e) => setDebut(e.target.value)} required />
+          </Champ>
+          <Champ label="Au" aide="Vide = jusqu'à nouvel ordre">
+            <input type="date" value={fin} min={debut} onChange={(e) => setFin(e.target.value)} />
+          </Champ>
+        </div>
+
+        <Champ label="Note">
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Contrôle vétérinaire vendredi…"
+          />
+        </Champ>
+
+        <button className="bouton pleine-largeur" disabled={envoi}>
+          {envoi ? 'Enregistrement…' : 'Mettre au repos'}
+        </button>
+      </form>
+    </Feuille>
   )
 }
 

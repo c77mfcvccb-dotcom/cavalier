@@ -1,6 +1,6 @@
 # Arborescence des écrans — Licol V1
 
-Mobile-first : navigation par barre d'onglets en bas d'écran, 4 onglets max,
+Mobile-first : navigation par barre d'onglets en bas d'écran, 5 onglets max,
 différente selon le type de compte. Tout est en français.
 
 ## Public (non connecté)
@@ -35,14 +35,24 @@ d'y rester enfermé.
 
 ## Compte CAVALIER
 
-Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
+Barre d'onglets : **Accueil · Chevaux · Calendrier · Dépenses · Profil**
 
 ```
 /                     ACCUEIL — tableau de bord
                       ├─ alertes échéances de soins triées par urgence
                       │  (retard en rouge, < 7 j en orange, < 30 j en gris)
                       ├─ mes prochains créneaux
+                      ├─ cours du club à venir, avec mon statut et mon cheval
+                      │  (seulement si je suis rattaché à un club)
                       └─ accès rapide « Rejoindre un cheval »
+
+/cours                COURS DU CLUB — le planning publié par mon club,
+                      jour par jour : discipline, niveau, moniteur, places.
+                      Un appui déplie le détail : qui vient, sur quel cheval,
+                      m'inscrire ou me désinscrire. Complet → inscription en
+                      liste d'attente, avec ma position ; une place libérée
+                      promeut automatiquement le premier de la liste (base).
+                      Le cheval attribué par le club s'affiche dès qu'il l'est
 
 /chevaux              MES CHEVAUX — cartes photo + nom + badge de rôle
                       (Propriétaire / Demi-pension / Cheval de club)
@@ -56,7 +66,10 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
 /chevaux/:id          FICHE CHEVAL — 5 onglets internes
    ├─ Fiche           photo, âge, race, robe, sexe, propriétaire,
    │                  cavaliers liés (avec leur couleur), bouton
-   │                  « Inviter en demi-pension » → génère le code
+   │                  « Inviter en demi-pension » → génère le code.
+   │                  Section Disponibilité : le gestionnaire met le cheval
+   │                  au repos (motif, dates, « jusqu'à nouvel ordre ») et
+   │                  le remet au travail ; tous les cavaliers le voient
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
@@ -83,11 +96,13 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
 
 ## Compte CLUB
 
-Barre d'onglets : **Cavalerie · Santé · Planning · Profil**
+Barre d'onglets : **Cavalerie · Santé · Planning · Dépenses · Profil**
 
 ```
 /                     CAVALERIE — liste de tous les chevaux du club,
-                      recherche, nombre de cavaliers liés par cheval
+                      recherche, nombre de cavaliers liés par cheval,
+                      charge de travail (« 2 fois aujourd'hui ») et badge
+                      « Au repos » quand une indisponibilité court
                       └─ bouton « Ajouter un cheval »
 
 /chevaux/:id          FICHE CHEVAL — mêmes 4 onglets que côté cavalier,
@@ -98,11 +113,16 @@ Barre d'onglets : **Cavalerie · Santé · Planning · Profil**
                       toutes les échéances de tous les chevaux,
                       triées par urgence, filtrables par type de soin
 
-/planning             PLANNING GLOBAL — qui monte quel cheval quand,
-                      vue semaine ; chaque créneau porte le nom du cheval
-                      et la couleur du cavalier. Les échéances de soins de
-                      la cavalerie s'intercalent au bon jour, dans le même
-                      rendu que côté cavalier
+/planning             PLANNING GLOBAL — vue semaine, trois natures de ligne :
+                      les COURS (création par le bouton +, capacité 1-30,
+                      discipline, niveau, moniteur), les créneaux « qui monte
+                      quel cheval quand », et les échéances de soins.
+                      Un appui sur un cours ouvre sa feuille : inscrits et
+                      liste d'attente, inscription d'office d'un cavalier,
+                      pointage présent/absent, et l'ATTRIBUTION des chevaux —
+                      le sélecteur annonce la charge du jour de chaque cheval
+                      et grise ceux au repos ; la base refuse de toute façon
+                      un cheval indisponible ou hors club (triggers 0017)
 
 /profil               Nom du club, photo, ville, présentation, déconnexion
 ```

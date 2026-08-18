@@ -2,11 +2,13 @@ import { useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 
 /**
- * Tables dont un changement doit rafraîchir un calendrier : les créneaux, et
- * les soins dont la vue `v_echeances` tire les échéances affichées sur la
- * même grille.
+ * Tables dont un changement doit rafraîchir un agenda : les créneaux, les
+ * soins dont la vue `v_echeances` tire les échéances affichées sur la même
+ * grille, et depuis la migration 0017 les cours du club, leurs inscriptions
+ * et les indisponibilités — un cavalier qui s'inscrit apparaît sur le
+ * planning de l'écurie pendant que le gérant le regarde.
  */
-const TABLES = ['creneaux', 'soins']
+const TABLES = ['creneaux', 'soins', 'cours', 'inscriptions_cours', 'indisponibilites']
 
 /** Rafale de saisies à deux : on ne recharge qu'une fois. */
 const REGROUPEMENT_MS = 150

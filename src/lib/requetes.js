@@ -221,6 +221,109 @@ export async function chargerSoins(chevalId) {
   return data || []
 }
 
+/**
+ * Indisponibilités encore actives ou à venir des chevaux donnés.
+ * `fin` nulle = jusqu'à nouvel ordre ; les indisponibilités déjà levées
+ * n'intéressent personne à l'écran, elles restent en base comme historique.
+ */
+export async function chargerIndisponibilites(chevauxIds) {
+  if (!chevauxIds?.length) return []
+
+  const { data, error } = await supabase
+    .from('indisponibilites')
+    .select('*, profil:profils(id, nom)')
+    .in('cheval_id', chevauxIds)
+    .or(`fin.is.null,fin.gte.${cleJour(new Date())}`)
+    .order('debut', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+/** L'indisponibilité qui couvre le jour donné, ou null. */
+export function indisponibiliteActive(indisponibilites, chevalId, jour = new Date()) {
+  const date = enDateLocale(cleJour(jour))
+  return (
+    (indisponibilites || []).find(
+      (i) =>
+        i.cheval_id === chevalId &&
+        enDateLocale(i.debut) <= date &&
+        (i.fin === null || enDateLocale(i.fin) >= date)
+    ) || null
+  )
+}
+
+/**
+ * Charge de travail par cheval — créneaux du calendrier et attributions de
+ * cours confondus — telle que la calcule la vue v_charge_chevaux :
+ * aujourd'hui, et les sept jours autour de maintenant.
+ */
+export async function chargerChargeChevaux(chevauxIds) {
+  if (!chevauxIds?.length) return new Map()
+
+  const { data, error } = await supabase
+    .from('v_charge_chevaux')
+    .select('*')
+    .in('cheval_id', chevauxIds)
+
+  if (error) throw error
+  return new Map((data || []).map((ligne) => [ligne.cheval_id, ligne]))
+}
+
+/**
+ * Cours d'un club sur une fenêtre, avec leurs inscriptions complètes.
+ * Les inscriptions reviennent triées par ancienneté : c'est l'ordre de la
+ * liste d'attente, et celui dans lequel la base promeut.
+ */
+export async function chargerCours({ clubId = null, debut = null, fin = null } = {}) {
+  let requete = supabase
+    .from('cours')
+    .select(
+      `*, club:profils(id, nom),
+       inscriptions:inscriptions_cours(
+         id, cavalier_id, cheval_id, statut, present, cree_le,
+         cavalier:profils(id, nom, photo_url, niveau_galop),
+         cheval:chevaux(id, nom)
+       )`
+    )
+    .order('debut')
+
+  if (clubId) requete = requete.eq('club_id', clubId)
+  if (debut) requete = requete.gte('debut', debut.toISOString())
+  if (fin) requete = requete.lte('debut', fin.toISOString())
+
+  const { data, error } = await requete
+  if (error) throw error
+  return (data || []).map((cours) => ({
+    ...cours,
+    inscriptions: (cours.inscriptions || []).sort((a, b) =>
+      (a.cree_le || '').localeCompare(b.cree_le || '')
+    ),
+  }))
+}
+
+/**
+ * Clubs auxquels un cavalier est rattaché. Pas de table d'adhésion : on est
+ * « du club » quand on est lié à au moins un de ses chevaux — le lien que
+ * crée le code d'invitation (même définition que est_cavalier_du_club en
+ * base, migration 0017).
+ */
+export async function chargerMesClubs(cavalierId) {
+  const { data, error } = await supabase
+    .from('cheval_cavaliers')
+    .select('cheval:chevaux(club:club_id(id, nom))')
+    .eq('cavalier_id', cavalierId)
+
+  if (error) throw error
+
+  const clubs = new Map()
+  for (const ligne of data || []) {
+    const club = ligne.cheval?.club
+    if (club) clubs.set(club.id, club)
+  }
+  return [...clubs.values()]
+}
+
 /** Documents administratifs du cheval, les plus récents d'abord. */
 export async function chargerDocuments(chevalId) {
   const { data, error } = await supabase

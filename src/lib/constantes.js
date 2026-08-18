@@ -162,6 +162,33 @@ export const CATEGORIES_DOCUMENT = {
  */
 export const QUOTA_DOCUMENTS = { gratuit: 10, premium: 50 }
 
+/**
+ * Disciplines d'un cours de club. Les clés sont contraintes en base
+ * (migration 0017) : en ajouter une ici sans toucher au `check` ferait
+ * échouer la création du cours.
+ */
+export const DISCIPLINES_COURS = {
+  dressage: { libelle: 'Dressage', emoji: '🎩' },
+  obstacle: { libelle: 'Obstacle', emoji: '🚧' },
+  cross: { libelle: 'Cross', emoji: '🌲' },
+  balade: { libelle: 'Balade', emoji: '🌤️' },
+  poney: { libelle: 'Poney', emoji: '🦄' },
+  autre: { libelle: 'Autre', emoji: '🐴' },
+}
+
+/**
+ * Motifs d'indisponibilité d'un cheval (migration 0017, même règle : les
+ * clés sont contraintes en base). « Repos » est le motif par défaut — c'est
+ * le plus fréquent, et le moins alarmant.
+ */
+export const MOTIFS_INDISPO = {
+  repos: { libelle: 'Repos', emoji: '😴' },
+  boiterie: { libelle: 'Boiterie', emoji: '🩹' },
+  osteo: { libelle: 'Ostéopathie', emoji: '🖐️' },
+  veterinaire: { libelle: 'Vétérinaire', emoji: '🩺' },
+  autre: { libelle: 'Autre', emoji: '📋' },
+}
+
 export const SEXES = {
   jument: 'Jument',
   hongre: 'Hongre',
