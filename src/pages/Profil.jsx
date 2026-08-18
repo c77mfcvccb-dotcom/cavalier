@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexte/AuthContexte'
+import { accesOffert } from '../lib/club'
 import { Avatar, Champ, Erreur, Succes } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import BlocAbonnement from '../composants/BlocAbonnement'
@@ -8,7 +10,8 @@ import ChargeurPhoto from '../composants/ChargeurPhoto'
 import PiedDePage from '../composants/PiedDePage'
 
 export default function Profil() {
-  const { profil, utilisateur, estClub, estPremium, rafraichirProfil, deconnexion } = useAuth()
+  const { profil, utilisateur, estClub, estPremium, adhesions, rafraichirProfil, deconnexion } =
+    useAuth()
 
   const [valeurs, setValeurs] = useState({
     nom: profil.nom || '',
@@ -65,12 +68,33 @@ export default function Profil() {
             <div className="doux">{utilisateur.email}</div>
             <div className="puces" style={{ marginTop: 6 }}>
               <span className="badge">{estClub ? 'Compte club' : 'Compte cavalier'}</span>
-              <span className={`badge ${estPremium ? 'ok' : 'contour'}`}>
-                {estPremium ? 'Premium' : 'Plan gratuit'}
+              <span className={`badge ${estPremium || accesOffert(adhesions) ? 'ok' : 'contour'}`}>
+                {estPremium
+                  ? 'Premium'
+                  : accesOffert(adhesions)
+                    ? "Accès offert par l'écurie"
+                    : 'Plan gratuit'}
               </span>
             </div>
           </div>
         </div>
+
+        {/* La rubrique club des deux visages : adhésions et statut côté
+            cavalier, membres et code d'adhésion côté gérant. */}
+        <Link to="/club" className="carte rangee" style={{ marginBottom: 18 }}>
+          <span style={{ fontSize: '1.4rem' }}>🏇</span>
+          <div className="corps" style={{ flex: 1 }}>
+            <div className="gras">Mon club</div>
+            <div className="doux" style={{ fontSize: '0.85rem' }}>
+              {estClub
+                ? "Membres, accès offerts et code d'adhésion"
+                : adhesions.length
+                  ? adhesions.map((a) => a.club_nom).join(' · ')
+                  : "Rejoindre une écurie avec son code d'adhésion"}
+            </div>
+          </div>
+          <span className="fleche">›</span>
+        </Link>
 
         <form onSubmit={enregistrer}>
           <Erreur>{erreur}</Erreur>

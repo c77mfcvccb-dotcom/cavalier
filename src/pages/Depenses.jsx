@@ -9,6 +9,7 @@ import BloquePremium from '../composants/BloquePremium'
 import GraphiqueMensuel from '../composants/GraphiqueMensuel'
 import FeuilleDepense from '../composants/FeuilleDepense'
 import { CATEGORIES_DEPENSE } from '../lib/constantes'
+import { accesOffert, couvertureClub } from '../lib/club'
 import { formatDate, formatMoisAnnee } from '../lib/format'
 import {
   cleMois,
@@ -25,7 +26,21 @@ import {
 } from '../lib/depenses'
 
 export default function Depenses() {
-  const { profil, estClub, estPremium } = useAuth()
+  const { profil, estClub, estPremium, adhesions } = useAuth()
+
+  // Premium contextuel (0018) : sans abonnement perso, un siège offert par
+  // une écurie ouvre le suivi — mais seulement les dépenses rattachées aux
+  // chevaux de son périmètre, jamais la comptabilité personnelle. Le RLS
+  // fait ce tri de toute façon ; l'écran se contente de ne pas proposer ce
+  // qui serait refusé.
+  const accesClub = accesOffert(adhesions)
+  const chevauxCouverts = useCallback(
+    (liste) =>
+      estPremium
+        ? liste
+        : liste.filter((cheval) => couvertureClub(cheval, adhesions)),
+    [estPremium, adhesions]
+  )
 
   const [mois, setMois] = useState(() => debutMois(new Date()))
   const [chevalFiltre, setChevalFiltre] = useState('')
@@ -43,7 +58,7 @@ export default function Depenses() {
    * à l'intérieur de la fenêtre ne touche donc pas la base.
    */
   const recharger = useCallback(async () => {
-    if (!estPremium) {
+    if (!estPremium && !accesClub) {
       setChargement(false)
       return
     }
@@ -68,7 +83,7 @@ export default function Depenses() {
     } finally {
       setChargement(false)
     }
-  }, [estPremium, mois, profil])
+  }, [estPremium, accesClub, mois, profil])
 
   useEffect(() => {
     recharger()
@@ -114,7 +129,7 @@ export default function Depenses() {
     setDepenses((liste) => liste.filter((d) => d.id !== depense.id))
   }
 
-  if (!estPremium) {
+  if (!estPremium && !accesClub) {
     return (
       <>
         <Entete titre="Dépenses" retour />
@@ -358,7 +373,8 @@ export default function Depenses() {
       <FeuilleDepense
         ouverte={feuilleOuverte}
         depense={enEdition}
-        chevaux={chevaux}
+        chevaux={chevauxCouverts(chevaux)}
+        sansCheval={estPremium}
         profilId={profil.id}
         moisAffiche={mois}
         onFermer={() => setFeuilleOuverte(false)}

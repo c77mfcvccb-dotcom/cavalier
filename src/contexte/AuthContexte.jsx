@@ -22,6 +22,7 @@ export function FournisseurAuth({ children }) {
   const [session, setSession] = useState(null)
   const [profil, setProfil] = useState(null)
   const [abonnement, setAbonnement] = useState(null)
+  const [adhesions, setAdhesions] = useState([])
   const [chargement, setChargement] = useState(true)
   // Lu dès le premier rendu : le drapeau est posé à l'import, donc déjà là.
   const [recuperation, setRecuperation] = useState(recuperationEnCours)
@@ -39,6 +40,19 @@ export function FournisseurAuth({ children }) {
       .eq('profil_id', utilisateur.id)
       .maybeSingle()
     setAbonnement(data ?? null)
+  }, [])
+
+  // Les adhésions aux écuries (migration 0018) : c'est par elles qu'un
+  // cavalier gratuit peut avoir le premium sur le périmètre de son club.
+  // Une erreur — migration pas encore exécutée, réseau — vaut « aucune » :
+  // l'application retombe sur le plan du compte, jamais sur un écran cassé.
+  const chargerAdhesions = useCallback(async (utilisateur) => {
+    if (!utilisateur) {
+      setAdhesions([])
+      return
+    }
+    const { data, error } = await supabase.rpc('mes_adhesions')
+    setAdhesions(error ? [] : (data ?? []))
   }, [])
 
   const chargerProfil = useCallback(async (utilisateur) => {
@@ -95,7 +109,11 @@ export function FournisseurAuth({ children }) {
 
     supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session)
-      await Promise.all([chargerProfil(data.session?.user), chargerAbonnement(data.session?.user)])
+      await Promise.all([
+        chargerProfil(data.session?.user),
+        chargerAbonnement(data.session?.user),
+        chargerAdhesions(data.session?.user),
+      ])
       setChargement(false)
     })
 
@@ -109,12 +127,16 @@ export function FournisseurAuth({ children }) {
         setRecuperation(true)
       }
       setSession(nouvelle)
-      await Promise.all([chargerProfil(nouvelle?.user), chargerAbonnement(nouvelle?.user)])
+      await Promise.all([
+        chargerProfil(nouvelle?.user),
+        chargerAbonnement(nouvelle?.user),
+        chargerAdhesions(nouvelle?.user),
+      ])
       setChargement(false)
     })
 
     return () => ecoute.subscription.unsubscribe()
-  }, [chargerProfil, chargerAbonnement])
+  }, [chargerProfil, chargerAbonnement, chargerAdhesions])
 
   const valeur = useMemo(
     () => ({
@@ -126,10 +148,12 @@ export function FournisseurAuth({ children }) {
       recuperation,
       abonnement,
       estPremium: abonnementActif(abonnement),
+      adhesions,
       rafraichirProfil: () => chargerProfil(session?.user),
       // Après un retour de RevenueCat, le webhook peut n'avoir pas encore
       // écrit : l'écran d'abonnement rappelle cette fonction en boucle courte.
       rafraichirAbonnement: () => chargerAbonnement(session?.user),
+      rafraichirAdhesions: () => chargerAdhesions(session?.user),
 
       /**
        * `versionCgv` conserve la trace de l'acceptation : sans elle, une case
@@ -220,9 +244,10 @@ export function FournisseurAuth({ children }) {
         setRecuperation(false)
         setProfil(null)
         setAbonnement(null)
+        setAdhesions([])
       },
     }),
-    [session, profil, abonnement, chargement, recuperation, chargerProfil, chargerAbonnement]
+    [session, profil, abonnement, adhesions, chargement, recuperation, chargerProfil, chargerAbonnement, chargerAdhesions]
   )
 
   return <AuthContexte.Provider value={valeur}>{children}</AuthContexte.Provider>

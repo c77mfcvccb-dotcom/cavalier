@@ -91,7 +91,17 @@ Barre d'onglets : **Accueil · Chevaux · Calendrier · Dépenses · Profil**
                       Second appui sur le jour choisi → création : direct
                       avec un seul cheval, sinon on demande lequel
 
-/profil               Nom, photo, galop, ville, téléphone, déconnexion
+/club                 MON CLUB — mes écuries : statut (membre / accès
+                      offert), les chevaux de l'écurie et les miens en
+                      pension, mise en pension d'un de mes chevaux,
+                      rejoindre une écurie avec son code d'adhésion,
+                      quitter. L'accès offert par l'écurie = premium sur
+                      son périmètre uniquement ; les chevaux personnels
+                      hors écurie restent sur le plan du compte
+
+/profil               Nom, photo, galop, ville, téléphone, déconnexion,
+                      badge de plan (Premium / Accès offert par l'écurie /
+                      Plan gratuit) et entrée « Mon club »
 ```
 
 ## Compte CLUB
@@ -123,6 +133,12 @@ Barre d'onglets : **Cavalerie · Santé · Planning · Dépenses · Profil**
                       le sélecteur annonce la charge du jour de chaque cheval
                       et grise ceux au repos ; la base refuse de toute façon
                       un cheval indisponible ou hors club (triggers 0017)
+
+/club                 MON CLUB (gérant) — le code d'adhésion multi-usage
+                      (affichage, partage, régénération : l'ancien meurt),
+                      et la liste des membres : accès offert donné ou
+                      retiré membre par membre (sièges illimités), retrait
+                      du club. Bandeau si l'abonnement du club est inactif
 
 /profil               Nom du club, photo, ville, présentation, déconnexion
 ```

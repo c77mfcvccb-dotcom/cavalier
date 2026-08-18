@@ -29,7 +29,7 @@ export default function MesCours() {
 
   const recharger = useCallback(async () => {
     const [mesClubs, mesChevaux, lesCours] = await Promise.all([
-      chargerMesClubs(profil.id),
+      chargerMesClubs(),
       chargerMesChevaux(profil.id),
       chargerCours({ debut: new Date() }),
     ])
@@ -110,9 +110,9 @@ export default function MesCours() {
           <EtatVide
             emoji="🎓"
             titre="Aucun club"
-            texte="Les cours apparaissent ici quand vous êtes rattaché à un club — c'est le club qui vous relie à un de ses chevaux, avec un code d'invitation."
+            texte="Les cours apparaissent ici quand vous êtes membre d'une écurie — elle vous transmet son code d'adhésion, à saisir dans Mon club."
             action={
-              <Link to="/rejoindre" className="bouton">J'ai un code d'invitation</Link>
+              <Link to="/club" className="bouton">J'ai un code d'adhésion</Link>
             }
           />
         ) : cours.length === 0 ? (

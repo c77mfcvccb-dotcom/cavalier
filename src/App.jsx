@@ -50,6 +50,7 @@ const NouveauCheval = ecranDiffere(() => import('./pages/NouveauCheval'))
 const RejoindreCheval = ecranDiffere(() => import('./pages/RejoindreCheval'))
 const CalendrierGlobal = ecranDiffere(() => import('./pages/CalendrierGlobal'))
 const MesCours = ecranDiffere(() => import('./pages/MesCours'))
+const MonClub = ecranDiffere(() => import('./pages/MonClub'))
 
 function ConfigurationRequise() {
   return (
@@ -142,6 +143,8 @@ export default function App() {
             )}
 
             <Route path="/public/:token" element={<FichePublique />} />
+            {/* La même route pour les deux visages : adhérent ou gérant. */}
+            <Route path="/club" element={<MonClub />} />
             <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
             <Route path="/chevaux/:id" element={<FicheCheval />} />
             <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />

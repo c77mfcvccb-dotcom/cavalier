@@ -8,6 +8,7 @@ import { Champ, Chargement, Erreur, Feuille } from '../../composants/Ui'
 import Calendrier from '../../composants/Calendrier'
 import { TYPES_CRENEAU } from '../../lib/constantes'
 import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
+import { premiumPourCheval } from '../../lib/club'
 import { cleJour, enDateLocale, formatDate, formatHeure, valeurDatetimeLocal } from '../../lib/format'
 import {
   creneauHorsPlanGratuit,
@@ -174,7 +175,10 @@ function FeuilleCreneau({
   onFermer,
   onAjoute,
 }) {
-  const { profil, estPremium } = useAuth()
+  const { profil, estPremium, adhesions } = useAuth()
+  // Premium contextuel (0018) : le siège offert par une écurie ouvre le
+  // calendrier sans limite sur les chevaux de son périmètre.
+  const premium = premiumPourCheval(cheval, { estPremium, adhesions })
   const navigate = useNavigate()
 
   const creneauParDefaut = useCallback(() => {
@@ -226,7 +230,7 @@ function FeuilleCreneau({
 
     // Le serveur refusera de toute façon (politique RLS) : on préfère
     // conduire vers l'offre plutôt que d'afficher une erreur technique.
-    if (!estPremium && creneauHorsPlanGratuit(valeurs.debut)) {
+    if (!premium && creneauHorsPlanGratuit(valeurs.debut)) {
       navigate('/premium?motif=calendrier')
       return
     }
@@ -253,7 +257,7 @@ function FeuilleCreneau({
     } else onAjoute()
   }
 
-  const borneGratuite = estPremium ? null : valeurDatetimeLocal(finSemaineCourante())
+  const borneGratuite = premium ? null : valeurDatetimeLocal(finSemaineCourante())
 
   return (
     <Feuille titre="Nouveau créneau" ouverte={ouverte} onFermer={onFermer}>
@@ -295,7 +299,7 @@ function FeuilleCreneau({
           </Champ>
         </div>
 
-        {!estPremium && (
+        {!premium && (
           <p className="aide" style={{ marginTop: -6, marginBottom: 14 }}>
             Plan gratuit : jusqu'au {formatDate(dernierJourGratuit(), { avecJour: true })}.{' '}
             <Lien to="/premium?motif=calendrier">Passer en Premium</Lien> pour planifier

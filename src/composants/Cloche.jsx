@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexte/AuthContexte'
 import { Feuille } from './Ui'
 import { STATUTS_ECHEANCE, TYPES_SOIN } from '../lib/constantes'
+import { accesOffert } from '../lib/club'
 import { formatDate, joursRelatifs } from '../lib/format'
 
 /**
@@ -21,12 +22,16 @@ import { formatDate, joursRelatifs } from '../lib/format'
  * l'enregistrement du soin.
  */
 export default function Cloche() {
-  const { profil, utilisateur, estPremium } = useAuth()
+  const { profil, utilisateur, estPremium, adhesions } = useAuth()
   const [rappels, setRappels] = useState([])
   const [ouvert, setOuvert] = useState(false)
 
+  // L'abonnement perso, ou l'accès offert par une écurie (0018) : la vue
+  // v_rappels ne renverra de toute façon que les chevaux réellement couverts.
+  const premium = estPremium || accesOffert(adhesions)
+
   const charger = useCallback(async () => {
-    if (!estPremium) {
+    if (!premium) {
       setRappels([])
       return
     }
@@ -39,15 +44,16 @@ export default function Cloche() {
     // s'efface plutôt que d'afficher une erreur en tête de chaque écran.
     if (error) return
     setRappels(data || [])
-  }, [estPremium])
+  }, [premium])
 
   useEffect(() => {
     charger()
   }, [charger])
 
-  // La cloche n'existe pas hors session, ni en plan gratuit : le module de
-  // santé y est fermé, et une cloche vide n'inviterait à rien.
-  if (!profil || !estPremium) return null
+  // La cloche n'existe pas hors session, ni en plan gratuit sans accès
+  // offert : le module de santé y est fermé, et une cloche vide
+  // n'inviterait à rien.
+  if (!profil || !premium) return null
 
   const nonLus = rappels.filter((r) => !r.lu)
 

@@ -8,7 +8,12 @@ import { supabase } from './supabase'
  * et les indisponibilités — un cavalier qui s'inscrit apparaît sur le
  * planning de l'écurie pendant que le gérant le regarde.
  */
-const TABLES = ['creneaux', 'soins', 'cours', 'inscriptions_cours', 'indisponibilites']
+const TABLES = [
+  'creneaux', 'soins', 'cours', 'inscriptions_cours', 'indisponibilites',
+  // 0018 : un siège offert ou retiré se voit chez le membre comme chez le
+  // gérant sans recharger — le RLS ne diffuse ces lignes qu'aux concernés.
+  'membres_club',
+]
 
 /** Rafale de saisies à deux : on ne recharge qu'une fois. */
 const REGROUPEMENT_MS = 150

@@ -25,6 +25,8 @@ import {
   presenterBoutonExpress,
 } from '../lib/revenuecat'
 import { VERSION_CGV } from '../lib/legal'
+import CodeClub from '../composants/CodeClub'
+import { accesOffert } from '../lib/club'
 
 /** Raison de l'arrivée sur cet écran, pour un message adapté. */
 const MOTIFS = {
@@ -54,7 +56,7 @@ const OFFRES_REPLI = Object.entries(OFFRES).map(([cle, offre]) => ({
 }))
 
 export default function Premium() {
-  const { utilisateur, abonnement, estPremium, rafraichirAbonnement } = useAuth()
+  const { utilisateur, abonnement, estPremium, rafraichirAbonnement, estClub, adhesions } = useAuth()
   const [parametres] = useSearchParams()
 
   const [offres, setOffres] = useState(null)
@@ -474,6 +476,34 @@ export default function Premium() {
             ))}
           </div>
         </section>
+
+        {/* L'alternative au paiement : le code de son écurie. Un club qui
+            offre l'accès à ses membres remplace l'abonnement personnel sur
+            tout son périmètre — autant le dire ICI, avant que quelqu'un ne
+            paie ce que son écurie lui offre déjà. */}
+        {!estClub && (
+          <section style={{ marginBottom: 22 }}>
+            <div className="carte">
+              <p className="gras">🏇 Votre écurie est sur Licol ?</p>
+              {accesOffert(adhesions) ? (
+                <p className="doux" style={{ marginTop: 6 }}>
+                  Votre écurie vous offre déjà l'accès complet sur ses
+                  chevaux — voir <Link to="/club">Mon club</Link>.
+                  L'abonnement ci-dessous ne sert que pour vos chevaux
+                  personnels hors écurie.
+                </p>
+              ) : (
+                <>
+                  <p className="doux" style={{ margin: '6px 0 12px' }}>
+                    Si elle offre l'accès à ses membres, son code d'adhésion
+                    vous ouvre tout le suivi de ses chevaux — sans payer.
+                  </p>
+                  <CodeClub />
+                </>
+              )}
+            </div>
+          </section>
+        )}
 
         {chargementOffres ? (
           <Chargement texte="Chargement des formules…" />

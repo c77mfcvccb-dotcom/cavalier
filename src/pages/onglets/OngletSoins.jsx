@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerSoins } from '../../lib/requetes'
+import { premiumPourCheval } from '../../lib/club'
 import { Champ, Chargement, Erreur, EtatVide, Feuille } from '../../composants/Ui'
 import BloquePremium from '../../composants/BloquePremium'
 import {
@@ -36,7 +37,10 @@ const euros = (montant) =>
   `${Number(montant).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`
 
 export default function OngletSoins({ cheval }) {
-  const { profil, estPremium } = useAuth()
+  const { profil, estPremium, adhesions } = useAuth()
+  // Premium contextuel (0018) : l'abonnement perso, ou le siège offert par
+  // l'écurie quand le cheval est dans son périmètre.
+  const premium = premiumPourCheval(cheval, { estPremium, adhesions })
   const [soins, setSoins] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -48,7 +52,7 @@ export default function OngletSoins({ cheval }) {
   const recharger = useCallback(async () => {
     // Inutile d'interroger la base en gratuit : le RLS renverrait une liste
     // vide, ce qui ressemblerait à un carnet réellement vide.
-    if (!estPremium) {
+    if (!premium) {
       setChargement(false)
       return
     }
@@ -71,7 +75,7 @@ export default function OngletSoins({ cheval }) {
     } finally {
       setChargement(false)
     }
-  }, [cheval.id, estPremium])
+  }, [cheval.id, premium])
 
   useEffect(() => {
     recharger()
@@ -134,7 +138,7 @@ export default function OngletSoins({ cheval }) {
     else recharger()
   }
 
-  if (!estPremium) {
+  if (!premium) {
     return (
       <BloquePremium
         emoji="🩺"

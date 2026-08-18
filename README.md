@@ -82,6 +82,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0015_documents.sql` | Table `documents` et bucket de stockage privé pour les papiers du cheval (identification, contrat DP, assurance) |
 | `0016_documents_quotas.sql` | Documents ouverts au plan gratuit avec quota (10 par cheval, 50 en premium), 5 Mo par fichier, WebP accepté |
 | `0017_cours_et_indisponibilites.sql` | L'outil écurie : planning des cours avec inscriptions et liste d'attente, attribution des chevaux, indisponibilités et charge de travail |
+| `0018_adhesion_club.sql` | Le modèle club : adhésion par code d'écurie, accès premium offert aux membres sur le périmètre du club, premium contextuel par cheval, pension |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

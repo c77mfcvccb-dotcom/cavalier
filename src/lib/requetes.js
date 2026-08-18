@@ -303,25 +303,23 @@ export async function chargerCours({ clubId = null, debut = null, fin = null } =
 }
 
 /**
- * Clubs auxquels un cavalier est rattaché. Pas de table d'adhésion : on est
- * « du club » quand on est lié à au moins un de ses chevaux — le lien que
- * crée le code d'invitation (même définition que est_cavalier_du_club en
- * base, migration 0017).
+ * Clubs auxquels un cavalier est rattaché — par ADHÉSION depuis la
+ * migration 0018 (table membres_club, rejointe avec le code d'écurie), et
+ * non plus déduits des liens aux chevaux. `mes_adhesions()` dit aussi le
+ * siège et l'état de l'abonnement du club, que le RLS d'abonnements ne
+ * laisserait pas lire directement.
  */
-export async function chargerMesClubs(cavalierId) {
-  const { data, error } = await supabase
-    .from('cheval_cavaliers')
-    .select('cheval:chevaux(club:club_id(id, nom))')
-    .eq('cavalier_id', cavalierId)
-
+export async function chargerMesClubs() {
+  const { data, error } = await supabase.rpc('mes_adhesions')
   if (error) throw error
-
-  const clubs = new Map()
-  for (const ligne of data || []) {
-    const club = ligne.cheval?.club
-    if (club) clubs.set(club.id, club)
-  }
-  return [...clubs.values()]
+  return (data || []).map((a) => ({
+    id: a.club_id,
+    nom: a.club_nom,
+    siege: a.siege,
+    siege_depuis: a.siege_depuis,
+    club_premium: a.club_premium,
+    cree_le: a.cree_le,
+  }))
 }
 
 /** Documents administratifs du cheval, les plus récents d'abord. */

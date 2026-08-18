@@ -23,6 +23,9 @@ export default function FeuilleDepense({
   moisAffiche,
   onFermer,
   onEnregistre,
+  // « Tous les chevaux » (dépense sans cheval) demande l'abonnement
+  // personnel : l'accès offert par une écurie ne couvre que ses chevaux.
+  sansCheval = true,
 }) {
   const [montant, setMontant] = useState('')
   const [categorie, setCategorie] = useState('pension')
@@ -139,10 +142,18 @@ export default function FeuilleDepense({
 
         <Champ
           label="Cheval"
-          aide="« Tous » pour une dépense qui ne se rattache à aucun cheval en particulier."
+          aide={
+            sansCheval
+              ? '« Tous » pour une dépense qui ne se rattache à aucun cheval en particulier.'
+              : "L'accès offert par votre écurie couvre les dépenses sur ses chevaux."
+          }
         >
-          <select value={chevalId} onChange={(e) => setChevalId(e.target.value)}>
-            <option value="">Tous les chevaux</option>
+          <select value={chevalId} onChange={(e) => setChevalId(e.target.value)} required={!sansCheval}>
+            {sansCheval ? (
+              <option value="">Tous les chevaux</option>
+            ) : (
+              <option value="">— Choisir un cheval —</option>
+            )}
             {chevaux.map((cheval) => (
               <option key={cheval.id} value={cheval.id}>
                 {cheval.nom}

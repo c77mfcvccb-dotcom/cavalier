@@ -91,6 +91,39 @@ dans le front.
 `est_premium()` refuse par ailleurs de renseigner sur le statut d'un autre
 compte, pour ne pas transformer une fonction utilitaire en sonde.
 
+## Le modèle club : l'écurie paie, les membres reçoivent
+
+Depuis la migration 0018, une écurie abonnée **offre l'accès premium à ses
+membres** — sièges illimités, donnés d'office à l'adhésion par code, que le
+gérant peut retirer et rendre membre par membre (« Mon club »).
+
+Trois règles tiennent le modèle :
+
+- **Le périmètre.** L'accès offert couvre les chevaux de l'écurie
+  (`club_id`) et les chevaux personnels mis en pension chez elle
+  (`ecurie_id`). Les chevaux personnels hors écurie restent sur le plan du
+  compte : c'est l'abonnement personnel à 4,99 € qui les ouvre. En SQL, la
+  question n'est plus « ce compte est-il premium ? » mais « ce compte
+  est-il premium POUR CE CHEVAL ? » — `premium_cheval()`, qui prend le
+  meilleur des deux accès.
+- **Rien n'est matérialisé.** Aucun drapeau premium n'est posé sur le
+  membre : chaque contrôle relit siège + abonnement du club à l'instant T.
+  Siège retiré ou club expiré → l'accès tombe immédiatement, **sans perte
+  de données** ; tout revient dès que l'un ou l'autre revient.
+- **Le cumul est trivial.** Un membre déjà abonné en personne ne dépend en
+  rien du club — le `ou` de `premium_cheval()` suffit.
+
+L'abonnement du club vit dans la même table `abonnements`, écrit par le
+même webhook. **Le produit club à prix fixe reste à créer** dans
+RevenueCat et Stripe (et sa valeur à ajouter au `check` de
+`abonnements.produit`) ; d'ici là, un compte club peut s'abonner avec les
+produits existants et le modèle fonctionne tel quel.
+
+Sur l'écran d'abonnement cavalier, « Votre écurie est sur Licol ? » permet
+de saisir le code d'adhésion à la place de payer — et signale, à ceux qui
+ont déjà l'accès offert, que l'abonnement personnel ne servirait qu'à
+leurs chevaux hors écurie.
+
 ## Montage RevenueCat
 
 L'application est une PWA : le SDK mobile de RevenueCat ne s'applique pas.

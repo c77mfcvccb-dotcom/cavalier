@@ -6,6 +6,7 @@ import { Chargement, Erreur, Succes } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import BloquePremium from '../composants/BloquePremium'
 import { TYPES_SOIN } from '../lib/constantes'
+import { premiumPourCheval } from '../lib/club'
 
 /**
  * Périodicités de rappel, cheval par cheval.
@@ -36,7 +37,7 @@ function dureeLisible(jours) {
 
 export default function ReglagesRappels() {
   const { id } = useParams()
-  const { estPremium } = useAuth()
+  const { estPremium, adhesions } = useAuth()
 
   const [cheval, setCheval] = useState(null)
   const [reglages, setReglages] = useState({})
@@ -44,14 +45,13 @@ export default function ReglagesRappels() {
   const [erreur, setErreur] = useState('')
   const [message, setMessage] = useState('')
 
+  // Le droit dépend du cheval (0018) : la fiche se charge donc AVANT de
+  // trancher — club_id et ecurie_id disent si une écurie couvre. En
+  // gratuit, la liste des réglages revient simplement vide sous RLS.
   const charger = useCallback(async () => {
-    if (!estPremium) {
-      setChargement(false)
-      return
-    }
     try {
       const [fiche, lignes] = await Promise.all([
-        supabase.from('chevaux').select('id, nom').eq('id', id).maybeSingle(),
+        supabase.from('chevaux').select('id, nom, club_id, ecurie_id').eq('id', id).maybeSingle(),
         supabase
           .from('rappels_soins')
           .select('type, intervalle_jours, actif')
@@ -68,11 +68,13 @@ export default function ReglagesRappels() {
     } finally {
       setChargement(false)
     }
-  }, [id, estPremium])
+  }, [id])
 
   useEffect(() => {
     charger()
   }, [charger])
+
+  const premium = premiumPourCheval(cheval, { estPremium, adhesions })
 
   /** Valeur affichée : le réglage du cheval, sinon la périodicité par défaut. */
   const valeur = (cle) =>
@@ -131,7 +133,7 @@ export default function ReglagesRappels() {
     setMessage('Périodicité par défaut rétablie.')
   }
 
-  if (!estPremium) {
+  if (!chargement && !premium) {
     return (
       <>
         <Entete titre="Rappels" retour />

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
 import { chargerDocuments } from '../../lib/requetes'
+import { premiumPourCheval } from '../../lib/club'
 import { Link } from 'react-router-dom'
 import { Champ, Chargement, Erreur, EtatVide, Feuille } from '../../composants/Ui'
 import { CATEGORIES_DOCUMENT, QUOTA_DOCUMENTS } from '../../lib/constantes'
@@ -73,16 +74,18 @@ function extensionEnvoyee(fichier) {
 }
 
 export default function OngletDocuments({ cheval }) {
-  const { profil, estPremium } = useAuth()
+  const { profil, estPremium, adhesions } = useAuth()
   const [documents, setDocuments] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [feuilleOuverte, setFeuilleOuverte] = useState(false)
 
   // Le quota se compte par cheval, la limite dépend du plan de celui qui
-  // ajoute. Celle qui fait foi est le trigger de la migration 0016 ; ici on
-  // l'annonce avant de buter dessus.
-  const limite = estPremium ? QUOTA_DOCUMENTS.premium : QUOTA_DOCUMENTS.gratuit
+  // ajoute — abonnement perso ou siège offert par l'écurie (0018). Celle qui
+  // fait foi est le trigger des migrations 0016/0018 ; ici on l'annonce
+  // avant de buter dessus.
+  const premium = premiumPourCheval(cheval, { estPremium, adhesions })
+  const limite = premium ? QUOTA_DOCUMENTS.premium : QUOTA_DOCUMENTS.gratuit
   const quotaAtteint = documents.length >= limite
 
   const recharger = useCallback(async () => {
@@ -147,11 +150,11 @@ export default function OngletDocuments({ cheval }) {
         <div className="carte">
           <p className="gras">Limite de {limite} documents atteinte pour ce cheval</p>
           <p className="doux" style={{ marginTop: 6 }}>
-            {estPremium
+            {premium
               ? 'Supprimez des documents pour pouvoir en ajouter de nouveaux.'
               : `Supprimez des documents, ou passez en Premium pour en ranger jusqu'à ${QUOTA_DOCUMENTS.premium} par cheval.`}
           </p>
-          {!estPremium && (
+          {!premium && (
             <Link to="/premium?motif=documents" className="bouton" style={{ marginTop: 12 }}>
               Découvrir Premium
             </Link>

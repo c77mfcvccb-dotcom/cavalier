@@ -71,11 +71,18 @@ function reponse(url, methode, premium) {
       : [{ statut: 'gratuit', produit: null, expire_le: null, url_gestion: null }]
   }
   if (url.includes('/rest/v1/chevaux')) {
-    return [{
-      id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, cree_par: AUTRE,
-      race: 'Selle français', robe: 'Bai', sexe: 'jument', date_naissance: '2015-04-12',
-      proprietaire_nom: 'Marine Leroy', notes: 'Sensible du dos.',
-    }]
+    return filtrerEq(url, [
+      {
+        id: CHEVAL, nom: 'Ivoire de la Bergerie', club_id: null, ecurie_id: null, cree_par: AUTRE,
+        race: 'Selle français', robe: 'Bai', sexe: 'jument', date_naissance: '2015-04-12',
+        proprietaire_nom: 'Marine Leroy', notes: 'Sensible du dos.',
+      },
+      {
+        id: CHEVAL_CLUB, nom: 'Quenotte', club_id: CLUB, ecurie_id: null, cree_par: CLUB,
+        race: 'Connemara', robe: 'Gris', sexe: 'jument', date_naissance: '2012-05-01',
+        proprietaire_nom: null, notes: null,
+      },
+    ], ['id', 'club_id', 'cree_par'])
   }
   if (url.includes('/rest/v1/cheval_cavaliers')) {
     // Deux prénoms identiques : le cas qui exige de désambiguïser les
@@ -126,6 +133,20 @@ function reponse(url, methode, premium) {
   }
   if (url.includes('/rest/v1/v_echeances') || url.includes('/rest/v1/v_rappels')) {
     return [{ id: 'e1', cheval_id: CHEVAL, cheval_nom: 'Ivoire de la Bergerie', type: 'vermifuge', prochaine_echeance: dans(-4), jours_restants: -4, statut: 'retard', praticien: null, lu: false }]
+  }
+  if (url.includes('/rest/v1/rpc/mes_adhesions')) {
+    // Alice est membre de l'écurie, siège offert, club abonné : le cas qui
+    // ouvre le premium contextuel sur Quenotte — et sur lui seul.
+    return [{
+      club_id: CLUB, club_nom: 'Écuries du Vallon', siege: true,
+      siege_depuis: '2024-04-01T10:00:00Z', club_premium: true, cree_le: '2024-04-01T10:00:00Z',
+    }]
+  }
+  if (url.includes('/rest/v1/rpc/rejoindre_club')) {
+    return { club_id: CLUB, nom: 'Écuries du Vallon', siege: true, deja_membre: false }
+  }
+  if (url.includes('/rest/v1/membres_club')) {
+    return []
   }
   if (url.includes('/rest/v1/inscriptions_cours')) {
     return []
@@ -211,6 +232,7 @@ const ECRANS = [
   ['/chevaux', 'Mes chevaux'],
   ['/calendrier', 'Calendrier'],
   ['/cours', 'Cours du club'],
+  ['/club', 'Mon club'],
   ['/depenses', 'Dépenses'],
   ['/profil', 'Profil'],
   ['/premium', 'Abonnement'],
@@ -356,6 +378,51 @@ export async function verifier(base) {
       const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
       noter('Fiche — l\'indisponibilité en cours est signalée', texte.includes('Ostéopathie'), texte.slice(0, 120))
       noter('Fiche — la section Disponibilité liste le repos', texte.includes('Disponibilité'), texte.slice(0, 120))
+      await page.close()
+    }
+
+    // ── Mon club : adhésion, statut, et périmètre annoncé ─────────────
+    {
+      const { page } = await ouvrirPage(navigateur, base, { premium: false })
+      await page.goto(`${base}/club`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Mon club — l\'écurie et son statut s\'affichent',
+        texte.includes('Écuries du Vallon') && texte.includes('Accès offert'), texte.slice(0, 150))
+      noter('Mon club — le périmètre de l\'accès est expliqué',
+        texte.includes('chevaux personnels'), texte.slice(0, 200))
+      await page.close()
+    }
+
+    // ── Le premium contextuel : offert sur le cheval du club,
+    //    plan gratuit intact sur le cheval personnel ──────────────────────
+    {
+      const { page } = await ouvrirPage(navigateur, base, { premium: false })
+      // Le cheval personnel (Ivoire) reste fermé…
+      await page.goto(`${base}/chevaux/${CHEVAL}?onglet=soins`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      let texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Contextuel — le cheval personnel reste au plan gratuit',
+        texte.includes('Premium') || texte.includes('premium'), texte.slice(0, 120))
+      // …quand le cheval de l'écurie est ouvert par le siège offert.
+      await page.goto(`${base}/chevaux/${CHEVAL_CLUB}?onglet=soins`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Contextuel — le cheval de l\'écurie est ouvert par le siège',
+        !texte.includes('Découvrir Premium') && texte.includes('soin'), texte.slice(0, 150))
+      await page.close()
+    }
+
+    // ── Le paywall annonce l'alternative « code club » ────────────────
+    {
+      const { page } = await ouvrirPage(navigateur, base, { premium: false })
+      await page.goto(`${base}/premium`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(1200)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Paywall — la voie du code club est annoncée',
+        texte.includes('écurie'), texte.slice(0, 150))
+      noter('Paywall — l\'accès déjà offert est signalé',
+        texte.includes('offre déjà'), texte.slice(0, 200))
       await page.close()
     }
 

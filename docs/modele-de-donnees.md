@@ -214,6 +214,73 @@ vaccin, vermifuge, ostéo, dentiste.
 habituel du type (ferrure 6 semaines, vermifuge 3 mois, vaccin 1 an, dentiste
 1 an, ostéo 6 mois) — modifiable.
 
+### `membres_club` — l'adhésion à une écurie (migration 0018)
+
+| colonne | type | notes |
+|---|---|---|
+| `club_id` | uuid FK | profil de type `club` |
+| `cavalier_id` | uuid FK | unique par club ; type `cavalier` (trigger) |
+| `siege` | boolean | vrai par défaut : l'adhésion donne l'accès offert d'office |
+| `siege_depuis` | timestamptz | rafraîchie quand le siège est rendu (trigger) |
+
+L'adhésion est la relation de base du modèle club : on rejoint l'écurie
+(avec son code), puis on est lié à des chevaux. `est_cavalier_du_club()`
+(0017) lit désormais cette table — cours et écrans existants ont basculé
+sans réécriture, et une reprise a créé les adhésions des cavaliers déjà
+liés à un cheval de club. **Sièges illimités** : le gérant ne gère pas un
+quota, il retire (et rend) l'accès membre par membre. On n'entre que par
+`rejoindre_club(code)` — aucune politique d'INSERT ; le membre se retire
+lui-même, le gérant peut retirer n'importe qui.
+
+### `codes_adhesion` — le code d'écurie
+
+Une ligne par club (`club_id` clé primaire) : régénérer **remplace**, donc
+l'ancien code meurt mécaniquement. Multi-usage et longue durée — à la
+différence des `invitations`, par cheval et à usage unique. Lisible par le
+seul gérant ; la saisie passe par `rejoindre_club()` en `security definer`,
+et un code faux ne révèle jamais l'existence de l'écurie.
+
+### `chevaux.ecurie_id` — la pension
+
+`club_id` signifie **propriété** et donne les droits de gestionnaire ;
+`ecurie_id` signifie **stationné chez** et n'ouvre aucun droit de gestion
+à l'écurie — il ne sert qu'au périmètre premium. Le propriétaire rattache
+son cheval (trigger : uniquement une écurie dont il est membre, sinon
+`ECURIE_NON_MEMBRE`) ; lui ou le gérant détachent (`detacher_de_ecurie()`).
+
+### Le premium contextuel
+
+`est_premium(uid)` (l'abonnement du compte) reste, mais les politiques
+posent désormais la question par cheval :
+
+```
+premium_cheval(cheval, user) = est_premium(user)
+                            ou couverture_club(cheval, user)
+
+couverture_club = membre + siège + abonnement du CLUB actif
+                + cheval dans le périmètre (club_id OU ecurie_id)
+```
+
+Rien n'est jamais matérialisé — aucun drapeau premium posé sur le
+cavalier : chaque contrôle relit adhésion, siège et abonnement du club à
+l'instant T. La perte d'un siège ou l'expiration de l'abonnement club
+ferment l'accès immédiatement **sans toucher aux données**, et tout
+revient dès qu'un siège est réattribué ou qu'un abonnement personnel
+arrive ; l'accès le plus favorable gagne toujours. Sont contextuelles :
+soins, réglages de rappels, borne du calendrier gratuit, dépenses (sur les
+chevaux couverts seulement — jamais la comptabilité sans cheval), et le
+quota de documents (10/50). L'abonnement du club vit dans la même table
+`abonnements`, écrit par le même webhook ; le produit dédié à prix fixe
+restera à créer côté RevenueCat/Stripe.
+
+Deux conséquences de bord : les chevaux de club ne comptent plus dans la
+limite « un cheval » du plan gratuit (la relation d'école est l'affaire du
+club), et `profils_select` s'étend au lien gérant ↔ membre
+(`lien_club()`) pour que la liste des membres ne soit pas aveugle.
+L'interface interroge `mes_adhesions()` — le RLS d'abonnements ne
+laisserait pas un membre lire l'abonnement de son club, la fonction répond
+sans rien exposer d'autre.
+
 ### `indisponibilites` — le cheval au repos (migration 0017)
 
 | colonne     | type | notes                                                       |
