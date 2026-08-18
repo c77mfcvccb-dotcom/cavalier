@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
 import { chargerChevauxVisibles } from '../lib/requetes'
@@ -43,7 +43,9 @@ export default function Depenses() {
   )
 
   const [mois, setMois] = useState(() => debutMois(new Date()))
-  const [chevalFiltre, setChevalFiltre] = useState('')
+  // « Dépenses de ce cheval » depuis sa fiche : l'écran arrive déjà filtré
+  const [parametres] = useSearchParams()
+  const [chevalFiltre, setChevalFiltre] = useState(() => parametres.get('cheval') || '')
   const [depenses, setDepenses] = useState([])
   const [chevaux, setChevaux] = useState([])
   const [chargement, setChargement] = useState(true)

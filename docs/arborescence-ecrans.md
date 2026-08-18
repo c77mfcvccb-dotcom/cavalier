@@ -69,7 +69,12 @@ Barre d'onglets : **Accueil · Chevaux · Calendrier · Dépenses · Profil**
    │                  « Inviter en demi-pension » → génère le code.
    │                  Section Disponibilité : le gestionnaire met le cheval
    │                  au repos (motif, dates, « jusqu'à nouvel ordre ») et
-   │                  le remet au travail ; tous les cavaliers le voient
+   │                  le remet au travail ; tous les cavaliers le voient.
+   │                  Côté club : « + Ajouter » lie un membre sans code, et
+   │                  un cheval au repos propose de REPORTER ses cavaliers
+   │                  sur un autre cheval — la liaison porte « Remplace X »
+   │                  et la levée du repos propose d'y mettre fin.
+   │                  « Dépenses de ce cheval » ouvre le suivi déjà filtré
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
@@ -133,6 +138,12 @@ Barre d'onglets : **Cavalerie · Santé · Planning · Dépenses · Profil**
                       le sélecteur annonce la charge du jour de chaque cheval
                       et grise ceux au repos ; la base refuse de toute façon
                       un cheval indisponible ou hors club (triggers 0017)
+
+/journal              JOURNAL DE CAVALERIE — le tableau de suivi : ce que
+                      les cavaliers notent après leurs séances, tous chevaux
+                      confondus, filtrable par cheval. Les ressentis
+                      inquiétants (boiterie suspectée, blessure) remontent
+                      en tête dans « À surveiller ». Accès depuis le Planning
 
 /club                 MON CLUB (gérant) — le code d'adhésion multi-usage
                       (affichage, partage, régénération : l'ancien meurt),

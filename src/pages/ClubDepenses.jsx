@@ -29,8 +29,10 @@ export default function ClubDepenses() {
         setChevaux(cavalerie)
         if (cavalerie.length === 0) return
 
+        // v_soins et non la table : la lecture directe de `cout` est
+        // refusée depuis la 0019 — le club, gestionnaire, y voit tout.
         const { data, error } = await supabase
-          .from('soins')
+          .from('v_soins')
           .select('cheval_id, type, date_realisee, cout')
           .in('cheval_id', cavalerie.map((c) => c.id))
           .not('cout', 'is', null)

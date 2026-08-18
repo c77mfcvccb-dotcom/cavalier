@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
 import {
@@ -147,7 +148,15 @@ export default function ClubPlanning() {
 
   return (
     <>
-      <Entete titre="Planning" sousTitre="Cours et montes de la semaine" />
+      <Entete
+        titre="Planning"
+        sousTitre="Cours et montes de la semaine"
+        action={
+          <Link to="/journal" className="bouton fantome petit">
+            Journal
+          </Link>
+        }
+      />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>

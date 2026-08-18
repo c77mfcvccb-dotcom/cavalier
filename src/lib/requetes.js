@@ -81,9 +81,14 @@ export async function chargerEcheances({ chevalId = null, limite = null } = {}) 
 
 /** Cavaliers liés à un cheval, avec leur profil et leur couleur de calendrier. */
 export async function chargerCavaliersDuCheval(chevalId) {
+  // `remplacement` : le cheval indisponible que cette liaison remplace
+  // (0019) — le nom ne revient que si le lecteur a accès à ce cheval-là,
+  // le badge se dégrade alors sans casser la liste.
   const { data, error } = await supabase
     .from('cheval_cavaliers')
-    .select('id, role, couleur, cavalier_id, profil:profils(id, nom, photo_url, niveau_galop)')
+    .select(
+      'id, role, couleur, cavalier_id, remplacement_de, profil:profils(id, nom, photo_url, niveau_galop), remplacement:remplacement_de(id, nom)'
+    )
     .eq('cheval_id', chevalId)
     .order('cree_le')
 
@@ -210,12 +215,38 @@ export async function chargerSeances(chevalId) {
   return data || []
 }
 
+/**
+ * Le carnet de santé se lit par la vue v_soins (migration 0019), jamais par
+ * la table : la colonne `cout` y est masquée pour qui n'est ni l'auteur du
+ * soin ni le gestionnaire du cheval — et la table refuse de toute façon la
+ * lecture directe de cette colonne.
+ */
 export async function chargerSoins(chevalId) {
   const { data, error } = await supabase
-    .from('soins')
+    .from('v_soins')
     .select('*')
     .eq('cheval_id', chevalId)
     .order('date_realisee', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+/**
+ * Le journal de la cavalerie : les dernières séances de tous les chevaux
+ * donnés, cavalier et cheval compris — ce que les demi-pensionnaires
+ * notent, vu depuis le bureau du club.
+ */
+export async function chargerJournalSeances(chevauxIds, { limite = 100 } = {}) {
+  if (!chevauxIds?.length) return []
+
+  const { data, error } = await supabase
+    .from('seances')
+    .select('*, cavalier:profils(id, nom, photo_url), cheval:chevaux(id, nom)')
+    .in('cheval_id', chevauxIds)
+    .order('date', { ascending: false })
+    .order('cree_le', { ascending: false })
+    .limit(limite)
 
   if (error) throw error
   return data || []

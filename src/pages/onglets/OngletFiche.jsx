@@ -18,6 +18,8 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
   const [partageOuvert, setPartageOuvert] = useState(false)
   const [indispoOuverte, setIndispoOuverte] = useState(false)
   const [indisponibilites, setIndisponibilites] = useState([])
+  const [lierOuvert, setLierOuvert] = useState(false)
+  const [reportOuvert, setReportOuvert] = useState(false)
   const [lienPublic, setLienPublic] = useState(null)
   const [code, setCode] = useState('')
   const [erreur, setErreur] = useState('')
@@ -56,17 +58,50 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
 
   const indispoEnCours = indisponibiliteActive(indisponibilites, cheval.id)
 
+  // La fiche d'un cheval de club, vue par le club lui-même : c'est là que
+  // vivent la liaison directe et le report (migration 0019).
+  const estClubGestionnaire = cheval.club_id === profil.id
+
   // « Lever » remet le cheval au travail aujourd'hui même : l'indisponibilité
   // se ferme au lieu d'être effacée — l'historique dira un jour pourquoi il
   // n'a pas tourné cette semaine-là. Une indisponibilité qui n'a pas encore
   // commencé, elle, se supprime : il n'y a rien à archiver.
+  //
+  // Le cheval revenu, les remplacements qui pointaient vers lui n'ont plus
+  // de raison d'être : on propose de les clore dans la foulée — proposer,
+  // pas imposer, car une bascule peut être devenue définitive.
   async function leverIndispo(indispo) {
     const { error } = await supabase
       .from('indisponibilites')
       .update({ fin: cleJour(new Date()) })
       .eq('id', indispo.id)
-    if (error) setErreur(error.message)
-    else rechargerIndispos()
+    if (error) {
+      setErreur(error.message)
+      return
+    }
+    rechargerIndispos()
+
+    if (estClubGestionnaire) {
+      const { data: remplacements } = await supabase
+        .from('cheval_cavaliers')
+        .select('id, profil:profils(nom), cheval:chevaux(nom)')
+        .eq('remplacement_de', cheval.id)
+      if (remplacements?.length) {
+        const detail = remplacements
+          .map((r) => `${r.profil?.nom ?? 'Cavalier'} sur ${r.cheval?.nom ?? 'un autre cheval'}`)
+          .join(', ')
+        if (
+          window.confirm(
+            `${cheval.nom} est de retour. Mettre fin aux remplacements ? (${detail})`
+          )
+        ) {
+          await supabase
+            .from('cheval_cavaliers')
+            .delete()
+            .in('id', remplacements.map((r) => r.id))
+        }
+      }
+    }
   }
 
   async function supprimerIndispo(indispo) {
@@ -220,11 +255,18 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             Cavaliers
             <span className="doux"> · {cavaliers.length}{plafond ? `/${plafond}` : ''}</span>
           </h2>
-          {estGestionnaire && !complet && (
-            <button className="lien" onClick={genererCode} disabled={envoi}>
-              + Inviter
-            </button>
-          )}
+          <span className="rangee" style={{ gap: 10 }}>
+            {estClubGestionnaire && (
+              <button className="lien" onClick={() => setLierOuvert(true)}>
+                + Ajouter
+              </button>
+            )}
+            {estGestionnaire && !complet && (
+              <button className="lien" onClick={genererCode} disabled={envoi}>
+                + Inviter
+              </button>
+            )}
+          </span>
         </div>
 
         <div className="liste">
@@ -252,6 +294,11 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
                   {liaison.profil?.niveau_galop ? ` · Galop ${liaison.profil.niveau_galop}` : ''}
                 </div>
               </div>
+              {liaison.remplacement_de && (
+                <span className="badge contour" title="Liaison posée le temps d'une indisponibilité">
+                  Remplace{liaison.remplacement?.nom ? ` ${liaison.remplacement.nom}` : ''}
+                </span>
+              )}
               {estGestionnaire && liaison.cavalier_id !== profil.id && (
                 <button className="bouton fantome petit" onClick={() => retirerCavalier(liaison)}>
                   Retirer
@@ -316,6 +363,16 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             </div>
           )}
 
+          {indispoEnCours && estClubGestionnaire && cavaliers.length > 0 && (
+            <button
+              className="bouton secondaire pleine-largeur"
+              style={{ marginTop: 10 }}
+              onClick={() => setReportOuvert(true)}
+            >
+              Reporter ses cavaliers sur un autre cheval
+            </button>
+          )}
+
           <p className="aide" style={{ marginTop: 10 }}>
             Un cheval indisponible ne peut pas être attribué à un cours, et tous
             ses cavaliers voient qu'il est au repos.
@@ -331,6 +388,15 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           <Link to={`/chevaux/${cheval.id}/carnet`} className="bouton secondaire pleine-largeur">
             Carnet de santé imprimable
           </Link>
+
+          {estGestionnaire && (
+            <Link
+              to={`/depenses?cheval=${cheval.id}`}
+              className="bouton secondaire pleine-largeur"
+            >
+              Dépenses de ce cheval
+            </Link>
+          )}
 
           {estGestionnaire &&
             (urlPublique ? (
@@ -462,7 +528,211 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           rechargerIndispos()
         }}
       />
+
+      {estClubGestionnaire && (
+        <FeuilleLierMembre
+          cheval={cheval}
+          cavaliers={cavaliers}
+          ouverte={lierOuvert}
+          onFermer={() => setLierOuvert(false)}
+          onLie={() => {
+            setLierOuvert(false)
+            recharger()
+          }}
+        />
+      )}
+
+      {estClubGestionnaire && (
+        <FeuilleReport
+          cheval={cheval}
+          cavaliers={cavaliers}
+          ouverte={reportOuvert}
+          onFermer={() => setReportOuvert(false)}
+          onReporte={() => {
+            setReportOuvert(false)
+            recharger()
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+/**
+ * Le club lie un de ses membres au cheval, sans code : la porte normale
+ * reste l'invitation, mais quand la cavalière est devant la carrière, le
+ * geste doit tenir en un appui (migration 0019).
+ */
+function FeuilleLierMembre({ cheval, cavaliers, ouverte, onFermer, onLie }) {
+  const { profil } = useAuth()
+  const [membres, setMembres] = useState(null)
+  const [erreur, setErreur] = useState('')
+
+  useEffect(() => {
+    if (!ouverte) return
+    supabase
+      .from('membres_club')
+      .select('cavalier_id, cavalier:cavalier_id(id, nom, photo_url, niveau_galop)')
+      .eq('club_id', profil.id)
+      .then(({ data }) =>
+        setMembres(
+          (data || [])
+            .map((m) => m.cavalier)
+            .filter(Boolean)
+            .sort((a, b) => a.nom.localeCompare(b.nom))
+        )
+      )
+  }, [ouverte, profil.id])
+
+  const dejaLies = new Set(cavaliers.map((c) => c.cavalier_id))
+  const candidats = (membres || []).filter((m) => !dejaLies.has(m.id))
+
+  async function lier(cavalierId) {
+    setErreur('')
+    const { error } = await supabase.rpc('lier_membre_au_cheval', {
+      p_cheval: cheval.id,
+      p_cavalier: cavalierId,
+    })
+    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
+    else onLie()
+  }
+
+  return (
+    <Feuille titre={`Ajouter un cavalier à ${cheval.nom}`} ouverte={ouverte} onFermer={onFermer}>
+      <Erreur>{erreur}</Erreur>
+      {membres === null ? (
+        <p className="doux">Chargement des membres…</p>
+      ) : candidats.length === 0 ? (
+        <p className="doux">
+          Tous vos membres sont déjà liés à ce cheval — les nouveaux membres
+          arrivent par le code d'adhésion, dans « Mon club ».
+        </p>
+      ) : (
+        <div className="liste">
+          {candidats.map((membre) => (
+            <button
+              key={membre.id}
+              className="element"
+              style={{ width: '100%', textAlign: 'left' }}
+              onClick={() => lier(membre.id)}
+            >
+              <Avatar profil={membre} />
+              <div className="corps">
+                <div className="titre">{membre.nom}</div>
+                {membre.niveau_galop && <div className="meta">Galop {membre.niveau_galop}</div>}
+              </div>
+              <span className="fleche">+</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </Feuille>
+  )
+}
+
+/**
+ * Le cheval est au repos : ses cavaliers basculent sur un autre cheval de
+ * l'écurie, et chacun pourra noter ses séances sur CELUI-LÀ. La liaison
+ * créée porte la mention « remplace » — et la levée de l'indisponibilité
+ * proposera d'y mettre fin.
+ */
+function FeuilleReport({ cheval, cavaliers, ouverte, onFermer, onReporte }) {
+  const { profil } = useAuth()
+  const [cavalerie, setCavalerie] = useState([])
+  const [cible, setCible] = useState('')
+  const [choisis, setChoisis] = useState(() => new Set())
+  const [erreur, setErreur] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+
+  useEffect(() => {
+    if (!ouverte) return
+    setCible('')
+    setChoisis(new Set(cavaliers.filter((c) => c.cavalier_id !== profil.id).map((c) => c.cavalier_id)))
+    setErreur('')
+    supabase
+      .from('chevaux')
+      .select('id, nom')
+      .eq('club_id', profil.id)
+      .neq('id', cheval.id)
+      .order('nom')
+      .then(({ data }) => setCavalerie(data || []))
+  }, [ouverte, cheval.id, profil.id, cavaliers])
+
+  const basculer = (id) =>
+    setChoisis((avant) => {
+      const suite = new Set(avant)
+      if (suite.has(id)) suite.delete(id)
+      else suite.add(id)
+      return suite
+    })
+
+  async function reporter(evenement) {
+    evenement.preventDefault()
+    setErreur('')
+    setEnvoi(true)
+    // Un appel par cavalier : chacun peut échouer pour sa propre raison
+    // (déjà lié, retiré du club entre-temps) sans bloquer les autres.
+    for (const cavalierId of choisis) {
+      const { error } = await supabase.rpc('lier_membre_au_cheval', {
+        p_cheval: cible,
+        p_cavalier: cavalierId,
+        p_remplace: cheval.id,
+      })
+      if (error) {
+        setErreur(error.message.replace(/^.*?:\s*/, ''))
+        setEnvoi(false)
+        return
+      }
+    }
+    setEnvoi(false)
+    onReporte()
+  }
+
+  return (
+    <Feuille titre={`Reporter les cavaliers de ${cheval.nom}`} ouverte={ouverte} onFermer={onFermer}>
+      <p className="doux" style={{ marginBottom: 12 }}>
+        Chaque cavalier choisi est lié au cheval de remplacement : il y note
+        ses séances et voit son calendrier le temps du repos. À la levée de
+        l'indisponibilité, la fiche proposera de clore ces remplacements.
+      </p>
+
+      <form onSubmit={reporter}>
+        <Erreur>{erreur}</Erreur>
+
+        <Champ label="Cheval de remplacement">
+          <select value={cible} onChange={(e) => setCible(e.target.value)} required>
+            <option value="">— Choisir un cheval —</option>
+            {cavalerie.map((c) => (
+              <option key={c.id} value={c.id}>{c.nom}</option>
+            ))}
+          </select>
+        </Champ>
+
+        <Champ label="Cavaliers à reporter">
+          <div className="pile" style={{ gap: 8 }}>
+            {cavaliers
+              .filter((liaison) => liaison.cavalier_id !== profil.id)
+              .map((liaison) => (
+                <label key={liaison.id} className="rangee" style={{ gap: 10 }}>
+                  <input
+                    type="checkbox"
+                    checked={choisis.has(liaison.cavalier_id)}
+                    onChange={() => basculer(liaison.cavalier_id)}
+                  />
+                  <span>{liaison.profil?.nom}</span>
+                </label>
+              ))}
+          </div>
+        </Champ>
+
+        <button
+          className="bouton pleine-largeur"
+          disabled={envoi || !cible || choisis.size === 0}
+        >
+          {envoi ? 'Report…' : `Reporter ${choisis.size} cavalier${choisis.size > 1 ? 's' : ''}`}
+        </button>
+      </form>
+    </Feuille>
   )
 }
 

@@ -107,7 +107,17 @@ valable si une place se libère.
 
 **Cette limite n'a rien à voir avec celle du plan gratuit.** L'une compte les
 cavaliers d'un cheval, l'autre les chevaux d'un compte : le plan gratuit
-reste à **un cheval par compte, créé ou rejoint** (migration 0006).
+reste à **un cheval par compte, créé ou rejoint** (migration 0006) — les
+chevaux de club en sont exclus depuis la 0018.
+
+**Liaison directe et remplacement** (migration 0019). Le club peut lier un
+de SES membres à un de SES chevaux en un geste, sans code, par
+`lier_membre_au_cheval()` — l'invitation reste la porte normale quand c'est
+le cavalier qui agit. La colonne `remplacement_de` (uuid → chevaux,
+nullable) mémorise le cheval indisponible qu'une liaison remplace : elle
+porte le badge « Remplace X » sur la fiche, et la levée de
+l'indisponibilité propose de clore d'un coup les remplacements qui
+pointaient vers le cheval revenu.
 
 ### `documents` — pièces administratives du cheval
 
@@ -200,6 +210,17 @@ cavaliers liés.
 ### `soins` — table unique santé/soins
 C'est le choix structurant demandé : **une seule table** pour ferrure, véto,
 vaccin, vermifuge, ostéo, dentiste.
+
+> **Le coût est confidentiel** (migration 0019) : visible du seul **auteur
+> du soin** et du **gestionnaire du cheval**. Le RLS ne masquant que des
+> lignes, le verrou est un droit de colonne — le rôle client n'a plus le
+> SELECT sur `cout`, et la lecture passe par la vue **`v_soins`**, qui
+> rejoue la politique de lignes de la table et ne rend le coût qu'à qui y a
+> droit. La demi-pensionnaire d'un cheval de club ne voit donc plus la
+> facture du vétérinaire de l'écurie ; `v_echeances` et la cloche, qui ne
+> lisent pas cette colonne, ne changent pas. Attention : toute migration
+> future qui referait un `grant select` global sur `soins` rouvrirait la
+> colonne.
 
 | colonne              | type | notes                                                      |
 |----------------------|------|------------------------------------------------------------|

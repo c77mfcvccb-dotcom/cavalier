@@ -36,7 +36,7 @@ function statutEcheance(dateEcheance) {
 const euros = (montant) =>
   `${Number(montant).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`
 
-export default function OngletSoins({ cheval }) {
+export default function OngletSoins({ cheval, estGestionnaire }) {
   const { profil, estPremium, adhesions } = useAuth()
   // Premium contextuel (0018) : l'abonnement perso, ou le siège offert par
   // l'écurie quand le cheval est dans son périmètre.
@@ -240,6 +240,14 @@ export default function OngletSoins({ cheval }) {
               })}
             </div>
           </div>
+
+          {!estGestionnaire && (
+            <p className="aide" style={{ marginTop: 8 }}>
+              Seuls vos propres coûts apparaissent ici : ceux des autres
+              cavaliers et du gestionnaire restent privés (et
+              réciproquement).
+            </p>
+          )}
         </section>
       )}
 

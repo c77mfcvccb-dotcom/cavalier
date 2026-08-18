@@ -44,6 +44,7 @@ const Confidentialite = ecranDiffere(() => import('./pages/legales/Confidentiali
 const ClubCavalerie = ecranDiffere(() => import('./pages/ClubCavalerie'))
 const ClubSante = ecranDiffere(() => import('./pages/ClubSante'))
 const ClubPlanning = ecranDiffere(() => import('./pages/ClubPlanning'))
+const ClubJournal = ecranDiffere(() => import('./pages/ClubJournal'))
 const ClubDepenses = ecranDiffere(() => import('./pages/ClubDepenses'))
 const Depenses = ecranDiffere(() => import('./pages/Depenses'))
 const NouveauCheval = ecranDiffere(() => import('./pages/NouveauCheval'))
@@ -131,6 +132,7 @@ export default function App() {
                 <Route path="/" element={<ClubCavalerie />} />
                 <Route path="/sante" element={<ClubSante />} />
                 <Route path="/planning" element={<ClubPlanning />} />
+                <Route path="/journal" element={<ClubJournal />} />
               </>
             ) : (
               <>

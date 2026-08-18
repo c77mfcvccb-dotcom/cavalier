@@ -102,7 +102,7 @@ function reponse(url, methode, premium) {
       { id: 'cr2', cheval_id: CHEVAL, cavalier_id: AUTRE, debut: jourDuMois(11), fin: jourDuMois(11, 11), type: 'monte', titre: 'Cours', notes: null, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie' }, cavalier: { id: AUTRE, nom: 'Marie Leroy' } },
     ]
   }
-  if (url.includes('/rest/v1/soins')) {
+  if (url.includes('/rest/v1/soins') || url.includes('/rest/v1/v_soins')) {
     // Une échéance dans chacune des trois fenêtres, dont la zone 8–30 jours
     // qui a déjà vidé l'écran une fois.
     return [
@@ -294,6 +294,11 @@ export async function verifier(base) {
       noter('Soins — un badge par échéance, tous nommés',
         badges.every((b) => b.trim().length > 0), badges.join(' | '))
       noter('Soins — le retard est signalé', badges.includes('En retard'), badges.join(' | '))
+      // Alice n'est pas gestionnaire d'Ivoire : la confidentialité des
+      // coûts (0019) doit être annoncée sous le total.
+      const texteSoins = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Soins — la confidentialité des coûts est annoncée',
+        texteSoins.includes('propres coûts'), texteSoins.slice(0, 150))
       await page.close()
     }
 
