@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexte/AuthContexte'
@@ -9,12 +9,14 @@ import OngletFiche from './onglets/OngletFiche'
 import OngletCalendrier from './onglets/OngletCalendrier'
 import OngletSeances from './onglets/OngletSeances'
 import OngletSoins from './onglets/OngletSoins'
+import OngletDocuments from './onglets/OngletDocuments'
 
 const ONGLETS = [
   { cle: 'fiche', libelle: 'Fiche' },
   { cle: 'calendrier', libelle: 'Calendrier' },
   { cle: 'seances', libelle: 'Séances' },
   { cle: 'soins', libelle: 'Soins' },
+  { cle: 'documents', libelle: 'Documents' },
 ]
 
 export default function FicheCheval() {
@@ -27,6 +29,21 @@ export default function FicheCheval() {
   const [cavaliers, setCavaliers] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
+  const ongletsRef = useRef(null)
+
+  // Ouvrir directement sur un onglet éloigné (lien, retour arrière, actualisation
+  // de page) le laissait hors champ dans la barre défilante : actif, mais
+  // invisible tant qu'on n'avait pas pensé à faire glisser la barre soi-même.
+  // Dépend aussi de `chargement` : au premier rendu, avant que la fiche ne
+  // soit chargée, la fonction s'arrête plus bas sur <Chargement /> et la
+  // barre d'onglets n'existe pas encore dans le DOM — l'effet s'exécuterait
+  // dans le vide. Sans cette dépendance, il ne se rejoue jamais une fois le
+  // contenu réellement monté.
+  useEffect(() => {
+    ongletsRef.current
+      ?.querySelector('.actif')
+      ?.scrollIntoView({ inline: 'center', block: 'nearest' })
+  }, [ongletActif, chargement])
 
   const recharger = useCallback(async () => {
     const { data, error } = await supabase
@@ -77,7 +94,7 @@ export default function FicheCheval() {
       <Entete titre={cheval.nom} sousTitre={cheval.race || null} retour />
 
       <main className="contenu">
-        <div className="onglets">
+        <div className="onglets" ref={ongletsRef}>
           {ONGLETS.map((onglet) => (
             <button
               key={onglet.cle}
@@ -95,6 +112,7 @@ export default function FicheCheval() {
         {ongletActif === 'calendrier' && <OngletCalendrier {...proprietes} />}
         {ongletActif === 'seances' && <OngletSeances {...proprietes} />}
         {ongletActif === 'soins' && <OngletSoins {...proprietes} />}
+        {ongletActif === 'documents' && <OngletDocuments {...proprietes} />}
       </main>
     </>
   )

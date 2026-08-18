@@ -404,6 +404,10 @@ button {
 .bandeau-rappel.urgent { border-color: #f0dcc0; background: #fdf7ee; }
 
 /* ---------- Onglets internes ---------- */
+/* Cinq onglets et plus ne tiennent plus à largeur égale sur un écran de
+   320 px sans casser les mots (« Calendrier », « Documents »). Plutôt que
+   de rétrécir le texte jusqu'à l'illisible, la barre défile horizontalement
+   — le même choix que pour les tableaux légaux plus bas dans cette feuille. */
 .onglets {
   display: flex;
   gap: 4px;
@@ -411,16 +415,19 @@ button {
   background: var(--sable);
   border-radius: var(--rayon-sm);
   margin-bottom: 16px;
+  overflow-x: auto;
 }
 
 .onglets button {
-  flex: 1;
-  padding: 8px 4px;
+  flex: 1 0 auto;
+  min-width: 72px;
+  padding: 8px 10px;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--vert);
   opacity: 0.65;
+  white-space: nowrap;
 }
 
 .onglets button.actif { background: var(--carte); opacity: 1; box-shadow: var(--ombre); }
@@ -550,6 +557,11 @@ button {
 .element .titre { font-weight: 600; font-size: 0.94rem; }
 .element .meta { font-size: 0.8rem; color: var(--texte-doux); }
 .element .bordure-couleur { width: 4px; align-self: stretch; border-radius: 999px; flex-shrink: 0; }
+
+/* Le corps d'une ligne de document est un bouton (il ouvre le fichier) :
+   un <button> centre son texte par défaut, contrairement au <div> que
+   `.corps` habille ailleurs. */
+.document-lien { display: block; width: 100%; text-align: left; }
 
 /* ---------- Groupes repliables (carnet de santé) ---------- */
 .entete-groupe {

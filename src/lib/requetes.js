@@ -220,3 +220,15 @@ export async function chargerSoins(chevalId) {
   if (error) throw error
   return data || []
 }
+
+/** Documents administratifs du cheval, les plus récents d'abord. */
+export async function chargerDocuments(chevalId) {
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*, profil:profils(id, nom)')
+    .eq('cheval_id', chevalId)
+    .order('cree_le', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}

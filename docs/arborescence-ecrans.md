@@ -53,7 +53,7 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
 
 /rejoindre            Saisie du code d'invitation à 6 caractères
 
-/chevaux/:id          FICHE CHEVAL — 4 onglets internes
+/chevaux/:id          FICHE CHEVAL — 5 onglets internes
    ├─ Fiche           photo, âge, race, robe, sexe, propriétaire,
    │                  cavaliers liés (avec leur couleur), bouton
    │                  « Inviter en demi-pension » → génère le code
@@ -61,8 +61,11 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
    ├─ Séances         carnet chronologique, ajout d'une séance
-   └─ Soins           historique par type + prochaines échéances,
-                      ajout d'un soin (échéance pré-remplie)
+   ├─ Soins           historique par type + prochaines échéances,
+   │                  ajout d'un soin (échéance pré-remplie)
+   └─ Documents        document d'identification, contrat de demi-pension,
+                      assurance — un fichier par ligne, ouvert via une URL
+                      signée, visible par tous les cavaliers liés au cheval
 
 /calendrier           CALENDRIER GLOBAL — tous mes chevaux fusionnés,
                       vue mois puis détail du jour. Deux natures d'événement :

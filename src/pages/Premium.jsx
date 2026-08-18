@@ -33,6 +33,7 @@ const MOTIFS = {
   soins: 'Le carnet de santé fait partie de Licol Premium.',
   calendrier: 'En gratuit, le calendrier s’arrête au dimanche de la semaine en cours.',
   depenses: 'Le suivi des dépenses fait partie de Licol Premium.',
+  documents: 'Les documents du cheval font partie de Licol Premium.',
 }
 
 /** Sondage de la base après paiement : 10 essais espacés de 3 s. */

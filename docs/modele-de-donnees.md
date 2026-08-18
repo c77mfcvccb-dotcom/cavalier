@@ -109,6 +109,43 @@ valable si une place se libère.
 cavaliers d'un cheval, l'autre les chevaux d'un compte : le plan gratuit
 reste à **un cheval par compte, créé ou rejoint** (migration 0006).
 
+### `documents` — pièces administratives du cheval
+
+| colonne         | type    | notes                                                |
+|-----------------|---------|-------------------------------------------------------|
+| `cheval_id`     | uuid FK |                                                       |
+| `categorie`     | text    | `identification` \| `contrat_dp` \| `assurance` \| `autre` |
+| `nom`           | text    | nom affiché, modifiable à la saisie                  |
+| `chemin`        | text    | chemin dans le bucket `documents`, unique             |
+| `taille_octets` | int     |                                                       |
+| `type_mime`     | text    |                                                       |
+| `ajoute_par`    | uuid FK | profil de l'auteur                                    |
+
+Fonctionnalité **premium** (migration 0015), sur le même modèle que le
+carnet de soins : la politique RLS conditionne l'accès, pas l'interface.
+
+**Bucket privé**, à la différence de `photos` : une carte d'immatriculation
+n'a pas vocation à être accessible par une URL publique devinable. Le
+téléchargement passe par une URL signée (`createSignedUrl`, 60 secondes),
+dont l'émission est elle-même soumise au RLS de `storage.objects`.
+
+Convention de chemin : `{cheval_id}/{uuid}.{extension}`. Le premier segment
+porte le cheval, ce qui permet à la politique de stockage de retrouver
+`a_acces_cheval()` à partir du seul nom de fichier — `storage.objects` ne
+connaît ni cheval, ni relation, seulement un chemin :
+
+```sql
+using (
+  bucket_id = 'documents'
+  and est_premium(auth.uid())
+  and a_acces_cheval((storage.foldername(name))[1]::uuid, auth.uid())
+)
+```
+
+Pas de politique `update` : un document se remplace (suppression puis
+nouvel envoi), il ne se corrige pas — ça évite qu'un fichier et sa ligne de
+métadonnées divergent silencieusement.
+
 ### `invitations`
 | colonne          | type   | notes                                     |
 |------------------|--------|-------------------------------------------|

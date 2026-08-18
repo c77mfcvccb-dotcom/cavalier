@@ -135,6 +135,21 @@ export const STATUTS_ECHEANCE = {
  */
 export const SEUIL_URGENCE_JOURS = 14
 
+/**
+ * Catégories de documents administratifs du cheval.
+ *
+ * Quatre, volontairement peu nombreuses : au-delà, le choix à la saisie
+ * devient une hésitation plutôt qu'un classement. « Vaccination » n'en fait
+ * pas partie — un carnet de vaccins existe déjà dans les soins, et dupliquer
+ * la notion créerait deux endroits où chercher la même information.
+ */
+export const CATEGORIES_DOCUMENT = {
+  identification: { libelle: 'Document d’identification', emoji: '🪪' },
+  contrat_dp: { libelle: 'Contrat de demi-pension', emoji: '📄' },
+  assurance: { libelle: 'Assurance', emoji: '🛡️' },
+  autre: { libelle: 'Autre', emoji: '📎' },
+}
+
 export const SEXES = {
   jument: 'Jument',
   hongre: 'Hongre',

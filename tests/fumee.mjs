@@ -87,6 +87,13 @@ function reponse(url, methode, premium) {
       { id: 'se2', cheval_id: CHEVAL, cavalier_id: MOI, date: dans(-6), type: 'balade', duree_min: 90, ressenti: 'ras', notes: null, cavalier: { id: MOI, nom: 'Alice Martin' } },
     ]
   }
+  if (url.includes('/rest/v1/documents')) {
+    if (methode === 'POST') return []
+    return [
+      { id: 'doc1', cheval_id: CHEVAL, categorie: 'identification', nom: 'Carte immatriculation', chemin: `${CHEVAL}/doc1.pdf`, taille_octets: 245000, type_mime: 'application/pdf', cree_le: dans(-40), profil: { id: AUTRE, nom: 'Marie Leroy' } },
+      { id: 'doc2', cheval_id: CHEVAL, categorie: 'contrat_dp', nom: 'Contrat demi-pension', chemin: `${CHEVAL}/doc2.pdf`, taille_octets: 98000, type_mime: 'application/pdf', cree_le: dans(-10), profil: { id: MOI, nom: 'Alice Martin' } },
+    ]
+  }
   if (url.includes('/rest/v1/depenses')) {
     return [
       { id: 'd1', profil_id: MOI, cheval_id: CHEVAL, montant: 320, categorie: 'pension', date: dans(-3), note: null, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie' } },
@@ -119,8 +126,12 @@ async function ouvrirPage(navigateur, base, { premium = true, largeur = 390 } = 
       body: JSON.stringify(reponse(route.request().url(), route.request().method(), premium)),
     })
   )
-  // Aucun appel sortant : ni paiement, ni temps réel.
+  // Aucun appel sortant : ni paiement, ni temps réel. Le canal temps réel
+  // est intercepté puis laissé muet — sans cela, le SDK tente la connexion
+  // en boucle à travers le proxy du poste de test, et ces tentatives à
+  // rallonge finissent par ralentir la page au point de fausser les mesures.
   await page.route(/revenuecat|stripe/, (route) => route.abort())
+  await page.routeWebSocket(/supabase/, () => {})
 
   await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
   const exp = Math.floor(Date.now() / 1000) + 3600
@@ -154,6 +165,7 @@ const ECRANS = [
   [`/chevaux/${CHEVAL}?onglet=calendrier`, 'Cheval · calendrier'],
   [`/chevaux/${CHEVAL}?onglet=seances`, 'Cheval · séances'],
   [`/chevaux/${CHEVAL}?onglet=soins`, 'Cheval · soins'],
+  [`/chevaux/${CHEVAL}?onglet=documents`, 'Cheval · documents'],
   [`/chevaux/${CHEVAL}/carnet`, 'Carnet imprimable'],
   [`/chevaux/${CHEVAL}/rappels`, 'Réglages des rappels'],
 ]
@@ -204,6 +216,31 @@ export async function verifier(base) {
       noter('Soins — un badge par échéance, tous nommés',
         badges.every((b) => b.trim().length > 0), badges.join(' | '))
       noter('Soins — le retard est signalé', badges.includes('En retard'), badges.join(' | '))
+      await page.close()
+    }
+
+    // ── Documents : la liste s'affiche, groupée par catégorie ─────────
+    {
+      const { page } = await ouvrirPage(navigateur, base)
+      await page.goto(`${base}/chevaux/${CHEVAL}?onglet=documents`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const lignes = await page.locator('section .liste .element, .liste .element').allInnerTexts()
+      noter('Documents — deux documents listés', lignes.length === 2, `${lignes.length} trouvé(s)`)
+      noter('Documents — bouton d’ajout présent',
+        (await page.getByRole('button', { name: /Ajouter un document/ }).count()) === 1)
+      await page.close()
+    }
+
+    // ── Documents : le plan gratuit renvoie à l'abonnement ────────────
+    {
+      const { page } = await ouvrirPage(navigateur, base, { premium: false })
+      await page.goto(`${base}/chevaux/${CHEVAL}?onglet=documents`, { waitUntil: 'domcontentloaded' })
+      // `body` plutôt que `main` : si l'écran reste bloqué sur le chargement,
+      // `main` n'existe pas et le test expirerait au lieu d'échouer proprement.
+      await page.waitForTimeout(1200)
+      const texte = await page.locator('body').innerText()
+      noter('Documents — plan gratuit renvoie à l’abonnement',
+        /[Pp]remium/.test(texte), texte.replace(/\s+/g, ' ').slice(0, 80))
       await page.close()
     }
 

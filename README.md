@@ -15,8 +15,9 @@ sans les trous, qui se refermeraient en bouillie à 16 px). Les PNG de la PWA
 se régénèrent avec `npm run icones`.
 
 - **Côté cavalier** : ses chevaux, le partage en demi-pension par code
-  d'invitation, un calendrier partagé par cheval, un carnet de séances et
-  le suivi santé avec alertes d'échéances.
+  d'invitation, un calendrier partagé par cheval mis à jour en temps réel,
+  un carnet de séances, le suivi santé avec alertes d'échéances, et les
+  documents administratifs du cheval rangés une fois pour toutes.
 - **Côté club** : le pilotage de la cavalerie, le même suivi santé en vue
   globale triée par urgence, et le planning « qui monte quel cheval quand ».
 
@@ -74,6 +75,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0012_rappels_in_app.sql` | Rappels dans l'application plutôt que par email : cloche, marquage comme lu, retrait de l'envoi planifié |
 | `0013_participants_cheval.sql` | Borne haute du partage : dix cavaliers par cheval de particulier, aucune pour un cheval de club |
 | `0014_agenda_temps_reel.sql` | Diffusion temps réel des créneaux et des soins : le calendrier d'un co-cavalier se met à jour pendant qu'un autre écrit |
+| `0015_documents.sql` | Table `documents` et bucket de stockage privé pour les papiers du cheval (identification, contrat DP, assurance), réservé au premium |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

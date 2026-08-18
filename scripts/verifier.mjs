@@ -31,7 +31,18 @@ async function attendre(url, essais = 60) {
 
 console.log('› Construction…')
 await new Promise((resoudre, rejeter) => {
-  const build = spawn('npx', ['vite', 'build'], { stdio: ['ignore', 'ignore', 'inherit'] })
+  // L'URL Supabase est imposée ici, par-dessus tout `.env` : les tests
+  // interceptent `*.supabase.co`, et un build parti avec une autre valeur
+  // les ferait expirer un à un sans dire pourquoi. Les variables
+  // d'environnement priment sur le fichier chez Vite.
+  const build = spawn('npx', ['vite', 'build'], {
+    stdio: ['ignore', 'ignore', 'inherit'],
+    env: {
+      ...process.env,
+      VITE_SUPABASE_URL: 'https://exemple.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'cle-factice-pour-la-verification',
+    },
+  })
   build.on('exit', (code) => (code === 0 ? resoudre() : rejeter(new Error('build en échec'))))
 })
 
