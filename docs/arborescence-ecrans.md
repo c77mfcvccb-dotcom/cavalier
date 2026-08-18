@@ -65,7 +65,10 @@ Barre d'onglets : **Accueil · Mes chevaux · Calendrier · Profil**
    │                  ajout d'un soin (échéance pré-remplie)
    └─ Documents        document d'identification, contrat de demi-pension,
                       assurance — un fichier par ligne, ouvert via une URL
-                      signée, visible par tous les cavaliers liés au cheval
+                      signée, visible par tous les cavaliers liés au cheval.
+                      À l'ajout, la catégorie se choisit AVANT le fichier :
+                      rien ne part sans être classé. « Autre » exige un nom
+                      libre, qui devient le titre dans la liste
 
 /calendrier           CALENDRIER GLOBAL — tous mes chevaux fusionnés,
                       vue mois puis détail du jour. Deux natures d'événement :

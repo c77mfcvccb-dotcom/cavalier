@@ -197,9 +197,10 @@ export default function OngletDocuments({ cheval }) {
 
 function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
   const champRef = useRef(null)
-  const [fichier, setFichier] = useState(null)
+  const nomRef = useRef(null)
+  const [categorie, setCategorie] = useState(null)
   const [nom, setNom] = useState('')
-  const [categorie, setCategorie] = useState('identification')
+  const [fichier, setFichier] = useState(null)
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
 
@@ -207,11 +208,30 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
   if (ouverte !== etaitOuverte) {
     setEtaitOuverte(ouverte)
     if (ouverte) {
-      setFichier(null)
+      setCategorie(null)
       setNom('')
-      setCategorie('identification')
+      setFichier(null)
       setErreur('')
       if (champRef.current) champRef.current.value = ''
+    }
+  }
+
+  /**
+   * La catégorie d'abord, le fichier ensuite : le sélecteur ne s'ouvre
+   * qu'une fois la catégorie posée, si bien qu'aucun document ne peut
+   * partir sans être classé. Pour les trois catégories nommées, choisir
+   * ouvre directement le sélecteur — le classement EST le geste. « Autre »
+   * marque un arrêt : le nom d'abord, puisque c'est lui qui dira ce qu'est
+   * ce document.
+   */
+  function choisirCategorie(cle) {
+    setCategorie(cle)
+    setErreur('')
+    if (cle === 'autre') {
+      // Le champ n'existe pas encore à cet instant du rendu.
+      setTimeout(() => nomRef.current?.focus(), 50)
+    } else {
+      champRef.current?.click()
     }
   }
 
@@ -225,14 +245,21 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
     }
     setErreur('')
     setFichier(choisi)
-    // Nom affiché pré-rempli avec le nom de fichier, sans l'extension —
-    // modifiable, pour qu'« IMG_4821.jpg » puisse devenir « Assurance 2026 ».
-    const point = choisi.name.lastIndexOf('.')
-    setNom(point > 0 ? choisi.name.slice(0, point) : choisi.name)
   }
 
   async function enregistrer(evenement) {
     evenement.preventDefault()
+    if (!categorie) {
+      setErreur('Choisissez une catégorie')
+      return
+    }
+    // Obligatoire pour « autre » seulement : sans nom, une ligne « Autre »
+    // ne dit rien de ce qu'elle contient. Les trois autres catégories se
+    // suffisent — leur libellé sert alors de titre.
+    if (categorie === 'autre' && !nom.trim()) {
+      setErreur('Donnez un nom à ce document — c’est lui qui s’affichera dans la liste')
+      return
+    }
     if (!fichier) {
       setErreur('Choisissez un fichier')
       return
@@ -251,7 +278,7 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
       const { error } = await supabase.from('documents').insert({
         cheval_id: cheval.id,
         categorie,
-        nom: nom.trim() || fichier.name,
+        nom: nom.trim() || CATEGORIES_DOCUMENT[categorie].libelle,
         chemin,
         taille_octets: aEnvoyer.size,
         type_mime: aEnvoyer.type,
@@ -277,42 +304,78 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
       <form onSubmit={enregistrer}>
         <Erreur>{erreur}</Erreur>
 
-        <Champ label="Fichier" aide="PDF, photo ou scan — 15 Mo maximum">
-          <button
-            type="button"
-            className="bouton secondaire pleine-largeur"
-            onClick={() => champRef.current?.click()}
-          >
-            {fichier ? fichier.name : 'Choisir un fichier'}
-          </button>
-          <input
-            ref={champRef}
-            type="file"
-            accept="application/pdf,image/*"
-            onChange={surSelection}
-            style={{ display: 'none' }}
-          />
-        </Champ>
+        <p className="doux" style={{ marginBottom: 12 }}>
+          De quel document s’agit-il ?
+        </p>
 
-        {fichier && (
+        <div className="choix-compte" style={{ marginBottom: 16 }}>
+          {Object.entries(CATEGORIES_DOCUMENT).map(([cle, config]) => (
+            <button
+              key={cle}
+              type="button"
+              className={categorie === cle ? 'actif' : undefined}
+              onClick={() => choisirCategorie(cle)}
+            >
+              <span className="emoji">{config.emoji}</span>
+              <span>
+                <span className="titre">{config.libelle}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <input
+          ref={champRef}
+          type="file"
+          accept="application/pdf,image/*"
+          onChange={surSelection}
+          style={{ display: 'none' }}
+        />
+
+        {categorie && (
           <>
-            <Champ label="Nom affiché">
-              <input value={nom} onChange={(e) => setNom(e.target.value)} required />
-            </Champ>
+            {categorie === 'autre' ? (
+              <Champ
+                label="Nom du document"
+                aide="C’est lui qui s’affichera dans la liste"
+              >
+                <input
+                  ref={nomRef}
+                  value={nom}
+                  onChange={(e) => setNom(e.target.value)}
+                  placeholder="Facture ostéo mai 2026, certificat de vente…"
+                  required
+                />
+              </Champ>
+            ) : (
+              <Champ
+                label="Nom du document"
+                aide={`Facultatif — sinon « ${CATEGORIES_DOCUMENT[categorie].libelle} » servira de titre`}
+              >
+                <input
+                  value={nom}
+                  onChange={(e) => setNom(e.target.value)}
+                  placeholder={CATEGORIES_DOCUMENT[categorie].libelle}
+                />
+              </Champ>
+            )}
 
-            <Champ label="Catégorie">
-              <select value={categorie} onChange={(e) => setCategorie(e.target.value)}>
-                {Object.entries(CATEGORIES_DOCUMENT).map(([cle, config]) => (
-                  <option key={cle} value={cle}>
-                    {config.emoji} {config.libelle}
-                  </option>
-                ))}
-              </select>
+            <Champ label="Fichier" aide="PDF, photo ou scan — 15 Mo maximum">
+              <button
+                type="button"
+                className="bouton secondaire pleine-largeur"
+                onClick={() => champRef.current?.click()}
+              >
+                {fichier ? fichier.name : 'Choisir un fichier'}
+              </button>
             </Champ>
           </>
         )}
 
-        <button className="bouton pleine-largeur" disabled={envoi || !fichier}>
+        <button
+          className="bouton pleine-largeur"
+          disabled={envoi || !fichier || !categorie || (categorie === 'autre' && !nom.trim())}
+        >
           {envoi ? 'Envoi…' : 'Enregistrer'}
         </button>
       </form>
