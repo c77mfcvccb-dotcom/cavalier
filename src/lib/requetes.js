@@ -169,6 +169,50 @@ export async function chargerCreneaux({ chevauxIds, debut, fin }) {
 }
 
 /**
+ * Passages en cours d'un ou plusieurs chevaux : les attributions posées par
+ * le club, mises en forme d'événement de calendrier. Un cheval attribué à
+ * un cours y travaille autant qu'en créneau — son calendrier doit le dire,
+ * sinon la fiche ment sur sa journée.
+ *
+ * Le RLS fait le tri : sur un cheval de particulier la table est muette, et
+ * seuls les membres du club voient ses cours.
+ */
+export async function chargerPassagesCours({ chevauxIds, debut, fin }) {
+  if (!chevauxIds?.length) return []
+
+  let requete = supabase
+    .from('inscriptions_cours')
+    .select(
+      `id, cheval_id, cavalier_id, statut,
+       cavalier:profils(id, nom, photo_url),
+       cheval:cheval_id(id, nom),
+       cours:cours_id!inner(id, debut, fin, discipline, niveau, moniteur)`
+    )
+    .in('cheval_id', chevauxIds)
+    .eq('statut', 'inscrit')
+
+  if (debut) requete = requete.gte('cours.debut', debut.toISOString())
+  if (fin) requete = requete.lte('cours.debut', fin.toISOString())
+
+  const { data, error } = await requete
+  if (error) throw error
+
+  return (data || []).map((inscription) => ({
+    id: `cours-${inscription.id}`,
+    genre: 'cours',
+    cheval_id: inscription.cheval_id,
+    cheval: inscription.cheval,
+    cavalier_id: inscription.cavalier_id,
+    cavalier: inscription.cavalier,
+    debut: inscription.cours.debut,
+    fin: inscription.cours.fin,
+    discipline: inscription.cours.discipline,
+    niveau: inscription.cours.niveau,
+    moniteur: inscription.cours.moniteur,
+  }))
+}
+
+/**
  * Flux unique du calendrier : créneaux de monte + échéances de soins.
  *
  * Chaque élément porte un `genre` (« creneau » ou « soin ») qui pilote son
@@ -182,9 +226,10 @@ export async function chargerCreneaux({ chevauxIds, debut, fin }) {
 export async function chargerEvenements({ chevauxIds, debut, fin }) {
   if (!chevauxIds?.length) return []
 
-  const [creneaux, echeances] = await Promise.all([
+  const [creneaux, echeances, passages] = await Promise.all([
     chargerCreneaux({ chevauxIds, debut, fin }),
     chargerEcheances(),
+    chargerPassagesCours({ chevauxIds, debut, fin }),
   ])
 
   const dansLaFenetre = (jour) => {
@@ -209,7 +254,7 @@ export async function chargerEvenements({ chevauxIds, debut, fin }) {
       praticien: echeance.praticien,
     }))
 
-  return [...creneaux.map((c) => ({ ...c, genre: 'creneau' })), ...soins].sort(
+  return [...creneaux.map((c) => ({ ...c, genre: 'creneau' })), ...soins, ...passages].sort(
     (a, b) => enDateLocale(a.debut) - enDateLocale(b.debut)
   )
 }

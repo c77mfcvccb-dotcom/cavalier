@@ -8,6 +8,27 @@ import { STATUTS_ECHEANCE, TYPES_CRENEAU, TYPES_SOIN } from '../lib/constantes'
  * lisible, mais le soin porte son emoji et son badge d'urgence.
  */
 export default function LigneEvenement({ evenement, avecCheval = true }) {
+  if (evenement.genre === 'cours') {
+    return (
+      <Link to="/cours" className="element">
+        <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
+        <span style={{ fontSize: '1.3rem' }}>🎓</span>
+        <div className="corps">
+          <div className="titre">
+            Cours{evenement.niveau ? ` · ${evenement.niveau}` : ''}
+            {avecCheval && <span className="doux"> · {evenement.cheval?.nom}</span>}
+          </div>
+          <div className="meta">
+            {formatHeure(evenement.debut)} – {formatHeure(evenement.fin)} ·{' '}
+            {evenement.cavalier?.nom}
+            {evenement.moniteur ? ` · ${evenement.moniteur}` : ''}
+          </div>
+        </div>
+        <span className="fleche">›</span>
+      </Link>
+    )
+  }
+
   if (evenement.genre === 'soin') {
     const type = TYPES_SOIN[evenement.type] || TYPES_SOIN.autre
     const statut = STATUTS_ECHEANCE[evenement.statut] || STATUTS_ECHEANCE.ok

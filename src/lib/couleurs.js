@@ -205,6 +205,21 @@ export function identiteCavalier(repertoire, cavalierId, nom) {
  * un créneau, emoji du type de soin pour une échéance.
  */
 export function etiquetteEvenement(evenement) {
+  // Un passage en cours : le cheval travaille sous la bannière du club.
+  // Une seule étiquette par jour quel que soit le cavalier — dans une case
+  // de grille, « il y a cours » suffit, le détail vit dans la liste du jour.
+  if (evenement.genre === 'cours') {
+    return {
+      cle: 'cours',
+      libelle: 'Cours',
+      court: '🎓',
+      priorite: 0,
+      fond: '#e3ecf7',
+      texte: '#2b6cb0',
+      trait: '#2b6cb0',
+    }
+  }
+
   if (evenement.genre === 'soin') {
     const type = TYPES_SOIN[evenement.type] || TYPES_SOIN.autre
     // Priorité 1 : dans une case étroite, savoir qui monte prime sur le soin,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link as Lien, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
-import { chargerCreneaux } from '../../lib/requetes'
+import { chargerCreneaux, chargerPassagesCours } from '../../lib/requetes'
 import { useAgendaVivant } from '../../lib/temps-reel'
 import { Champ, Chargement, Erreur, Feuille } from '../../composants/Ui'
 import Calendrier from '../../composants/Calendrier'
@@ -31,7 +31,19 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
 
   const recharger = useCallback(async () => {
     try {
-      setCreneaux(await chargerCreneaux({ chevauxIds: [cheval.id] }))
+      // Les créneaux ET les passages en cours : un cheval attribué à un
+      // cours y travaille — son calendrier doit le montrer, sinon la fiche
+      // ment sur sa journée. Le temps réel recharge ce bloc quand le club
+      // attribue : la sélection pour un cours apparaît ici sans rien faire.
+      const [lignes, passages] = await Promise.all([
+        chargerCreneaux({ chevauxIds: [cheval.id] }),
+        chargerPassagesCours({ chevauxIds: [cheval.id] }),
+      ])
+      setCreneaux(
+        [...lignes.map((c) => ({ ...c, genre: 'creneau' })), ...passages].sort(
+          (a, b) => new Date(a.debut) - new Date(b.debut)
+        )
+      )
     } catch (e) {
       setErreur(e.message || 'Chargement du calendrier impossible')
     } finally {
@@ -99,6 +111,25 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
         ) : (
           <div className="liste">
             {creneauxDuJour.map((creneau) => {
+              if (creneau.genre === 'cours') {
+                return (
+                  <div key={creneau.id} className="element">
+                    <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
+                    <span style={{ fontSize: '1.2rem' }}>🎓</span>
+                    <div className="corps">
+                      <div className="titre">
+                        Cours{creneau.niveau ? ` · ${creneau.niveau}` : ''}
+                      </div>
+                      <div className="meta">
+                        {formatHeure(creneau.debut)} – {formatHeure(creneau.fin)} ·{' '}
+                        {creneau.cavalier?.nom}
+                        {creneau.moniteur ? ` · ${creneau.moniteur}` : ''}
+                      </div>
+                    </div>
+                    <span className="badge contour">Attribué</span>
+                  </div>
+                )
+              }
               const modifiable = creneau.cavalier_id === profil.id || estGestionnaire
               return (
                 <div key={creneau.id} className="element">
