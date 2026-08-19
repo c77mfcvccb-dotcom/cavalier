@@ -196,6 +196,16 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             <><dt>Propriétaire</dt><dd>{cheval.proprietaire_nom}</dd></>
           )}
           {cheval.club_id && (<><dt>Statut</dt><dd>Cheval de club</dd></>)}
+          {cheval.ecurie_id && (
+            <>
+              <dt>Statut</dt>
+              <dd>
+                {cheval.pension_confirmee
+                  ? 'En pension à l\'écurie'
+                  : 'Pension demandée — en attente de l\'écurie'}
+              </dd>
+            </>
+          )}
           {indispoEnCours && (
             <>
               <dt>Disponibilité</dt>

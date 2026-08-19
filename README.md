@@ -87,6 +87,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0020_mes_cavaliers.sql` | La fiche d'un cheval en pension devient visible de son écurie, et l'attribution d'une monture porte son rôle (demi-pension ou cheval de club) |
 | `0021_pension_confirmee.sql` | La pension se demande et l'écurie la confirme : sans acceptation du gérant, aucun cheval n'entre dans le périmètre du club ni dans son accès offert |
 | `0023_roles_pension.sql` | Les formules de pension à l'attribution : demi-pension, tiers de pension, pension complète ou cheval de club — contrainte de table et fonction d'attribution élargies (la 0022 vit dans la PR des soins privés) |
+| `0024_acces_pension.sql` | `a_acces_cheval()` s'ouvre à l'écurie d'une pension CONFIRMÉE : soins, carnet, créneaux, séances et documents du cheval hébergé — sans en faire la gestionnaire (fiche, suppression, indisponibilités et coûts restent au propriétaire) |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

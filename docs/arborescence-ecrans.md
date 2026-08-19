@@ -155,8 +155,10 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       L'ancien onglet Santé a fusionné ici — les données
                       n'ont pas bougé, l'historique reste sur chaque fiche
 
-/chevaux              CAVALERIE — liste de tous les chevaux du club,
-                      recherche, nombre de cavaliers liés par cheval,
+/chevaux              CAVALERIE — liste de tous les chevaux du club ET des
+                      pensions confirmées (badge « 🏠 En pension » —
+                      l'Accueil rappelle leurs soins, le cheval doit donc
+                      se trouver ici), recherche, nombre de cavaliers liés,
                       charge de travail (« 2 aujourd'hui · 5 sur la
                       semaine ») et badge « Au repos » quand une
                       indisponibilité court

@@ -268,12 +268,17 @@ et un code faux ne révèle jamais l'existence de l'écurie.
 ### `chevaux.ecurie_id` — la pension (demandée, puis confirmée)
 
 `club_id` signifie **propriété** et donne les droits de gestionnaire ;
-`ecurie_id` signifie **stationné chez** et n'ouvre aucun droit de gestion
-à l'écurie — il sert au périmètre premium et, depuis la 0020, à la
-**visibilité de la fiche** : l'écurie voit les chevaux en pension chez elle
-(sans quoi « Mes cavaliers » afficherait des pensions fantômes), mais
-`a_acces_cheval()` ne change pas — calendrier, séances, soins et documents
-restent au propriétaire et à ses invités. Le propriétaire rattache son
+`ecurie_id` signifie **stationné chez** — il sert au périmètre premium et,
+depuis la 0020, à la **visibilité de la fiche** : l'écurie voit les chevaux
+en pension chez elle (sans quoi « Mes cavaliers » afficherait des pensions
+fantômes). Depuis la **0024**, une pension **confirmée** entre aussi dans
+`a_acces_cheval()` : l'écurie lit et écrit les soins du cheval qu'elle
+héberge (c'est ce qui fait vivre les tâches de son Accueil), voit son
+calendrier, ses séances et ses documents. Elle n'en devient pas pour
+autant **gestionnaire** : modifier la fiche, supprimer le cheval, poser
+une indisponibilité, générer le lien public et lire les coûts des soins
+d'autrui restent au propriétaire — et une demande de pension en attente
+n'ouvre rien. Le propriétaire rattache son
 cheval (trigger : uniquement une écurie dont il est membre, sinon
 `ECURIE_NON_MEMBRE`) ; lui ou le gérant détachent (`detacher_de_ecurie()`).
 

@@ -27,8 +27,10 @@ export default function ClubCavalerie() {
     let annule = false
 
     async function charger() {
+      // Avec les pensions confirmées : l'accueil rappelle leurs soins, le
+      // cheval doit donc se retrouver ici aussi — badgé « En pension ».
       const [cavalerie, echeances] = await Promise.all([
-        chargerChevauxClub(profil.id),
+        chargerChevauxClub(profil.id, { avecPensions: true }),
         chargerEcheances(),
       ])
       if (annule) return
@@ -124,6 +126,9 @@ export default function ClubCavalerie() {
                       <div className="nom">{cheval.nom}</div>
                       <div className="detail">{details || 'Fiche à compléter'}</div>
                       <div className="puces" style={{ marginTop: 5 }}>
+                        {cheval.ecurie_id === profil.id && (
+                          <span className="badge contour">🏠 En pension</span>
+                        )}
                         <span className="badge contour">
                           {cheval.nb_cavaliers} cavalier{cheval.nb_cavaliers > 1 ? 's' : ''}
                         </span>
