@@ -7,7 +7,7 @@ import { useAgendaVivant } from '../lib/temps-reel'
 import { Avatar, Champ, Chargement, Erreur, EtatVide, Feuille, PhotoCheval } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import CodeClub from '../composants/CodeClub'
-import { ROLES } from '../lib/constantes'
+import { ROLES, ROLES_ATTRIBUTION } from '../lib/constantes'
 import { traduireErreurClub } from '../lib/club'
 
 /**
@@ -716,20 +716,16 @@ function FeuilleAttribution({ membre, cavalerie, liaisons, onFermer, onAttribue 
           aide="Le rôle s'affiche partout où la liaison apparaît — sur la fiche, le calendrier, le planning."
         >
           <div className="choix-puces">
-            <button
-              type="button"
-              className={role === 'demi_pension' ? 'actif' : undefined}
-              onClick={() => setRole('demi_pension')}
-            >
-              Demi-pension
-            </button>
-            <button
-              type="button"
-              className={role === 'cavalier_club' ? 'actif' : undefined}
-              onClick={() => setRole('cavalier_club')}
-            >
-              Cheval de club
-            </button>
+            {ROLES_ATTRIBUTION.map((cle) => (
+              <button
+                key={cle}
+                type="button"
+                className={role === cle ? 'actif' : undefined}
+                onClick={() => setRole(cle)}
+              >
+                {ROLES[cle].libelle}
+              </button>
+            ))}
           </div>
         </Champ>
 

@@ -240,6 +240,7 @@ const ECRANS = [
   ['/mentions-legales', 'Mentions légales'],
   ['/confidentialite', 'Confidentialité'],
   [`/chevaux/${CHEVAL}?onglet=fiche`, 'Cheval · fiche'],
+  [`/chevaux/${CHEVAL}?onglet=cavaliers`, 'Cheval · cavaliers'],
   [`/chevaux/${CHEVAL}?onglet=calendrier`, 'Cheval · calendrier'],
   [`/chevaux/${CHEVAL}?onglet=seances`, 'Cheval · séances'],
   [`/chevaux/${CHEVAL}?onglet=soins`, 'Cheval · soins'],
@@ -389,6 +390,21 @@ export async function verifier(base) {
       const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
       noter('Fiche — l\'indisponibilité en cours est signalée', texte.includes('Ostéopathie'), texte.slice(0, 120))
       noter('Fiche — la section Disponibilité liste le repos', texte.includes('Disponibilité'), texte.slice(0, 120))
+      await page.close()
+    }
+
+    // ── L'onglet Cavaliers : la gestion des liaisons a son onglet ─────
+    {
+      const { page } = await ouvrirPage(navigateur, base)
+      await page.goto(`${base}/chevaux/${CHEVAL}?onglet=cavaliers`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Cavaliers — l\'onglet est dans la barre de la fiche',
+        (await page.locator('.onglets button', { hasText: 'Cavaliers' }).count()) === 1)
+      noter('Cavaliers — les trois liaisons sont listées avec leur rôle',
+        texte.includes('Marie Leroy') && texte.includes('Alice Martin') &&
+        texte.includes('(vous)') && texte.includes('Propriétaire') && texte.includes('Demi-pension'),
+        texte.slice(0, 300))
       await page.close()
     }
 

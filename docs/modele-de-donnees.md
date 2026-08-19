@@ -74,7 +74,7 @@ accède à ses chevaux via `club_id`).
 |---------------|---------|----------------------------------------------------------|
 | `cheval_id`   | uuid FK |                                                          |
 | `cavalier_id` | uuid FK | profil de type `cavalier`                                |
-| `role`        | text    | `proprietaire` \| `demi_pension` \| `cavalier_club`        |
+| `role`        | text    | `proprietaire` \| `demi_pension` \| `tiers_pension` \| `pension_complete` \| `cavalier_club` (0023) |
 | `couleur`     | text    | hérité — voir la note ci-dessous                         |
 
 > La colonne `couleur` n'est plus lue par l'application. Elle attribuait une
@@ -110,12 +110,14 @@ cavaliers d'un cheval, l'autre les chevaux d'un compte : le plan gratuit
 reste à **un cheval par compte, créé ou rejoint** (migration 0006) — les
 chevaux de club en sont exclus depuis la 0018.
 
-**Liaison directe et remplacement** (migrations 0019/0020). Le club peut
-lier un de SES membres à un de SES chevaux en un geste, sans code, par
+**Liaison directe et remplacement** (migrations 0019/0020/0023). Le club
+peut lier un de SES membres à un de SES chevaux en un geste, sans code, par
 `lier_membre_au_cheval()` — l'invitation reste la porte normale quand c'est
-le cavalier qui agit. La fonction pose aussi le **rôle** de l'attribution
-(`demi_pension` ou `cavalier_club`, jamais `proprietaire`) ; rappelée sur
-une liaison existante, elle ajuste le rôle au lieu d'échouer. La colonne `remplacement_de` (uuid → chevaux,
+le cavalier qui agit. La fonction pose aussi le **rôle** de l'attribution,
+la formule réelle de l'écurie : `demi_pension`, `tiers_pension`,
+`pension_complete` ou `cavalier_club` — jamais `proprietaire`, qui se
+constate à la création du cheval ; rappelée sur une liaison existante, elle
+ajuste le rôle au lieu d'échouer. La colonne `remplacement_de` (uuid → chevaux,
 nullable) mémorise le cheval indisponible qu'une liaison remplace : elle
 porte le badge « Remplace X » sur la fiche, et la levée de
 l'indisponibilité propose de clore d'un coup les remplacements qui

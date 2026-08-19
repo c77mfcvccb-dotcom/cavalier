@@ -47,7 +47,9 @@ export default function ClubAccueil() {
   const [horizon, setHorizon] = useState('jour')
 
   const recharger = useCallback(async () => {
-    const chevaux = await chargerChevauxClub(profil.id)
+    // Avec les pensions confirmées : le vaccin d'un cheval en pension à
+    // l'écurie est une tâche au même titre que celui d'un cheval de club.
+    const chevaux = await chargerChevauxClub(profil.id, { avecPensions: true })
     setCavalerie(chevaux)
 
     // Les cours d'aujourd'hui : le programme de la journée fait partie des

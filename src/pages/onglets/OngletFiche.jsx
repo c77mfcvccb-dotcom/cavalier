@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexte/AuthContexte'
-import { Avatar, Champ, Erreur, Feuille, PhotoCheval } from '../../composants/Ui'
+import { Champ, Erreur, Feuille, PhotoCheval } from '../../composants/Ui'
 import ChargeurPhoto from '../../composants/ChargeurPhoto'
-import { MOTIFS_INDISPO, PARTICIPANTS_MAX, ROLES, SEXES } from '../../lib/constantes'
-import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
+import { MOTIFS_INDISPO, SEXES } from '../../lib/constantes'
 import { chargerIndisponibilites, indisponibiliteActive } from '../../lib/requetes'
 import { cleJour, formatDate, texteAge } from '../../lib/format'
 
@@ -14,25 +13,15 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
   const navigate = useNavigate()
 
   const [editionOuverte, setEditionOuverte] = useState(false)
-  const [invitationOuverte, setInvitationOuverte] = useState(false)
   const [partageOuvert, setPartageOuvert] = useState(false)
   const [indispoOuverte, setIndispoOuverte] = useState(false)
   const [indisponibilites, setIndisponibilites] = useState([])
-  const [lierOuvert, setLierOuvert] = useState(false)
   const [reportOuvert, setReportOuvert] = useState(false)
   const [lienPublic, setLienPublic] = useState(null)
-  const [code, setCode] = useState('')
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
 
   const maLiaison = cavaliers.find((c) => c.cavalier_id === profil.id)
-
-  const repertoire = useMemo(() => repertoireCavaliers(cavaliers), [cavaliers])
-
-  // Un cheval de club n'est pas plafonné : une cavalerie d'école tourne avec
-  // bien plus de dix cavaliers, et le partage y est le mode normal.
-  const plafond = cheval.club_id ? null : PARTICIPANTS_MAX
-  const complet = plafond !== null && cavaliers.length >= plafond
 
   // Lien public actif éventuel — visible du seul propriétaire ou club (RLS)
   useEffect(() => {
@@ -133,34 +122,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
     }
   }
 
-  async function genererCode() {
-    setErreur('')
-    setEnvoi(true)
-    const { data, error } = await supabase.rpc('generer_code_invitation', {
-      p_cheval: cheval.id,
-      p_role: cheval.club_id ? 'cavalier_club' : 'demi_pension',
-    })
-    setEnvoi(false)
-
-    if (error) {
-      setErreur(
-        error.message.includes('CHEVAL_COMPLET')
-          ? `Ce cheval compte déjà ${plafond} cavaliers, le maximum.`
-          : error.message.replace(/^.*?:\s*/, '')
-      )
-      return
-    }
-    setCode(data)
-    setInvitationOuverte(true)
-  }
-
-  async function retirerCavalier(liaison) {
-    if (!window.confirm(`Retirer ${liaison.profil?.nom} de ce cheval ?`)) return
-    const { error } = await supabase.from('cheval_cavaliers').delete().eq('id', liaison.id)
-    if (error) setErreur(error.message)
-    else recharger()
-  }
-
   async function quitterCheval() {
     if (!window.confirm('Vous ne verrez plus ce cheval ni son calendrier. Continuer ?')) return
     const { error } = await supabase.from('cheval_cavaliers').delete().eq('id', maLiaison.id)
@@ -248,72 +209,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           </button>
         )}
       </div>
-
-      <section>
-        <div className="titre-section">
-          <h2>
-            Cavaliers
-            <span className="doux"> · {cavaliers.length}{plafond ? `/${plafond}` : ''}</span>
-          </h2>
-          <span className="rangee" style={{ gap: 10 }}>
-            {estClubGestionnaire && (
-              <button className="lien" onClick={() => setLierOuvert(true)}>
-                + Ajouter
-              </button>
-            )}
-            {estGestionnaire && !complet && (
-              <button className="lien" onClick={genererCode} disabled={envoi}>
-                + Inviter
-              </button>
-            )}
-          </span>
-        </div>
-
-        <div className="liste">
-          {cavaliers.length === 0 && (
-            <div className="carte centre doux">Aucun cavalier lié pour l'instant</div>
-          )}
-
-          {cavaliers.map((liaison) => (
-            <div key={liaison.id} className="element">
-              <span
-                className="bordure-couleur"
-                style={{
-                  background: identiteCavalier(repertoire, liaison.cavalier_id, liaison.profil?.nom)
-                    .trait,
-                }}
-              />
-              <Avatar profil={liaison.profil} />
-              <div className="corps">
-                <div className="titre">
-                  {liaison.profil?.nom}
-                  {liaison.cavalier_id === profil.id && <span className="doux"> (vous)</span>}
-                </div>
-                <div className="meta">
-                  {ROLES[liaison.role]?.libelle}
-                  {liaison.profil?.niveau_galop ? ` · Galop ${liaison.profil.niveau_galop}` : ''}
-                </div>
-              </div>
-              {liaison.remplacement_de && (
-                <span className="badge contour" title="Liaison posée le temps d'une indisponibilité">
-                  Remplace{liaison.remplacement?.nom ? ` ${liaison.remplacement.nom}` : ''}
-                </span>
-              )}
-              {estGestionnaire && liaison.cavalier_id !== profil.id && (
-                <button className="bouton fantome petit" onClick={() => retirerCavalier(liaison)}>
-                  Retirer
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <p className="aide" style={{ marginTop: 10 }}>
-          {complet
-            ? `Ce cheval a atteint le maximum de ${plafond} cavaliers. Retirez-en un pour inviter quelqu'un d'autre.`
-            : 'Chaque cavalier lié a sa couleur : elle sert de repère dans le calendrier partagé.'}
-        </p>
-      </section>
 
       {(estGestionnaire || indisponibilites.length > 0) && (
         <section>
@@ -430,48 +325,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
       </div>
 
       <Feuille
-        titre="Code d'invitation"
-        ouverte={invitationOuverte}
-        onFermer={() => setInvitationOuverte(false)}
-      >
-        <div className="code-invitation">
-          <div className="doux" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            À transmettre au cavalier
-          </div>
-          <div className="code">{code}</div>
-          <div style={{ fontSize: '0.82rem', opacity: 0.75 }}>
-            Valable 30 jours, une seule utilisation — recommencez pour inviter
-            quelqu'un d'autre
-          </div>
-        </div>
-
-        <div className="pile" style={{ marginTop: 16 }}>
-          {navigator.share && (
-            <button
-              className="bouton"
-              onClick={() =>
-                navigator.share({
-                  title: 'Licol',
-                  text: `Rejoins ${cheval.nom} sur Licol avec le code ${code}`,
-                })
-              }
-            >
-              Partager le code
-            </button>
-          )}
-          <button
-            className="bouton secondaire"
-            onClick={() => navigator.clipboard?.writeText(code)}
-          >
-            Copier le code
-          </button>
-          <button className="bouton fantome" onClick={() => setInvitationOuverte(false)}>
-            Fermer
-          </button>
-        </div>
-      </Feuille>
-
-      <Feuille
         titre="Lien public de la fiche"
         ouverte={partageOuvert}
         onFermer={() => setPartageOuvert(false)}
@@ -531,19 +384,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
       />
 
       {estClubGestionnaire && (
-        <FeuilleLierMembre
-          cheval={cheval}
-          cavaliers={cavaliers}
-          ouverte={lierOuvert}
-          onFermer={() => setLierOuvert(false)}
-          onLie={() => {
-            setLierOuvert(false)
-            recharger()
-          }}
-        />
-      )}
-
-      {estClubGestionnaire && (
         <FeuilleReport
           cheval={cheval}
           cavaliers={cavaliers}
@@ -556,78 +396,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
         />
       )}
     </div>
-  )
-}
-
-/**
- * Le club lie un de ses membres au cheval, sans code : la porte normale
- * reste l'invitation, mais quand la cavalière est devant la carrière, le
- * geste doit tenir en un appui (migration 0019).
- */
-function FeuilleLierMembre({ cheval, cavaliers, ouverte, onFermer, onLie }) {
-  const { profil } = useAuth()
-  const [membres, setMembres] = useState(null)
-  const [erreur, setErreur] = useState('')
-
-  useEffect(() => {
-    if (!ouverte) return
-    supabase
-      .from('membres_club')
-      .select('cavalier_id, cavalier:cavalier_id(id, nom, photo_url, niveau_galop)')
-      .eq('club_id', profil.id)
-      .then(({ data }) =>
-        setMembres(
-          (data || [])
-            .map((m) => m.cavalier)
-            .filter(Boolean)
-            .sort((a, b) => a.nom.localeCompare(b.nom))
-        )
-      )
-  }, [ouverte, profil.id])
-
-  const dejaLies = new Set(cavaliers.map((c) => c.cavalier_id))
-  const candidats = (membres || []).filter((m) => !dejaLies.has(m.id))
-
-  async function lier(cavalierId) {
-    setErreur('')
-    const { error } = await supabase.rpc('lier_membre_au_cheval', {
-      p_cheval: cheval.id,
-      p_cavalier: cavalierId,
-    })
-    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
-    else onLie()
-  }
-
-  return (
-    <Feuille titre={`Ajouter un cavalier à ${cheval.nom}`} ouverte={ouverte} onFermer={onFermer}>
-      <Erreur>{erreur}</Erreur>
-      {membres === null ? (
-        <p className="doux">Chargement des membres…</p>
-      ) : candidats.length === 0 ? (
-        <p className="doux">
-          Tous vos membres sont déjà liés à ce cheval — les nouveaux membres
-          arrivent par le code d'adhésion, dans « Mon club ».
-        </p>
-      ) : (
-        <div className="liste">
-          {candidats.map((membre) => (
-            <button
-              key={membre.id}
-              className="element"
-              style={{ width: '100%', textAlign: 'left' }}
-              onClick={() => lier(membre.id)}
-            >
-              <Avatar profil={membre} />
-              <div className="corps">
-                <div className="titre">{membre.nom}</div>
-                {membre.niveau_galop && <div className="meta">Galop {membre.niveau_galop}</div>}
-              </div>
-              <span className="fleche">+</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </Feuille>
   )
 }
 

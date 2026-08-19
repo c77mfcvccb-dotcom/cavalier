@@ -68,19 +68,24 @@ sur la fiche de chaque cheval.
 
 /rejoindre            Saisie du code d'invitation à 6 caractères
 
-/chevaux/:id          FICHE CHEVAL — 5 onglets internes
-   ├─ Fiche           photo, âge, race, robe, sexe, propriétaire,
-   │                  cavaliers liés (avec leur couleur), bouton
-   │                  « Inviter en demi-pension » → génère le code.
+/chevaux/:id          FICHE CHEVAL — 6 onglets internes
+   ├─ Fiche           photo, âge, race, robe, sexe, propriétaire.
    │                  Section Disponibilité : le gestionnaire met le cheval
    │                  au repos (motif, dates, « jusqu'à nouvel ordre ») et
    │                  le remet au travail ; tous les cavaliers le voient.
-   │                  Côté club : « + Ajouter » lie un membre sans code, et
-   │                  un cheval au repos propose de REPORTER ses cavaliers
-   │                  sur un autre cheval — la liaison porte « Remplace X »
-   │                  et la levée du repos propose d'y mettre fin.
+   │                  Un cheval de club au repos propose de REPORTER ses
+   │                  cavaliers sur un autre cheval — la liaison porte
+   │                  « Remplace X » et la levée du repos propose d'y
+   │                  mettre fin.
    │                  « Dépenses de ce cheval » ouvre le suivi déjà filtré
    │                  (propriétaire cavalier seulement — pas côté club)
+   ├─ Cavaliers       qui monte le cheval, chacun avec sa couleur de
+   │                  calendrier et son rôle. « + Inviter » génère le code
+   │                  (demi-pension). Côté club, « + Attribuer » lie un
+   │                  membre sans code en posant la FORMULE : demi-pension,
+   │                  tiers de pension, pension complète ou cheval de club
+   │                  (migration 0023) — réattribuer ajuste le rôle sans
+   │                  rien refaire. Retrait d'une liaison au même endroit
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
@@ -125,8 +130,10 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
 ```
 /                     ACCUEIL — la page par défaut du club, recalculée à
                       chaque chargement depuis les soins (aucun cron) :
-                      ├─ TÂCHES : vermifuges, vaccins, ferrures… commutables
-                      │  Jour (d'office) / Semaine / Mois pour voir venir ce
+                      ├─ TÂCHES : vermifuges, vaccins, ferrures… — sur les
+                      │  chevaux du club ET les pensions confirmées —
+                      │  commutables Jour (d'office) / Semaine / Mois pour
+                      │  voir venir ce
                       │  qu'il y aura à faire — la borne du mois est à
                       │  30 jours parce que la saisie d'un soin pré-remplit
                       │  l'échéance à 4-12 semaines selon le type. Chaque

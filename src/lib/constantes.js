@@ -3,8 +3,17 @@
 export const ROLES = {
   proprietaire: { libelle: 'Propriétaire', court: 'Proprio' },
   demi_pension: { libelle: 'Demi-pension', court: 'DP' },
+  tiers_pension: { libelle: 'Tiers de pension', court: 'TP' },
+  pension_complete: { libelle: 'Pension complète', court: 'Pension' },
   cavalier_club: { libelle: 'Cheval de club', court: 'Club' },
 }
+
+/**
+ * Les rôles qu'une écurie peut poser à l'attribution (migration 0023).
+ * « propriétaire » n'en fait pas partie : il se constate à la création
+ * du cheval, rien d'autre ne le confère.
+ */
+export const ROLES_ATTRIBUTION = ['demi_pension', 'tiers_pension', 'pension_complete', 'cavalier_club']
 
 export const TYPES_SEANCE = {
   plat: 'Plat',

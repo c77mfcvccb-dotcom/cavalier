@@ -6,6 +6,7 @@ import { chargerCavaliersDuCheval } from '../lib/requetes'
 import { Chargement, EtatVide, Erreur } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import OngletFiche from './onglets/OngletFiche'
+import OngletCavaliers from './onglets/OngletCavaliers'
 import OngletCalendrier from './onglets/OngletCalendrier'
 import OngletSeances from './onglets/OngletSeances'
 import OngletSoins from './onglets/OngletSoins'
@@ -13,6 +14,7 @@ import OngletDocuments from './onglets/OngletDocuments'
 
 const ONGLETS = [
   { cle: 'fiche', libelle: 'Fiche' },
+  { cle: 'cavaliers', libelle: 'Cavaliers' },
   { cle: 'calendrier', libelle: 'Calendrier' },
   { cle: 'seances', libelle: 'Séances' },
   { cle: 'soins', libelle: 'Soins' },
@@ -109,6 +111,7 @@ export default function FicheCheval() {
         <Erreur>{erreur}</Erreur>
 
         {ongletActif === 'fiche' && <OngletFiche {...proprietes} />}
+        {ongletActif === 'cavaliers' && <OngletCavaliers {...proprietes} />}
         {ongletActif === 'calendrier' && <OngletCalendrier {...proprietes} />}
         {ongletActif === 'seances' && <OngletSeances {...proprietes} />}
         {ongletActif === 'soins' && <OngletSoins {...proprietes} />}

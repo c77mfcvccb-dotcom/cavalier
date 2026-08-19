@@ -29,13 +29,26 @@ export async function chargerMesChevaux(cavalierId) {
     .sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' }))
 }
 
-/** Cavalerie d'un club. Jointure inverse désambiguïsée, même raison que ci-dessus. */
-export async function chargerChevauxClub(clubId) {
-  const { data, error } = await supabase
+/**
+ * Cavalerie d'un club. Jointure inverse désambiguïsée, même raison que
+ * ci-dessus.
+ *
+ * `avecPensions` élargit aux chevaux de propriétaires en pension confirmée
+ * à l'écurie : c'est le périmètre des SOINS (l'accueil doit rappeler le
+ * vermifuge du cheval en pension comme celui du cheval de club), mais pas
+ * celui des COURS — la base refuse d'attribuer à un cours un cheval qui
+ * n'appartient pas au club (trigger 0017), donc les écrans d'attribution
+ * restent sur le réglage par défaut.
+ */
+export async function chargerChevauxClub(clubId, { avecPensions = false } = {}) {
+  let requete = supabase
     .from('chevaux')
     .select('*, cheval_cavaliers!cheval_id(count)')
-    .eq('club_id', clubId)
-    .order('nom')
+  requete = avecPensions
+    ? requete.or(`club_id.eq.${clubId},and(ecurie_id.eq.${clubId},pension_confirmee.eq.true)`)
+    : requete.eq('club_id', clubId)
+
+  const { data, error } = await requete.order('nom')
 
   if (error) throw error
   return (data || []).map((cheval) => ({
