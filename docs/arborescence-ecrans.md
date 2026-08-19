@@ -35,8 +35,10 @@ d'y rester enfermé.
 
 ## Compte CAVALIER
 
-Barre d'onglets : **Accueil · Chevaux · Agenda · Club · Dépenses · Profil**
-(six entrées est la limite absolue — d'où les libellés courts)
+Barre d'onglets : **Accueil · Chevaux · Agenda · Cours · Club · Profil**
+(six entrées est la limite absolue — d'où les libellés courts). Les
+dépenses ont quitté la barre : leur porte d'entrée vit dans le Profil et
+sur la fiche de chaque cheval.
 
 ```
 /                     ACCUEIL — tableau de bord
@@ -97,13 +99,15 @@ Barre d'onglets : **Accueil · Chevaux · Agenda · Club · Dépenses · Profil*
                       Second appui sur le jour choisi → création : direct
                       avec un seul cheval, sinon on demande lequel
 
-/club                 MON CLUB — mes écuries : statut (membre / accès
-                      offert), les chevaux de l'écurie et les miens en
-                      pension, mise en pension d'un de mes chevaux,
-                      rejoindre une écurie avec son code d'adhésion,
-                      quitter. L'accès offert par l'écurie = premium sur
-                      son périmètre uniquement ; les chevaux personnels
-                      hors écurie restent sur le plan du compte
+/club                 MON CLUB — une carte par écurie, avec son LOGO, son
+                      nom, sa ville et le statut (membre / accès offert) ;
+                      « Mes chevaux ici » : les montures que le club m'a
+                      attribuées (photo + rôle DP ou cheval de club) et mes
+                      chevaux en pension ; mise en pension, cours du club,
+                      quitter, et le code d'adhésion pour rejoindre.
+                      L'accès offert par l'écurie = premium sur son
+                      périmètre uniquement ; les chevaux personnels hors
+                      écurie restent sur le plan du compte
 
 /profil               Nom, photo, galop, ville, téléphone, déconnexion,
                       badge de plan (Premium / Accès offert par l'écurie /
@@ -112,7 +116,8 @@ Barre d'onglets : **Accueil · Chevaux · Agenda · Club · Dépenses · Profil*
 
 ## Compte CLUB
 
-Barre d'onglets : **Chevaux · Cavaliers · Santé · Planning · Dépenses · Profil**
+Barre d'onglets : **Chevaux · Cavaliers · Santé · Planning · Cours · Profil**
+(dépenses accessibles depuis le Profil, comme côté cavalier)
 
 ```
 /                     CAVALERIE — liste de tous les chevaux du club,
@@ -129,16 +134,23 @@ Barre d'onglets : **Chevaux · Cavaliers · Santé · Planning · Dépenses · P
                       toutes les échéances de tous les chevaux,
                       triées par urgence, filtrables par type de soin
 
-/planning             PLANNING GLOBAL — vue semaine, trois natures de ligne :
-                      les COURS (création par le bouton +, capacité 1-30,
-                      discipline, niveau, moniteur), les créneaux « qui monte
-                      quel cheval quand », et les échéances de soins.
-                      Un appui sur un cours ouvre sa feuille : inscrits et
-                      liste d'attente, inscription d'office d'un cavalier,
-                      pointage présent/absent, et l'ATTRIBUTION des chevaux —
-                      le sélecteur annonce la charge du jour de chaque cheval
-                      et grise ceux au repos ; la base refuse de toute façon
-                      un cheval indisponible ou hors club (triggers 0017)
+/planning             LE PLANNING DES CHEVAUX — la raison d'être de l'écran :
+                      qui monte quel cheval quand, vue semaine, filtrable par
+                      cheval (avec bannière « au repos » sur le cheval
+                      filtré). Deux natures de ligne seulement : créneaux de
+                      monte, et passages en cours (cheval attribué). Les
+                      échéances de soins vivent dans Santé, les cours dans
+                      leur onglet — plus rien n'est mélangé
+
+/cours                COURS (onglet dédié) — création par le bouton +
+                      (capacité 1-30, discipline, niveau, moniteur), cartes
+                      par jour avec inscrits/attente et alerte « N sans
+                      cheval ». Un appui ouvre la feuille : inscrits et liste
+                      d'attente, inscription d'office, pointage
+                      présent/absent, et l'ATTRIBUTION des chevaux — le
+                      sélecteur annonce la charge du jour et grise ceux au
+                      repos ; la base refuse de toute façon un cheval
+                      indisponible ou hors club (triggers 0017)
 
 /journal              JOURNAL DE CAVALERIE — le tableau de suivi : ce que
                       les cavaliers notent après leurs séances, tous chevaux

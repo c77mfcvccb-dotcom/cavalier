@@ -79,18 +79,14 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* La rubrique club des deux visages : adhésions et statut côté
-            cavalier, membres et code d'adhésion côté gérant. */}
-        <Link to="/club" className="carte rangee" style={{ marginBottom: 18 }}>
-          <span style={{ fontSize: '1.4rem' }}>🏇</span>
+        {/* Les dépenses ont quitté la barre du bas au profit des cours :
+            leur porte d'entrée vit ici, et sur la fiche de chaque cheval. */}
+        <Link to="/depenses" className="carte rangee" style={{ marginBottom: 18 }}>
+          <span style={{ fontSize: '1.4rem' }}>💶</span>
           <div className="corps" style={{ flex: 1 }}>
-            <div className="gras">Mon club</div>
+            <div className="gras">Suivi des dépenses</div>
             <div className="doux" style={{ fontSize: '0.85rem' }}>
-              {estClub
-                ? "Membres, accès offerts et code d'adhésion"
-                : adhesions.length
-                  ? adhesions.map((a) => a.club_nom).join(' · ')
-                  : "Rejoindre une écurie avec son code d'adhésion"}
+              Totaux par mois, par poste et par cheval
             </div>
           </div>
           <span className="fleche">›</span>

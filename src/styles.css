@@ -718,6 +718,13 @@ button {
 .ligne-oubli a { font-size: 0.84rem; color: var(--texte-doux); text-decoration: underline; }
 .ligne-oubli a:hover { color: var(--texte); }
 
+/* Une carte par membre sur « Mes cavaliers » : le cavalier en tête, ses
+   chevaux en liste, les actions en pied — l'œil trouve la personne avant
+   les boutons. */
+.carte-membre { padding: 14px; }
+.carte-membre + .carte-membre { margin-top: 2px; }
+.carte-membre .element { background: var(--fond); box-shadow: none; }
+
 /* Rangée de puces pour un choix court (motif, discipline) : la version
    compacte de .choix-compte, quand cinq ou six options en grille de grandes
    cartes pousseraient le bouton d'envoi hors de l'écran. */

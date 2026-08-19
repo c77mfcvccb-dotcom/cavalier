@@ -100,7 +100,6 @@ export default function MesCours() {
       <Entete
         titre="Cours"
         sousTitre={clubs.map((c) => c.nom).join(' · ') || 'Planning du club'}
-        retour
       />
 
       <main className="contenu">

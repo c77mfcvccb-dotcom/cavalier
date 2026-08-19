@@ -7,16 +7,19 @@ import Cloche from './Cloche'
  *
  * Six entrées est la limite absolue sur un écran de téléphone, et elle ne
  * se paie qu'avec des libellés courts : « Agenda » plutôt que
- * « Calendrier », « Club » plutôt que « Mon club ». Le club, lui, garde le
- * mot juste — « Chevaux » pour sa cavalerie, « Cavaliers » pour ses
- * membres et leurs montures.
+ * « Calendrier », « Club » plutôt que « Mon club ».
+ *
+ * Les cours ont leur onglet des deux côtés — c'est le cœur du produit
+ * club — et les dépenses sortent de la barre : elles restent accessibles
+ * depuis le Profil et depuis la fiche de chaque cheval, mais un suivi de
+ * budget n'a pas à occuper une place de premier plan.
  */
 const ONGLETS_CAVALIER = [
   { to: '/', icone: '🏠', libelle: 'Accueil' },
   { to: '/chevaux', icone: '🐴', libelle: 'Chevaux' },
   { to: '/calendrier', icone: '📅', libelle: 'Agenda' },
+  { to: '/cours', icone: '🎓', libelle: 'Cours' },
   { to: '/club', icone: '🏇', libelle: 'Club' },
-  { to: '/depenses', icone: '💶', libelle: 'Dépenses' },
   { to: '/profil', icone: '👤', libelle: 'Profil' },
 ]
 
@@ -25,7 +28,7 @@ const ONGLETS_CLUB = [
   { to: '/club', icone: '👥', libelle: 'Cavaliers' },
   { to: '/sante', icone: '🩺', libelle: 'Santé' },
   { to: '/planning', icone: '📅', libelle: 'Planning' },
-  { to: '/depenses', icone: '💶', libelle: 'Dépenses' },
+  { to: '/cours', icone: '🎓', libelle: 'Cours' },
   { to: '/profil', icone: '👤', libelle: 'Profil' },
 ]
 
