@@ -139,11 +139,16 @@ export default function ClubCavalerie() {
                         ) : (
                           charge &&
                           charge.semaine > 0 && (
-                            <span className="badge contour">
-                              {charge.aujourd_hui > 0
-                                ? `${charge.aujourd_hui} fois aujourd'hui`
-                                : `${charge.semaine} sur la semaine`}
-                            </span>
+                            <>
+                              {charge.aujourd_hui > 0 && (
+                                <span className="badge contour">
+                                  {charge.aujourd_hui} aujourd'hui
+                                </span>
+                              )}
+                              <span className="badge contour">
+                                {charge.semaine} sur la semaine
+                              </span>
+                            </>
                           )
                         )}
                         {alertes > 0 && (
