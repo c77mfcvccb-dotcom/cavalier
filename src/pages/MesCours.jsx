@@ -170,7 +170,7 @@ export default function MesCours() {
                           <div className="meta">
                             {clubs.length > 1 ? `${c.club?.nom} · ` : ''}
                             {inscrits.length}/{c.places} inscrit{inscrits.length > 1 ? 's' : ''}
-                            {c.moniteur ? ` · ${c.moniteur}` : ''}
+                            {c.moniteur ? ` · Coach : ${c.moniteur}` : ''}
                           </div>
                         </div>
                         <span className="puces">

@@ -189,7 +189,7 @@ export default function ClubCours() {
                         <div className="meta">
                           {inscrits.length}/{c.places} inscrit{inscrits.length > 1 ? 's' : ''}
                           {attente > 0 ? ` · ${attente} en attente` : ''}
-                          {c.moniteur ? ` · ${c.moniteur}` : ''}
+                          {c.moniteur ? ` · Coach : ${c.moniteur}` : ''}
                         </div>
                       </div>
                       {sansCheval > 0 && (
@@ -350,7 +350,7 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
               placeholder="Galop 3-4"
             />
           </Champ>
-          <Champ label="Moniteur">
+          <Champ label="Coach">
             <input value={moniteur} onChange={(e) => setMoniteur(e.target.value)} />
           </Champ>
         </div>
@@ -545,7 +545,7 @@ function FeuilleCours({ cours, cavalerie, indisponibilites, chargeJour, onFermer
       <p className="doux" style={{ marginBottom: 12 }}>
         {formatDate(cours.debut, { avecJour: true, court: true })} de {formatHeure(cours.debut)} à{' '}
         {formatHeure(cours.fin)}
-        {cours.moniteur ? ` · ${cours.moniteur}` : ''}
+        {cours.moniteur ? ` · Coach : ${cours.moniteur}` : ''}
       </p>
       {cours.notes && (
         <p className="doux" style={{ marginBottom: 12, whiteSpace: 'pre-wrap' }}>{cours.notes}</p>

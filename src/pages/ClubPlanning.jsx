@@ -219,7 +219,7 @@ export default function ClubPlanning() {
                         <div className="meta">
                           {ligne.cavalier?.nom}
                           {ligne.cours.niveau ? ` · ${ligne.cours.niveau}` : ''}
-                          {ligne.cours.moniteur ? ` · ${ligne.cours.moniteur}` : ''}
+                          {ligne.cours.moniteur ? ` · Coach : ${ligne.cours.moniteur}` : ''}
                         </div>
                       </div>
                       <span className="badge contour">🎓 Cours</span>

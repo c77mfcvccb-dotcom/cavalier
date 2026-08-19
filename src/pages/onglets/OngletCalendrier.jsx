@@ -123,7 +123,7 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
                       <div className="meta">
                         {formatHeure(creneau.debut)} – {formatHeure(creneau.fin)} ·{' '}
                         {creneau.cavalier?.nom}
-                        {creneau.moniteur ? ` · ${creneau.moniteur}` : ''}
+                        {creneau.moniteur ? ` · Coach : ${creneau.moniteur}` : ''}
                       </div>
                     </div>
                     <span className="badge contour">Attribué</span>
@@ -342,7 +342,7 @@ function FeuilleCreneau({
           <input
             value={valeurs.titre}
             onChange={modifier('titre')}
-            placeholder="Cours avec le moniteur…"
+            placeholder="Cours avec la coach…"
           />
         </Champ>
 

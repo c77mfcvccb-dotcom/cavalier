@@ -21,7 +21,7 @@ export default function LigneEvenement({ evenement, avecCheval = true }) {
           <div className="meta">
             {formatHeure(evenement.debut)} – {formatHeure(evenement.fin)} ·{' '}
             {evenement.cavalier?.nom}
-            {evenement.moniteur ? ` · ${evenement.moniteur}` : ''}
+            {evenement.moniteur ? ` · Coach : ${evenement.moniteur}` : ''}
           </div>
         </div>
         <span className="fleche">›</span>
