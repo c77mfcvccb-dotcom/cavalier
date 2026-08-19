@@ -18,12 +18,15 @@ export async function chargerMesChevaux(cavalierId) {
     .from('cheval_cavaliers')
     .select('role, couleur, cheval:cheval_id(*)')
     .eq('cavalier_id', cavalierId)
-    .order('cree_le', { ascending: true })
 
   if (error) throw error
+  // Ordre alphabétique, en français — accents pliés (Éclair avec Eclair),
+  // comme la cavalerie côté club. L'ordre d'ajout n'aidait personne à
+  // retrouver un cheval dans une liste.
   return (data || [])
     .filter((ligne) => ligne.cheval)
     .map((ligne) => ({ ...ligne.cheval, role: ligne.role, couleur: ligne.couleur }))
+    .sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' }))
 }
 
 /** Cavalerie d'un club. Jointure inverse désambiguïsée, même raison que ci-dessus. */
