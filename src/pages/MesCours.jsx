@@ -6,6 +6,7 @@ import { chargerCours, chargerMesChevaux, chargerMesClubs } from '../lib/requete
 import { useAgendaVivant } from '../lib/temps-reel'
 import { Avatar, Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
+import SelecteurPeriode, { fenetrePeriode } from '../composants/SelecteurPeriode'
 import { DISCIPLINES_COURS } from '../lib/constantes'
 import { cleJour, formatDate, formatHeure } from '../lib/format'
 
@@ -22,21 +23,26 @@ export default function MesCours() {
   const [clubs, setClubs] = useState([])
   const [cours, setCours] = useState([])
   const [chevauxIds, setChevauxIds] = useState([])
+  // Le JOUR d'office, comme côté écurie : les cours d'aujourd'hui d'abord,
+  // la semaine et le mois d'un appui.
+  const [periode, setPeriode] = useState('jour')
+  const [ancre, setAncre] = useState(() => new Date())
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [envoiId, setEnvoiId] = useState(null)
   const [detailId, setDetailId] = useState(null)
 
   const recharger = useCallback(async () => {
+    const { debut, fin } = fenetrePeriode(periode, ancre)
     const [mesClubs, mesChevaux, lesCours] = await Promise.all([
       chargerMesClubs(),
       chargerMesChevaux(profil.id),
-      chargerCours({ debut: new Date() }),
+      chargerCours({ debut, fin }),
     ])
     setClubs(mesClubs)
     setChevauxIds(mesChevaux.map((c) => c.id))
     setCours(lesCours)
-  }, [profil.id])
+  }, [profil.id, periode, ancre])
 
   useEffect(() => {
     let annule = false
@@ -114,11 +120,26 @@ export default function MesCours() {
               <Link to="/club" className="bouton">J'ai un code d'adhésion</Link>
             }
           />
-        ) : cours.length === 0 ? (
+        ) : (
+          <SelecteurPeriode
+            periode={periode}
+            ancre={ancre}
+            onPeriode={setPeriode}
+            onAncre={setAncre}
+          />
+        )}
+
+        {clubs.length > 0 && (cours.length === 0 ? (
           <EtatVide
             emoji="📅"
-            titre="Aucun cours planifié"
-            texte="Le club n'a pas encore publié de cours à venir."
+            titre={
+              periode === 'jour'
+                ? "Aucun cours aujourd'hui"
+                : periode === 'mois'
+                  ? 'Aucun cours ce mois-ci'
+                  : 'Aucun cours cette semaine'
+            }
+            texte="Changez de période avec les flèches, ou élargissez à la semaine ou au mois."
           />
         ) : (
           parJour.map(([jour, coursDuJour]) => (
@@ -244,7 +265,7 @@ export default function MesCours() {
               </div>
             </section>
           ))
-        )}
+        ))}
       </main>
     </>
   )

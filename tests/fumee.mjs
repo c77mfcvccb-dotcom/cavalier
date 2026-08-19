@@ -353,6 +353,12 @@ export async function verifier(base) {
       const { page } = await ouvrirPage(navigateur, base)
       await page.goto(`${base}/cours`, { waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(900)
+      // La vue Jour est le réglage d'office (même sélecteur que l'écurie) ;
+      // le cours simulé est demain, la flèche doit l'atteindre.
+      noter('Cours — le sélecteur Jour/Semaine/Mois est là, Jour d\'office',
+        (await page.locator('main .choix-puces button.actif', { hasText: 'Jour' }).count()) === 1)
+      await page.getByRole('button', { name: 'Jour suivant' }).click()
+      await page.waitForTimeout(700)
       const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
       noter('Cours — le cours du club est affiché', texte.includes('Obstacle') && texte.includes('Galop 3-4'), texte.slice(0, 120))
       noter('Cours — le statut « Inscrit » est visible', texte.includes('Inscrit'), texte.slice(0, 120))

@@ -49,8 +49,10 @@ sur la fiche de chaque cheval.
                       │  (seulement si je suis rattaché à un club)
                       └─ accès rapide « Rejoindre un cheval »
 
-/cours                COURS DU CLUB — le planning publié par mon club,
-                      jour par jour : discipline, niveau, moniteur, places.
+/cours                COURS DU CLUB — le planning publié par mon club, en
+                      vue JOUR par défaut, commutable Semaine ou Mois (même
+                      sélecteur que l'écurie) : discipline, niveau, coach,
+                      places.
                       Un appui déplie le détail : qui vient, sur quel cheval,
                       m'inscrire ou me désinscrire. Complet → inscription en
                       liste d'attente, avec ma position ; une place libérée
