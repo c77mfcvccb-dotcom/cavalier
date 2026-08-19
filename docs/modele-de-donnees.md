@@ -263,7 +263,7 @@ différence des `invitations`, par cheval et à usage unique. Lisible par le
 seul gérant ; la saisie passe par `rejoindre_club()` en `security definer`,
 et un code faux ne révèle jamais l'existence de l'écurie.
 
-### `chevaux.ecurie_id` — la pension
+### `chevaux.ecurie_id` — la pension (demandée, puis confirmée)
 
 `club_id` signifie **propriété** et donne les droits de gestionnaire ;
 `ecurie_id` signifie **stationné chez** et n'ouvre aucun droit de gestion
@@ -274,6 +274,15 @@ et un code faux ne révèle jamais l'existence de l'écurie.
 restent au propriétaire et à ses invités. Le propriétaire rattache son
 cheval (trigger : uniquement une écurie dont il est membre, sinon
 `ECURIE_NON_MEMBRE`) ; lui ou le gérant détachent (`detacher_de_ecurie()`).
+
+**La pension est une demande** (migration 0021) : `pension_confirmee`,
+fausse par défaut et remise à faux à chaque changement d'écurie, ne passe
+à vrai que par `confirmer_pension()` — sous l'identité de l'écurie visée,
+le trigger refuse toute auto-confirmation du propriétaire
+(`PENSION_A_CONFIRMER`). Tant qu'elle n'est pas acceptée, la pension
+n'ouvre **rien** : `couverture_club()` l'ignore, le cheval ne compte pas
+dans le périmètre premium. Le gérant voit la demande sur « Mes
+cavaliers » et l'accepte ou la refuse (le refus = détacher).
 
 > **Deux clés de `cheval_cavaliers` vers `chevaux`** depuis la 0019
 > (`cheval_id` et `remplacement_de`) : toute jointure PostgREST entre ces

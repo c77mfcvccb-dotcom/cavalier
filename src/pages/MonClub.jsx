@@ -192,7 +192,16 @@ function ClubAdherent() {
                             <PhotoCheval cheval={cheval} />
                             <div className="infos">
                               <div className="nom">{cheval.nom}</div>
-                              <div className="detail">Mon cheval, en pension ici</div>
+                              <div className="detail">
+                                {cheval.pension_confirmee
+                                  ? 'Mon cheval, en pension ici'
+                                  : 'Demande de pension envoyée'}
+                              </div>
+                              {!cheval.pension_confirmee && (
+                                <div className="puces" style={{ marginTop: 5 }}>
+                                  <span className="badge urgent">En attente de l'écurie</span>
+                                </div>
+                              )}
                             </div>
                             <button
                               className="bouton fantome petit"
@@ -201,7 +210,7 @@ function ClubAdherent() {
                                 sortirDePension(cheval.id)
                               }}
                             >
-                              Sortir
+                              {cheval.pension_confirmee ? 'Sortir' : 'Annuler'}
                             </button>
                           </Link>
                         ))}
@@ -211,8 +220,8 @@ function ClubAdherent() {
                     {chevauxAPension.length > 0 && (
                       <div style={{ marginTop: 12 }}>
                         <Champ
-                          label="Mettre un de mes chevaux en pension ici"
-                          aide="Il entre dans le périmètre de l'écurie : l'accès offert le couvre aussi."
+                          label="Demander la pension d'un de mes chevaux ici"
+                          aide="C'est une demande : rien ne prend effet tant que l'écurie ne l'a pas acceptée. Une fois acceptée, l'accès offert couvre aussi ce cheval."
                         >
                           <select
                             value=""
@@ -288,7 +297,7 @@ function ClubGerant() {
       // fiche est visible, leurs données restent au propriétaire.
       supabase
         .from('chevaux')
-        .select('id, nom, cree_par')
+        .select('id, nom, cree_par, pension_confirmee')
         .eq('ecurie_id', profil.id)
         .order('nom'),
     ])
@@ -372,8 +381,22 @@ function ClubGerant() {
   }
 
   async function sortirDePension(cheval) {
-    if (!window.confirm(`${cheval.nom} quitte la pension de l'écurie ?`)) return
+    if (
+      !window.confirm(
+        cheval.pension_confirmee
+          ? `${cheval.nom} quitte la pension de l'écurie ?`
+          : `Refuser la pension de ${cheval.nom} ?`
+      )
+    )
+      return
     const { error } = await supabase.rpc('detacher_de_ecurie', { p_cheval: cheval.id })
+    if (error) setErreur(traduireErreurClub(error.message))
+    else recharger()
+  }
+
+  async function accepterPension(cheval) {
+    setErreur('')
+    const { error } = await supabase.rpc('confirmer_pension', { p_cheval: cheval.id })
     if (error) setErreur(traduireErreurClub(error.message))
     else recharger()
   }
@@ -540,14 +563,35 @@ function ClubGerant() {
                           <span style={{ fontSize: '1.2rem' }}>🏠</span>
                           <div className="corps">
                             <div className="titre" style={{ fontSize: '0.9rem' }}>{cheval.nom}</div>
-                            <div className="meta">Son cheval, en pension à l'écurie</div>
+                            <div className="meta">
+                              {cheval.pension_confirmee
+                                ? "Son cheval, en pension à l'écurie"
+                                : 'Demande de pension — à vous de décider'}
+                            </div>
                           </div>
-                          <button
-                            className="bouton fantome petit"
-                            onClick={() => sortirDePension(cheval)}
-                          >
-                            Sortir
-                          </button>
+                          {cheval.pension_confirmee ? (
+                            <button
+                              className="bouton fantome petit"
+                              onClick={() => sortirDePension(cheval)}
+                            >
+                              Sortir
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                className="bouton petit"
+                                onClick={() => accepterPension(cheval)}
+                              >
+                                Accepter
+                              </button>
+                              <button
+                                className="bouton fantome petit"
+                                onClick={() => sortirDePension(cheval)}
+                              >
+                                Refuser
+                              </button>
+                            </>
+                          )}
                         </div>
                       ))}
 

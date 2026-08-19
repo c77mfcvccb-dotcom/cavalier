@@ -22,7 +22,10 @@ export function couvertureClub(cheval, adhesions) {
       (a) =>
         a.siege &&
         a.club_premium &&
-        (cheval.club_id === a.club_id || cheval.ecurie_id === a.club_id)
+        (cheval.club_id === a.club_id ||
+          // Une pension ne compte qu'ACCEPTÉE par l'écurie (0021) : la
+          // demande seule n'ouvre rien.
+          (cheval.ecurie_id === a.club_id && cheval.pension_confirmee))
     ) || null
   )
 }
@@ -42,6 +45,8 @@ export function accesOffert(adhesions) {
 
 /** Les erreurs de la 0018, traduites. */
 export function traduireErreurClub(message) {
+  if (message?.includes('PENSION_A_CONFIRMER'))
+    return "Seule l'écurie peut accepter une pension — la demande lui a été transmise."
   if (message?.includes('ECURIE_NON_MEMBRE'))
     return "Adhérez d'abord à cette écurie avec son code, dans « Mon club »."
   if (message?.includes('ECURIE_INVALIDE')) return "Ce compte n'est pas une écurie."
