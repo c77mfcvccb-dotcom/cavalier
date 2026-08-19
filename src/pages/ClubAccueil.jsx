@@ -10,6 +10,18 @@ import { DISCIPLINES_COURS, TYPES_SOIN } from '../lib/constantes'
 import { ajouterJours, cleJour, formatDate, formatHeure, joursRelatifs } from '../lib/format'
 
 /**
+ * Les trois horizons de la liste des tâches. La borne du mois est à
+ * 30 jours parce que le formulaire de soin pré-remplit l'échéance à
+ * 4-12 semaines selon le type : c'est la fenêtre qui laisse voir un soin
+ * tout juste saisi. Les retards restent visibles sur tous les horizons.
+ */
+const HORIZONS = {
+  jour: { libelle: 'Jour', limite: 0, vide: "Aucun soin en retard ni dû aujourd'hui sur la cavalerie." },
+  semaine: { libelle: 'Semaine', limite: 7, vide: 'Rien à faire cette semaine sur la cavalerie.' },
+  mois: { libelle: 'Mois', limite: 30, vide: 'Rien à prévoir ce mois-ci sur la cavalerie.' },
+}
+
+/**
  * L'accueil du club : ce qu'il y a à FAIRE aujourd'hui, cheval par cheval.
  *
  * Tout se recalcule à chaque chargement, à partir des soins existants —
@@ -30,6 +42,9 @@ export default function ClubAccueil() {
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [envoiCle, setEnvoiCle] = useState(null)
+  // L'horizon choisi pour les tâches : la journée d'office, la semaine ou
+  // le mois d'un appui — pour voir venir ce qu'il y aura à faire.
+  const [horizon, setHorizon] = useState('jour')
 
   const recharger = useCallback(async () => {
     const chevaux = await chargerChevauxClub(profil.id)
@@ -123,13 +138,9 @@ export default function ClubAccueil() {
     return lignes.sort((a, b) => a.jours - b.jours)
   }, [soins, cavalerie])
 
-  const taches = echeances.filter((l) => l.jours <= 0)
-  // 30 jours de visibilité : le formulaire de soin pré-remplit l'échéance
-  // selon la périodicité du type (4 à 12 semaines) — une fenêtre d'une
-  // semaine laisserait l'écran vide juste après la saisie, comme si rien
-  // n'avait été enregistré.
-  const aVenir = echeances.filter((l) => l.jours >= 1 && l.jours <= 30)
-  const prochaine = echeances.find((l) => l.jours > 0)
+  const limite = HORIZONS[horizon].limite
+  const taches = echeances.filter((l) => l.jours <= limite)
+  const prochaine = echeances.find((l) => l.jours > limite)
 
   /**
    * « Fait » : le soin est réalisé aujourd'hui. L'historique du cheval
@@ -172,7 +183,13 @@ export default function ClubAccueil() {
   const pastille = (jours) => (jours < 0 ? '🔴' : jours === 0 ? '🟠' : '🟡')
   const classeBadge = (jours) => (jours < 0 ? 'retard' : jours === 0 ? 'urgent' : 'contour')
   const libelleBadge = (jours) =>
-    jours < 0 ? 'En retard' : jours === 0 ? "Aujourd'hui" : 'Cette semaine'
+    jours < 0
+      ? 'En retard'
+      : jours === 0
+        ? "Aujourd'hui"
+        : jours <= 7
+          ? 'Cette semaine'
+          : 'Ce mois-ci'
 
   if (chargement) return <Chargement />
 
@@ -185,15 +202,28 @@ export default function ClubAccueil() {
 
         <section className="section">
           <div className="titre-section">
-            <h2>Tâches du jour</h2>
+            <h2>Tâches</h2>
             {taches.length > 0 && <span className="doux">{taches.length}</span>}
+          </div>
+
+          <div className="choix-puces" role="group" aria-label="Horizon des tâches">
+            {Object.entries(HORIZONS).map(([cle, h]) => (
+              <button
+                key={cle}
+                type="button"
+                className={horizon === cle ? 'actif' : ''}
+                onClick={() => setHorizon(cle)}
+              >
+                {h.libelle}
+              </button>
+            ))}
           </div>
 
           {taches.length === 0 ? (
             <div className="carte centre">
               <p className="gras">Tout est à jour ✅</p>
               <p className="doux" style={{ marginTop: 6 }}>
-                Aucun soin en retard ni dû aujourd'hui sur la cavalerie.
+                {HORIZONS[horizon].vide}
               </p>
               {prochaine && (
                 <p className="meta" style={{ marginTop: 8 }}>
@@ -242,6 +272,13 @@ export default function ClubAccueil() {
               })}
             </div>
           )}
+
+          <p className="aide" style={{ marginTop: 10 }}>
+            Les échéances viennent du carnet de santé de chaque cheval —
+            l'historique complet reste sur sa fiche, onglet Soins. Cocher
+            « Fait » y ajoute le soin du jour et recalcule la prochaine
+            échéance selon la périodicité du cheval.
+          </p>
         </section>
 
         <section className="section">
@@ -282,47 +319,6 @@ export default function ClubAccueil() {
           )}
         </section>
 
-        <section className="section">
-          <div className="titre-section">
-            <h2>À venir</h2>
-            <span className="doux">30 prochains jours</span>
-          </div>
-
-          {aVenir.length === 0 ? (
-            <div className="carte centre doux">Rien à prévoir dans les 30 prochains jours.</div>
-          ) : (
-            <div className="liste">
-              {aVenir.map((ligne) => {
-                const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
-                return (
-                  <Link
-                    key={ligne.soin.id}
-                    to={`/chevaux/${ligne.cheval.id}?onglet=soins`}
-                    className="element"
-                    style={{ padding: 8 }}
-                  >
-                    <span>{pastille(ligne.jours)}</span>
-                    <div className="corps">
-                      <div className="titre" style={{ fontSize: '0.9rem' }}>
-                        {ligne.cheval.nom} — {type.emoji} {type.libelle}
-                      </div>
-                    </div>
-                    <span className="doux" style={{ fontSize: '0.82rem' }}>
-                      {joursRelatifs(ligne.jours)}
-                    </span>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-
-          <p className="aide" style={{ marginTop: 10 }}>
-            Les échéances viennent du carnet de santé de chaque cheval —
-            l'historique complet reste sur sa fiche, onglet Soins. Cocher
-            « Fait » y ajoute le soin du jour et recalcule la prochaine
-            échéance selon la périodicité du cheval.
-          </p>
-        </section>
       </main>
     </>
   )

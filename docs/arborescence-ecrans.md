@@ -125,22 +125,21 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
 ```
 /                     ACCUEIL — la page par défaut du club, recalculée à
                       chaque chargement depuis les soins (aucun cron) :
-                      ├─ TÂCHES DU JOUR : vermifuges, vaccins, ferrures…
-                      │  en retard (🔴) ou dus aujourd'hui (🟠), avec le
-                      │  cheval, le type, l'échéance, et une case « Fait »
-                      │  qui écrit le soin au carnet et recalcule la
-                      │  prochaine échéance selon la périodicité du cheval.
+                      ├─ TÂCHES : vermifuges, vaccins, ferrures… commutables
+                      │  Jour (d'office) / Semaine / Mois pour voir venir ce
+                      │  qu'il y aura à faire — la borne du mois est à
+                      │  30 jours parce que la saisie d'un soin pré-remplit
+                      │  l'échéance à 4-12 semaines selon le type. Chaque
+                      │  tâche : cheval, type, échéance, badge (🔴 retard,
+                      │  🟠 aujourd'hui, 🟡 à venir — les retards restent
+                      │  sur tous les horizons) et une case « Fait » qui
+                      │  écrit le soin au carnet et recalcule la prochaine
+                      │  échéance selon la périodicité du cheval.
                       │  Rien à faire → « Tout est à jour ✅ », avec la
                       │  prochaine échéance annoncée pour que l'écran ne
                       │  paraisse jamais mort
-                      ├─ COURS DU JOUR : le programme de la journée, avec
-                      │  l'alerte « N sans cheval » et le lien vers l'onglet
-                      └─ À VENIR : les échéances des 30 prochains jours
-                         (🟡), en compact, reliées à la fiche du cheval —
-                         30 jours parce que la saisie d'un soin pré-remplit
-                         l'échéance à 4-12 semaines selon le type : une
-                         fenêtre plus courte cacherait le soin qu'on vient
-                         d'enregistrer.
+                      └─ COURS DU JOUR : le programme de la journée, avec
+                         l'alerte « N sans cheval » et le lien vers l'onglet.
                       L'ancien onglet Santé a fusionné ici — les données
                       n'ont pas bougé, l'historique reste sur chaque fiche
 
