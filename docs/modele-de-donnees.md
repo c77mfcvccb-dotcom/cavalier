@@ -224,6 +224,22 @@ vaccin, vermifuge, ostéo, dentiste.
 > future qui referait un `grant select` global sur `soins` rouvrirait la
 > colonne.
 
+> **Un soin peut être privé** (migration 0022) : la colonne `prive`
+> (défaut `false` = partagé) réserve l'entrée à son seul **créateur** —
+> lecture, modification et suppression. La règle vit en base, pas à
+> l'affichage : la politique de lignes de `soins` porte
+> `(not prive or cree_par = auth.uid())`, la vue `v_soins` (security
+> definer, elle ne traverse pas le RLS) rejoue le même prédicat dans son
+> WHERE, et la fonction `fiche_publique` exclut les soins privés du lien
+> de partage. `v_echeances` et `v_rappels` étant en `security_invoker`,
+> elles héritent de la politique sans changement : l'échéance d'un soin
+> privé ne sonne que chez son créateur, et les autres retombent sur
+> l'échéance du dernier soin **partagé** du type — chacun sa lecture du
+> même carnet. Corollaire assumé : un vermifuge noté en privé laisse
+> l'écurie voir une échéance plus ancienne, c'est le prix de la
+> confidentialité. La colonne étant née après le verrou de 0019, la
+> migration rejoue le grant « toutes colonnes sauf `cout` ».
+
 | colonne              | type | notes                                                      |
 |----------------------|------|------------------------------------------------------------|
 | `cheval_id`          | uuid |                                                            |
@@ -232,6 +248,7 @@ vaccin, vermifuge, ostéo, dentiste.
 | `prochaine_echeance` | date | nullable — c'est ce champ qui alimente les alertes         |
 | `praticien`, `produit`, `notes` | text |                                                 |
 | `cout`               | numeric |                                                         |
+| `prive`              | boolean | défaut `false` — `true` : visible du seul créateur (0022) |
 
 À la saisie, l'application pré-remplit `prochaine_echeance` avec l'intervalle
 habituel du type (ferrure 6 semaines, vermifuge 3 mois, vaccin 1 an, dentiste

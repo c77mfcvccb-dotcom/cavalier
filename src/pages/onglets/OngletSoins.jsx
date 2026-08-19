@@ -195,6 +195,7 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                     <div className="meta">
                       {formatDate(soin.prochaine_echeance, { court: true })} —{' '}
                       {joursRelatifs(statut.jours)}
+                      {soin.prive ? ' · 🔒 privé' : ''}
                     </div>
                   </div>
                   <span className={`badge ${libelle.classe}`}>{libelle.libelle}</span>
@@ -291,6 +292,11 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                           <div className="rangee espace">
                             <span className="gras" style={{ fontSize: '0.9rem' }}>
                               {formatDate(soin.date_realisee)}
+                              {soin.prive && (
+                                <span className="badge contour" style={{ marginLeft: 6 }}>
+                                  🔒 Privé
+                                </span>
+                              )}
                             </span>
                             {!estClub && soin.cout ? (
                               <span className="doux">{euros(soin.cout)}</span>
@@ -369,6 +375,7 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
     produit: '',
     cout: '',
     notes: '',
+    prive: false,
   })
 
   const [valeurs, setValeurs] = useState(valeursParDefaut)
@@ -435,6 +442,7 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
       produit: valeurs.produit || null,
       cout: valeurs.cout ? Number(valeurs.cout) : null,
       notes: valeurs.notes || null,
+      prive: valeurs.prive,
       cree_par: profilId,
     })
 
@@ -517,6 +525,32 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
 
         <Champ label="Notes">
           <textarea value={valeurs.notes} onChange={modifier('notes')} />
+        </Champ>
+
+        <Champ
+          label="Visibilité"
+          aide={
+            valeurs.prive
+              ? 'Visible par vous seul — ni les autres cavaliers, ni le lien public, ni les rappels des autres.'
+              : 'Visible par tous ceux qui ont accès au cheval.'
+          }
+        >
+          <div className="choix-puces" role="group" aria-label="Visibilité du soin">
+            <button
+              type="button"
+              className={!valeurs.prive ? 'actif' : ''}
+              onClick={() => setValeurs((v) => ({ ...v, prive: false }))}
+            >
+              Partagé
+            </button>
+            <button
+              type="button"
+              className={valeurs.prive ? 'actif' : ''}
+              onClick={() => setValeurs((v) => ({ ...v, prive: true }))}
+            >
+              🔒 Privé
+            </button>
+          </div>
         </Champ>
 
         <button className="bouton pleine-largeur" disabled={envoi}>

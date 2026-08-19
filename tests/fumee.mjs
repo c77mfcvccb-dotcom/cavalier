@@ -106,10 +106,12 @@ function reponse(url, methode, premium) {
     // Une échéance dans chacune des trois fenêtres, dont la zone 8–30 jours
     // qui a déjà vidé l'écran une fois.
     return [
-      { id: 's1', cheval_id: CHEVAL, type: 'vermifuge', date_realisee: dans(-125), prochaine_echeance: dans(-4), praticien: null, produit: 'Equimax', protocole: null, cout: 22, notes: null, cree_par: MOI },
-      { id: 's2', cheval_id: CHEVAL, type: 'ferrure', date_realisee: dans(-40), prochaine_echeance: dans(9), praticien: 'Maréchal Dupont', produit: null, protocole: null, cout: 95, notes: null, cree_par: AUTRE },
-      { id: 's3', cheval_id: CHEVAL, type: 'dentiste', date_realisee: dans(-345), prochaine_echeance: dans(20), praticien: null, produit: null, protocole: null, cout: 110, notes: null, cree_par: AUTRE },
-      { id: 's4', cheval_id: CHEVAL, type: 'vaccin', date_realisee: dans(-300), prochaine_echeance: dans(65), praticien: 'Dr Martin', produit: null, protocole: 'rappel', cout: 60, notes: 'RAS', cree_par: MOI },
+      { id: 's1', cheval_id: CHEVAL, type: 'vermifuge', date_realisee: dans(-125), prochaine_echeance: dans(-4), praticien: null, produit: 'Equimax', protocole: null, cout: 22, notes: null, prive: false, cree_par: MOI },
+      { id: 's2', cheval_id: CHEVAL, type: 'ferrure', date_realisee: dans(-40), prochaine_echeance: dans(9), praticien: 'Maréchal Dupont', produit: null, protocole: null, cout: 95, notes: null, prive: false, cree_par: AUTRE },
+      { id: 's3', cheval_id: CHEVAL, type: 'dentiste', date_realisee: dans(-345), prochaine_echeance: dans(20), praticien: null, produit: null, protocole: null, cout: 110, notes: null, prive: false, cree_par: AUTRE },
+      // Privé (0022) : la base ne renvoie ce soin qu'à son créateur — ici
+      // Alice le voit, avec le cadenas ; le formulaire propose le choix.
+      { id: 's4', cheval_id: CHEVAL, type: 'vaccin', date_realisee: dans(-300), prochaine_echeance: dans(65), praticien: 'Dr Martin', produit: null, protocole: 'rappel', cout: 60, notes: 'RAS', prive: true, cree_par: MOI },
     ]
   }
   if (url.includes('/rest/v1/seances')) {
@@ -299,6 +301,21 @@ export async function verifier(base) {
       const texteSoins = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
       noter('Soins — la confidentialité des coûts est annoncée',
         texteSoins.includes('propres coûts'), texteSoins.slice(0, 150))
+      // Soins privés (0022) : le cadenas marque l'échéance et l'entrée du
+      // carnet, et la saisie propose Partagé (le défaut) ou Privé.
+      noter('Soins — l\'échéance née d\'un soin privé porte le cadenas',
+        texteSoins.includes('🔒 privé'), texteSoins.slice(0, 300))
+      await page.locator('main details, main .carte', { hasText: 'Vaccin' }).first().click().catch(() => {})
+      const textePrive = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Soins — l\'entrée privée du carnet est badgée',
+        textePrive.includes('🔒 Privé'), textePrive.slice(0, 400))
+      await page.getByRole('button', { name: '+ Ajouter un soin' }).click()
+      await page.waitForTimeout(400)
+      const feuilleSoin = (await page.locator('.feuille').innerText()).replace(/\s+/g, ' ')
+      noter('Soins — la saisie propose Partagé ou Privé, Partagé d\'office',
+        feuilleSoin.includes('Visibilité') && feuilleSoin.includes('Privé') &&
+        (await page.locator('.feuille .choix-puces button.actif', { hasText: 'Partagé' }).count()) === 1,
+        feuilleSoin.slice(0, 300))
       await page.close()
     }
 

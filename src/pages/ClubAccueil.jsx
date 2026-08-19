@@ -68,7 +68,7 @@ export default function ClubAccueil() {
     const [lignes, periodicites] = await Promise.all([
       supabase
         .from('v_soins')
-        .select('id, cheval_id, type, date_realisee, prochaine_echeance, cree_le')
+        .select('id, cheval_id, type, date_realisee, prochaine_echeance, cree_le, prive')
         .in('cheval_id', ids),
       supabase
         .from('rappels_soins')
@@ -165,6 +165,9 @@ export default function ClubAccueil() {
       type: ligne.soin.type,
       date_realisee: cleJour(new Date()),
       prochaine_echeance: intervalle ? ajouterJours(new Date(), intervalle) : null,
+      // Clore une tâche née d'un soin privé (forcément le nôtre : les
+      // privés d'autrui ne se lisent pas) reste privé — même visibilité.
+      prive: ligne.soin.prive || false,
       cree_par: profil.id,
     })
     setEnvoiCle(null)
@@ -249,6 +252,7 @@ export default function ClubAccueil() {
                         {pastille(ligne.jours)}{' '}
                         {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
                         {joursRelatifs(ligne.jours)}
+                        {ligne.soin.prive ? ' · 🔒 privé' : ''}
                       </div>
                     </div>
                     <span className={`badge ${classeBadge(ligne.jours)}`}>

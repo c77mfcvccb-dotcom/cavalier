@@ -86,7 +86,11 @@ sur la fiche de chaque cheval.
    │                  jour ouvre la création d'un créneau
    ├─ Séances         carnet chronologique, ajout d'une séance
    ├─ Soins           historique par type + prochaines échéances,
-   │                  ajout d'un soin (échéance pré-remplie)
+   │                  ajout d'un soin (échéance pré-remplie, visibilité
+   │                  Partagé — le défaut — ou 🔒 Privé : un soin privé
+   │                  n'existe que pour son créateur, partout — liste,
+   │                  calendrier, cloche, accueil club, export PDF,
+   │                  lien public — c'est le RLS qui filtre, pas l'écran)
    └─ Documents        document d'identification, contrat de demi-pension,
                       assurance — un fichier par ligne, ouvert via une URL
                       signée, visible par tous les cavaliers liés au cheval.
