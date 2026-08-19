@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
-import { chargerChevauxClub } from '../lib/requetes'
+import { chargerChevauxClub, chargerCours } from '../lib/requetes'
 import { useAgendaVivant } from '../lib/temps-reel'
 import { Chargement, Erreur } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
-import { TYPES_SOIN } from '../lib/constantes'
-import { ajouterJours, cleJour, formatDate, joursRelatifs } from '../lib/format'
+import { DISCIPLINES_COURS, TYPES_SOIN } from '../lib/constantes'
+import { ajouterJours, cleJour, formatDate, formatHeure, joursRelatifs } from '../lib/format'
 
 /**
  * L'accueil du club : ce qu'il y a à FAIRE aujourd'hui, cheval par cheval.
@@ -26,6 +26,7 @@ export default function ClubAccueil() {
   const [cavalerie, setCavalerie] = useState([])
   const [soins, setSoins] = useState([])
   const [reglages, setReglages] = useState([])
+  const [coursDuJour, setCoursDuJour] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [envoiCle, setEnvoiCle] = useState(null)
@@ -33,6 +34,16 @@ export default function ClubAccueil() {
   const recharger = useCallback(async () => {
     const chevaux = await chargerChevauxClub(profil.id)
     setCavalerie(chevaux)
+
+    // Les cours d'aujourd'hui : le programme de la journée fait partie des
+    // tâches — savoir qui tourne à 18 h, et s'il reste des inscrits sans
+    // cheval attribué.
+    const debutJour = new Date()
+    debutJour.setHours(0, 0, 0, 0)
+    const finJour = new Date()
+    finJour.setHours(23, 59, 59, 999)
+    setCoursDuJour(await chargerCours({ clubId: profil.id, debut: debutJour, fin: finJour }))
+
     const ids = chevaux.map((c) => c.id)
     if (!ids.length) {
       setSoins([])
@@ -215,6 +226,44 @@ export default function ClubAccueil() {
                       Fait
                     </label>
                   </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="section">
+          <div className="titre-section">
+            <h2>Cours du jour</h2>
+            <Link to="/cours" className="lien">Tous les cours</Link>
+          </div>
+
+          {coursDuJour.length === 0 ? (
+            <div className="carte centre doux">Aucun cours aujourd'hui.</div>
+          ) : (
+            <div className="liste">
+              {coursDuJour.map((c) => {
+                const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
+                const sansCheval = inscrits.filter((i) => !i.cheval_id).length
+                return (
+                  <Link key={c.id} to="/cours" className="element">
+                    <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
+                    <div className="corps">
+                      <div className="titre">
+                        {DISCIPLINES_COURS[c.discipline]?.emoji}{' '}
+                        {formatHeure(c.debut)} · {DISCIPLINES_COURS[c.discipline]?.libelle}
+                        {c.niveau ? ` · ${c.niveau}` : ''}
+                      </div>
+                      <div className="meta">
+                        {inscrits.length}/{c.places} inscrit{inscrits.length > 1 ? 's' : ''}
+                        {c.moniteur ? ` · Coach : ${c.moniteur}` : ''}
+                      </div>
+                    </div>
+                    {sansCheval > 0 && (
+                      <span className="badge urgent">{sansCheval} sans cheval</span>
+                    )}
+                    <span className="fleche">›</span>
+                  </Link>
                 )
               })}
             </div>

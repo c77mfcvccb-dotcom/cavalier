@@ -26,7 +26,7 @@ import {
 } from '../lib/depenses'
 
 export default function Depenses() {
-  const { profil, estClub, estPremium, adhesions } = useAuth()
+  const { profil, estPremium, adhesions } = useAuth()
 
   // Premium contextuel (0018) : sans abonnement perso, un siège offert par
   // une écurie ouvre le suivi — mais seulement les dépenses rattachées aux
@@ -361,13 +361,6 @@ export default function Depenses() {
               )}
             </section>
 
-            {estClub && (
-              <p className="aide centre" style={{ marginTop: 22 }}>
-                <Link to="/depenses/soins">
-                  Voir les coûts de soins de toute la cavalerie ›
-                </Link>
-              </p>
-            )}
           </>
         )}
       </main>

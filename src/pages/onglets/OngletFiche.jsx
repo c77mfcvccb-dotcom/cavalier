@@ -389,7 +389,8 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             Carnet de santé imprimable
           </Link>
 
-          {estGestionnaire && (
+          {/* Cavalier seulement : la fonction dépenses n'existe plus côté écurie. */}
+          {estGestionnaire && !estClubGestionnaire && (
             <Link
               to={`/depenses?cheval=${cheval.id}`}
               className="bouton secondaire pleine-largeur"

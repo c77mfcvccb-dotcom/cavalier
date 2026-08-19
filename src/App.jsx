@@ -46,7 +46,6 @@ const ClubCavalerie = ecranDiffere(() => import('./pages/ClubCavalerie'))
 const ClubPlanning = ecranDiffere(() => import('./pages/ClubPlanning'))
 const ClubJournal = ecranDiffere(() => import('./pages/ClubJournal'))
 const ClubCours = ecranDiffere(() => import('./pages/ClubCours'))
-const ClubDepenses = ecranDiffere(() => import('./pages/ClubDepenses'))
 const Depenses = ecranDiffere(() => import('./pages/Depenses'))
 const NouveauCheval = ecranDiffere(() => import('./pages/NouveauCheval'))
 const RejoindreCheval = ecranDiffere(() => import('./pages/RejoindreCheval'))
@@ -145,6 +144,9 @@ export default function App() {
                 <Route path="/chevaux" element={<MesChevaux />} />
                 <Route path="/calendrier" element={<CalendrierGlobal />} />
                 <Route path="/cours" element={<MesCours />} />
+                {/* Cavalier seulement : la fonction dépenses n'existe plus
+                    côté écurie — un club qui tape l'URL retombe à l'accueil. */}
+                <Route path="/depenses" element={<Depenses />} />
                 <Route path="/rejoindre" element={<RejoindreCheval />} />
               </>
             )}
@@ -156,8 +158,6 @@ export default function App() {
             <Route path="/chevaux/:id" element={<FicheCheval />} />
             <Route path="/chevaux/:id/carnet" element={<CarnetSante />} />
             <Route path="/chevaux/:id/rappels" element={<ReglagesRappels />} />
-            <Route path="/depenses" element={<Depenses />} />
-            <Route path="/depenses/soins" element={<ClubDepenses />} />
             <Route path="/profil" element={<Profil />} />
             <Route path="/premium" element={<Premium />} />
             {/* Accessible connecté : le lien « demander un nouveau lien » de

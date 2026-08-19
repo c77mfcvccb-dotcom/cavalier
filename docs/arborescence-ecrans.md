@@ -78,6 +78,7 @@ sur la fiche de chaque cheval.
    │                  sur un autre cheval — la liaison porte « Remplace X »
    │                  et la levée du repos propose d'y mettre fin.
    │                  « Dépenses de ce cheval » ouvre le suivi déjà filtré
+   │                  (propriétaire cavalier seulement — pas côté club)
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
@@ -117,7 +118,7 @@ sur la fiche de chaque cheval.
 ## Compte CLUB
 
 Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Profil**
-(dépenses accessibles depuis le Profil, comme côté cavalier)
+(pas de dépenses côté club : la fonction n'existe que côté cavalier)
 
 ```
 /                     ACCUEIL — la page par défaut du club, recalculée à
@@ -128,6 +129,8 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       │  qui écrit le soin au carnet et recalcule la
                       │  prochaine échéance selon la périodicité du cheval.
                       │  Rien à faire → « Tout est à jour ✅ »
+                      ├─ COURS DU JOUR : le programme de la journée, avec
+                      │  l'alerte « N sans cheval » et le lien vers l'onglet
                       └─ À VENIR : les échéances des 7 prochains jours
                          (🟡), en compact, reliées à la fiche du cheval.
                       L'ancien onglet Santé a fusionné ici — les données
