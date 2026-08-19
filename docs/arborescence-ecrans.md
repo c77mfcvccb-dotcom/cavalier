@@ -145,18 +145,20 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       inviter un cavalier au cheval, retirer une liaison
 
 /planning             LE PLANNING DES CHEVAUX — la raison d'être de l'écran :
-                      qui monte quel cheval quand, vue semaine, filtrable par
-                      cheval (avec bannière « au repos » sur le cheval
-                      filtré). Deux natures de ligne seulement : créneaux de
-                      monte, et passages en cours (cheval attribué). Les
-                      échéances de soins vivent dans Santé, les cours dans
-                      leur onglet — plus rien n'est mélangé
+                      qui monte quel cheval quand, en vue JOUR par défaut,
+                      commutable Semaine ou Mois (sélecteur commun aux deux
+                      écrans), filtrable par cheval (avec bannière « au
+                      repos » sur le cheval filtré). Deux natures de ligne
+                      seulement : créneaux de monte, et passages en cours
+                      (cheval attribué). Les échéances de soins vivent sur
+                      l'Accueil et les fiches, les cours dans leur onglet
 
-/cours                COURS (onglet dédié) — création par le bouton +
-                      (capacité 1-30, discipline, niveau, moniteur), cartes
-                      par jour avec inscrits/attente et alerte « N sans
-                      cheval ». Un appui ouvre la feuille : inscrits et liste
-                      d'attente, inscription d'office, pointage
+/cours                COURS (onglet dédié) — les cours de la JOURNÉE par
+                      défaut, commutables Semaine ou Mois ; création par le
+                      bouton + (capacité 1-30, discipline, niveau, coach),
+                      cartes par jour avec inscrits/attente et alerte « N
+                      sans cheval ». Un appui ouvre la feuille : inscrits et
+                      liste d'attente, inscription d'office, pointage
                       présent/absent, et l'ATTRIBUTION des chevaux — le
                       sélecteur annonce la charge du jour et grise ceux au
                       repos ; la base refuse de toute façon un cheval

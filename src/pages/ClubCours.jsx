@@ -11,8 +11,9 @@ import {
 import { useAgendaVivant } from '../lib/temps-reel'
 import { Avatar, Champ, Chargement, Erreur, EtatVide, Feuille } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
+import SelecteurPeriode, { fenetrePeriode } from '../composants/SelecteurPeriode'
 import { DISCIPLINES_COURS, MOTIFS_INDISPO } from '../lib/constantes'
-import { cleJour, debutSemaine, formatDate, formatHeure } from '../lib/format'
+import { cleJour, formatDate, formatHeure } from '../lib/format'
 
 /**
  * Les triggers de la migration 0017 répondent par des codes : c'est ici
@@ -41,29 +42,30 @@ export default function ClubCours() {
   const [creneaux, setCreneaux] = useState([])
   const [indisponibilites, setIndisponibilites] = useState([])
   const [cavalerie, setCavalerie] = useState([])
-  const [semaine, setSemaine] = useState(() => debutSemaine(new Date()))
+  // Le JOUR d'office : les cours de la journée d'abord, la semaine et le
+  // mois à portée d'appui — même sélecteur que le Planning.
+  const [periode, setPeriode] = useState('jour')
+  const [ancre, setAncre] = useState(() => new Date())
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [creationOuverte, setCreationOuverte] = useState(false)
   const [coursOuvertId, setCoursOuvertId] = useState(null)
 
   const recharger = useCallback(async () => {
-    const fin = new Date(semaine)
-    fin.setDate(fin.getDate() + 6)
-    fin.setHours(23, 59, 59, 999)
+    const { debut, fin } = fenetrePeriode(periode, ancre)
 
     const chevaux = await chargerChevauxClub(profil.id)
     setCavalerie(chevaux)
     const ids = chevaux.map((c) => c.id)
     const [lesCours, lignes, indispos] = await Promise.all([
-      chargerCours({ clubId: profil.id, debut: semaine, fin }),
-      chargerCreneaux({ chevauxIds: ids, debut: semaine, fin }),
+      chargerCours({ clubId: profil.id, debut, fin }),
+      chargerCreneaux({ chevauxIds: ids, debut, fin }),
       chargerIndisponibilites(ids),
     ])
     setCours(lesCours)
     setCreneaux(lignes)
     setIndisponibilites(indispos)
-  }, [profil.id, semaine])
+  }, [profil.id, periode, ancre])
 
   useEffect(() => {
     let annule = false
@@ -80,15 +82,14 @@ export default function ClubCours() {
   // pendant que le gérant regarde l'écran.
   useAgendaVivant(cavalerie.map((c) => c.id), recharger)
 
-  const jours = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(semaine)
-        d.setDate(semaine.getDate() + i)
-        return d
-      }),
-    [semaine]
-  )
+  const jours = useMemo(() => {
+    const { debut, fin } = fenetrePeriode(periode, ancre)
+    const liste = []
+    for (const d = new Date(debut); d <= fin; d.setDate(d.getDate() + 1)) {
+      liste.push(new Date(d))
+    }
+    return liste
+  }, [periode, ancre])
 
   const joursRemplis = useMemo(() => {
     const carte = new Map()
@@ -123,15 +124,6 @@ export default function ClubCours() {
     [creneaux, cours]
   )
 
-  const decalerSemaine = (pas) => {
-    const suivante = new Date(semaine)
-    suivante.setDate(semaine.getDate() + pas * 7)
-    setSemaine(suivante)
-  }
-
-  const fin = new Date(semaine)
-  fin.setDate(semaine.getDate() + 6)
-
   const coursOuvert = cours.find((c) => c.id === coursOuvertId) || null
 
   return (
@@ -141,20 +133,25 @@ export default function ClubCours() {
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
 
-        <div className="calendrier-entete">
-          <button onClick={() => decalerSemaine(-1)} aria-label="Semaine précédente">‹</button>
-          <span className="mois">
-            {formatDate(semaine, { court: true })} – {formatDate(fin, { court: true })}
-          </span>
-          <button onClick={() => decalerSemaine(1)} aria-label="Semaine suivante">›</button>
-        </div>
+        <SelecteurPeriode
+          periode={periode}
+          ancre={ancre}
+          onPeriode={setPeriode}
+          onAncre={setAncre}
+        />
 
         {chargement ? (
           <Chargement />
         ) : joursRemplis.length === 0 ? (
           <EtatVide
             emoji="🎓"
-            titre="Aucun cours cette semaine"
+            titre={
+              periode === 'jour'
+                ? "Aucun cours aujourd'hui"
+                : periode === 'mois'
+                  ? 'Aucun cours ce mois-ci'
+                  : 'Aucun cours cette semaine'
+            }
             texte="Créez un cours avec le bouton + : vos cavaliers le verront aussitôt et pourront s'y inscrire depuis leur téléphone."
           />
         ) : (
