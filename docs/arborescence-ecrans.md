@@ -130,11 +130,17 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       │  cheval, le type, l'échéance, et une case « Fait »
                       │  qui écrit le soin au carnet et recalcule la
                       │  prochaine échéance selon la périodicité du cheval.
-                      │  Rien à faire → « Tout est à jour ✅ »
+                      │  Rien à faire → « Tout est à jour ✅ », avec la
+                      │  prochaine échéance annoncée pour que l'écran ne
+                      │  paraisse jamais mort
                       ├─ COURS DU JOUR : le programme de la journée, avec
                       │  l'alerte « N sans cheval » et le lien vers l'onglet
-                      └─ À VENIR : les échéances des 7 prochains jours
-                         (🟡), en compact, reliées à la fiche du cheval.
+                      └─ À VENIR : les échéances des 30 prochains jours
+                         (🟡), en compact, reliées à la fiche du cheval —
+                         30 jours parce que la saisie d'un soin pré-remplit
+                         l'échéance à 4-12 semaines selon le type : une
+                         fenêtre plus courte cacherait le soin qu'on vient
+                         d'enregistrer.
                       L'ancien onglet Santé a fusionné ici — les données
                       n'ont pas bougé, l'historique reste sur chaque fiche
 

@@ -37,7 +37,7 @@ const euros = (montant) =>
   `${Number(montant).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`
 
 export default function OngletSoins({ cheval, estGestionnaire }) {
-  const { profil, estPremium, adhesions } = useAuth()
+  const { profil, estClub, estPremium, adhesions } = useAuth()
   // Premium contextuel (0018) : l'abonnement perso, ou le siège offert par
   // l'écurie quand le cheval est dans son périmètre.
   const premium = premiumPourCheval(cheval, { estPremium, adhesions })
@@ -205,7 +205,7 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
         </section>
       )}
 
-      {depenses.annee > 0 && (
+      {!estClub && depenses.annee > 0 && (
         <section>
           <div className="titre-section">
             <h2>Dépenses {depenses.anneeCourante}</h2>
@@ -292,7 +292,9 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                             <span className="gras" style={{ fontSize: '0.9rem' }}>
                               {formatDate(soin.date_realisee)}
                             </span>
-                            {soin.cout ? <span className="doux">{euros(soin.cout)}</span> : null}
+                            {!estClub && soin.cout ? (
+                              <span className="doux">{euros(soin.cout)}</span>
+                            ) : null}
                           </div>
                           {(soin.praticien || soin.produit || soin.protocole) && (
                             <div className="meta">
@@ -350,6 +352,9 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
 }
 
 function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, onAjoute }) {
+  // Le suivi des dépenses n'existe que côté cavalier : une écurie note le
+  // soin et son échéance, jamais un montant.
+  const { estClub } = useAuth()
   const intervalleDeType = (type) =>
     type in intervalles ? intervalles[type] : TYPES_SOIN[type]?.intervalleJours
 
@@ -504,9 +509,11 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
           </Champ>
         )}
 
-        <Champ label="Montant (€)" aide="Facultatif — alimente le suivi des dépenses">
-          <input type="number" min="0" step="0.01" value={valeurs.cout} onChange={modifier('cout')} />
-        </Champ>
+        {!estClub && (
+          <Champ label="Montant (€)" aide="Facultatif — alimente le suivi des dépenses">
+            <input type="number" min="0" step="0.01" value={valeurs.cout} onChange={modifier('cout')} />
+          </Champ>
+        )}
 
         <Champ label="Notes">
           <textarea value={valeurs.notes} onChange={modifier('notes')} />

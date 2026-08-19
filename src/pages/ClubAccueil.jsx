@@ -124,7 +124,12 @@ export default function ClubAccueil() {
   }, [soins, cavalerie])
 
   const taches = echeances.filter((l) => l.jours <= 0)
-  const aVenir = echeances.filter((l) => l.jours >= 1 && l.jours <= 7)
+  // 30 jours de visibilité : le formulaire de soin pré-remplit l'échéance
+  // selon la périodicité du type (4 à 12 semaines) — une fenêtre d'une
+  // semaine laisserait l'écran vide juste après la saisie, comme si rien
+  // n'avait été enregistré.
+  const aVenir = echeances.filter((l) => l.jours >= 1 && l.jours <= 30)
+  const prochaine = echeances.find((l) => l.jours > 0)
 
   /**
    * « Fait » : le soin est réalisé aujourd'hui. L'historique du cheval
@@ -190,6 +195,13 @@ export default function ClubAccueil() {
               <p className="doux" style={{ marginTop: 6 }}>
                 Aucun soin en retard ni dû aujourd'hui sur la cavalerie.
               </p>
+              {prochaine && (
+                <p className="meta" style={{ marginTop: 8 }}>
+                  Prochaine échéance :{' '}
+                  {(TYPES_SOIN[prochaine.soin.type] || TYPES_SOIN.autre).libelle} de{' '}
+                  {prochaine.cheval.nom} — {joursRelatifs(prochaine.jours)}
+                </p>
+              )}
             </div>
           ) : (
             <div className="liste">
@@ -273,11 +285,11 @@ export default function ClubAccueil() {
         <section className="section">
           <div className="titre-section">
             <h2>À venir</h2>
-            <span className="doux">7 prochains jours</span>
+            <span className="doux">30 prochains jours</span>
           </div>
 
           {aVenir.length === 0 ? (
-            <div className="carte centre doux">Rien à prévoir cette semaine.</div>
+            <div className="carte centre doux">Rien à prévoir dans les 30 prochains jours.</div>
           ) : (
             <div className="liste">
               {aVenir.map((ligne) => {
