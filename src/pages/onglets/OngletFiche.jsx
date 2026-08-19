@@ -6,7 +6,7 @@ import { Champ, Erreur, Feuille, PhotoCheval } from '../../composants/Ui'
 import ChargeurPhoto from '../../composants/ChargeurPhoto'
 import { MOTIFS_INDISPO, SEXES } from '../../lib/constantes'
 import { chargerIndisponibilites, indisponibiliteActive } from '../../lib/requetes'
-import { cleJour, formatDate, texteAge } from '../../lib/format'
+import { ajouterJours, cleJour, formatDate, texteAge } from '../../lib/format'
 
 export default function OngletFiche({ cheval, cavaliers, estGestionnaire, recharger }) {
   const { profil } = useAuth()
@@ -51,52 +51,69 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
   // vivent la liaison directe et le report (migration 0019).
   const estClubGestionnaire = cheval.club_id === profil.id
 
-  // « Lever » remet le cheval au travail aujourd'hui même : l'indisponibilité
-  // se ferme au lieu d'être effacée — l'historique dira un jour pourquoi il
-  // n'a pas tourné cette semaine-là. Une indisponibilité qui n'a pas encore
-  // commencé, elle, se supprime : il n'y a rien à archiver.
-  //
   // Le cheval revenu, les remplacements qui pointaient vers lui n'ont plus
   // de raison d'être : on propose de les clore dans la foulée — proposer,
   // pas imposer, car une bascule peut être devenue définitive.
+  async function proposerFinRemplacements() {
+    if (!estClubGestionnaire) return
+    const { data: remplacements } = await supabase
+      .from('cheval_cavaliers')
+      .select('id, profil:profils(nom), cheval:cheval_id(nom)')
+      .eq('remplacement_de', cheval.id)
+    if (!remplacements?.length) return
+    const detail = remplacements
+      .map((r) => `${r.profil?.nom ?? 'Cavalier'} sur ${r.cheval?.nom ?? 'un autre cheval'}`)
+      .join(', ')
+    if (
+      window.confirm(`${cheval.nom} est de retour. Mettre fin aux remplacements ? (${detail})`)
+    ) {
+      await supabase
+        .from('cheval_cavaliers')
+        .delete()
+        .in('id', remplacements.map((r) => r.id))
+    }
+  }
+
+  // « Lever » remet le cheval au travail MAINTENANT : l'indisponibilité se
+  // ferme à hier — la fermer à aujourd'hui le laisserait indisponible
+  // jusqu'au soir — et reste dans l'historique, qui dira un jour pourquoi
+  // il n'a pas tourné cette semaine-là. Commencée aujourd'hui même, il n'y
+  // a rien à archiver (et la contrainte fin >= debut refuserait hier) :
+  // la ligne s'efface.
   async function leverIndispo(indispo) {
-    const { error } = await supabase
-      .from('indisponibilites')
-      .update({ fin: cleJour(new Date()) })
-      .eq('id', indispo.id)
+    const hier = ajouterJours(new Date(), -1)
+    const { error } =
+      indispo.debut > hier
+        ? await supabase.from('indisponibilites').delete().eq('id', indispo.id)
+        : await supabase.from('indisponibilites').update({ fin: hier }).eq('id', indispo.id)
     if (error) {
       setErreur(error.message)
       return
     }
     rechargerIndispos()
-
-    if (estClubGestionnaire) {
-      const { data: remplacements } = await supabase
-        .from('cheval_cavaliers')
-        .select('id, profil:profils(nom), cheval:cheval_id(nom)')
-        .eq('remplacement_de', cheval.id)
-      if (remplacements?.length) {
-        const detail = remplacements
-          .map((r) => `${r.profil?.nom ?? 'Cavalier'} sur ${r.cheval?.nom ?? 'un autre cheval'}`)
-          .join(', ')
-        if (
-          window.confirm(
-            `${cheval.nom} est de retour. Mettre fin aux remplacements ? (${detail})`
-          )
-        ) {
-          await supabase
-            .from('cheval_cavaliers')
-            .delete()
-            .in('id', remplacements.map((r) => r.id))
-        }
-      }
-    }
+    await proposerFinRemplacements()
   }
 
-  async function supprimerIndispo(indispo) {
+  // La suppression efface la ligne de l'historique : c'est le geste de la
+  // saisie par erreur — « je me suis trompé, il n'est pas blessé » — ou de
+  // l'annulation d'un repos à venir.
+  async function supprimerIndispo(indispo, { enCours = false, confirmer = false } = {}) {
+    if (
+      confirmer &&
+      !window.confirm(
+        enCours
+          ? 'Effacer cette indisponibilité de l\'historique ? Pour une simple remise au travail, préférez « Lever ».'
+          : 'Effacer cette indisponibilité de l\'historique ?'
+      )
+    )
+      return
     const { error } = await supabase.from('indisponibilites').delete().eq('id', indispo.id)
-    if (error) setErreur(error.message)
-    else rechargerIndispos()
+    if (error) {
+      setErreur(error.message)
+      return
+    }
+    rechargerIndispos()
+    if (enCours) await proposerFinRemplacements()
   }
 
   async function genererLienPublic() {
@@ -227,7 +244,9 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             <div className="liste">
               {indisponibilites.map((indispo) => {
                 // Clés « AAAA-MM-JJ » : l'ordre lexical est l'ordre des jours
-                const aVenir = indispo.debut > cleJour(new Date())
+                const aujourdhui = cleJour(new Date())
+                const aVenir = indispo.debut > aujourdhui
+                const enCours = !aVenir && (!indispo.fin || indispo.fin >= aujourdhui)
                 return (
                   <div key={indispo.id} className="element">
                     <div className="corps">
@@ -235,6 +254,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
                         {MOTIFS_INDISPO[indispo.motif]?.emoji}{' '}
                         {MOTIFS_INDISPO[indispo.motif]?.libelle || indispo.motif}
                         {aVenir && <span className="doux"> (à venir)</span>}
+                        {!aVenir && !enCours && <span className="doux"> (terminée)</span>}
                       </div>
                       <div className="meta">
                         Du {formatDate(indispo.debut, { court: true })}
@@ -244,12 +264,30 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
                         {indispo.note ? ` · ${indispo.note}` : ''}
                       </div>
                     </div>
-                    {estGestionnaire && (
+                    {estGestionnaire && aVenir && (
                       <button
                         className="bouton fantome petit"
-                        onClick={() => (aVenir ? supprimerIndispo(indispo) : leverIndispo(indispo))}
+                        onClick={() => supprimerIndispo(indispo)}
                       >
-                        {aVenir ? 'Annuler' : 'Lever'}
+                        Annuler
+                      </button>
+                    )}
+                    {estGestionnaire && enCours && (
+                      <button
+                        className="bouton fantome petit"
+                        onClick={() => leverIndispo(indispo)}
+                      >
+                        Lever
+                      </button>
+                    )}
+                    {estGestionnaire && !aVenir && (
+                      <button
+                        className="bouton fantome petit"
+                        onClick={() => supprimerIndispo(indispo, { enCours, confirmer: true })}
+                        aria-label="Supprimer cette indisponibilité"
+                        title="Saisie par erreur ? Effacer de l'historique"
+                      >
+                        ✕
                       </button>
                     )}
                   </div>

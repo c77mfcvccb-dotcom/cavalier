@@ -73,6 +73,11 @@ sur la fiche de chaque cheval.
    │                  Section Disponibilité : le gestionnaire met le cheval
    │                  au repos (motif, dates, « jusqu'à nouvel ordre ») et
    │                  le remet au travail ; tous les cavaliers le voient.
+   │                  « Lever » ferme le repos à HIER — le cheval est
+   │                  disponible immédiatement — et garde la ligne en
+   │                  historique ; « ✕ » l'efface entièrement, c'est le
+   │                  geste de la saisie par erreur (« il n'est pas
+   │                  blessé »), avec confirmation.
    │                  Un cheval de club au repos propose de REPORTER ses
    │                  cavaliers sur un autre cheval — la liaison porte
    │                  « Remplace X » et la levée du repos propose d'y
