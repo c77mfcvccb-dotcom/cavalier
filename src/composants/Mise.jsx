@@ -24,9 +24,11 @@ const ONGLETS_CAVALIER = [
 ]
 
 const ONGLETS_CLUB = [
-  { to: '/', icone: '🐴', libelle: 'Chevaux' },
+  // L'accueil remplace l'écran Santé : les échéances y deviennent des
+  // TÂCHES à cocher, et l'historique reste sur la fiche de chaque cheval.
+  { to: '/', icone: '🏠', libelle: 'Accueil' },
+  { to: '/chevaux', icone: '🐴', libelle: 'Chevaux' },
   { to: '/club', icone: '👥', libelle: 'Cavaliers' },
-  { to: '/sante', icone: '🩺', libelle: 'Santé' },
   { to: '/planning', icone: '📅', libelle: 'Planning' },
   { to: '/cours', icone: '🎓', libelle: 'Cours' },
   { to: '/profil', icone: '👤', libelle: 'Profil' },

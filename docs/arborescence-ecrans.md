@@ -116,23 +116,33 @@ sur la fiche de chaque cheval.
 
 ## Compte CLUB
 
-Barre d'onglets : **Chevaux · Cavaliers · Santé · Planning · Cours · Profil**
+Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Profil**
 (dépenses accessibles depuis le Profil, comme côté cavalier)
 
 ```
-/                     CAVALERIE — liste de tous les chevaux du club,
+/                     ACCUEIL — la page par défaut du club, recalculée à
+                      chaque chargement depuis les soins (aucun cron) :
+                      ├─ TÂCHES DU JOUR : vermifuges, vaccins, ferrures…
+                      │  en retard (🔴) ou dus aujourd'hui (🟠), avec le
+                      │  cheval, le type, l'échéance, et une case « Fait »
+                      │  qui écrit le soin au carnet et recalcule la
+                      │  prochaine échéance selon la périodicité du cheval.
+                      │  Rien à faire → « Tout est à jour ✅ »
+                      └─ À VENIR : les échéances des 7 prochains jours
+                         (🟡), en compact, reliées à la fiche du cheval.
+                      L'ancien onglet Santé a fusionné ici — les données
+                      n'ont pas bougé, l'historique reste sur chaque fiche
+
+/chevaux              CAVALERIE — liste de tous les chevaux du club,
                       recherche, nombre de cavaliers liés par cheval,
-                      charge de travail (« 2 fois aujourd'hui ») et badge
-                      « Au repos » quand une indisponibilité court
+                      charge de travail (« 2 aujourd'hui · 5 sur la
+                      semaine ») et badge « Au repos » quand une
+                      indisponibilité court
                       └─ bouton « Ajouter un cheval »
 
 /chevaux/:id          FICHE CHEVAL — mêmes 4 onglets que côté cavalier,
                       plus la gestion des cavaliers liés :
                       inviter un cavalier au cheval, retirer une liaison
-
-/sante                SANTÉ DE LA CAVALERIE — vue globale
-                      toutes les échéances de tous les chevaux,
-                      triées par urgence, filtrables par type de soin
 
 /planning             LE PLANNING DES CHEVAUX — la raison d'être de l'écran :
                       qui monte quel cheval quand, vue semaine, filtrable par

@@ -41,8 +41,8 @@ const FichePublique = ecranDiffere(() => import('./pages/FichePublique'))
 const Cgv = ecranDiffere(() => import('./pages/legales/Cgv'))
 const MentionsLegales = ecranDiffere(() => import('./pages/legales/MentionsLegales'))
 const Confidentialite = ecranDiffere(() => import('./pages/legales/Confidentialite'))
+const ClubAccueil = ecranDiffere(() => import('./pages/ClubAccueil'))
 const ClubCavalerie = ecranDiffere(() => import('./pages/ClubCavalerie'))
-const ClubSante = ecranDiffere(() => import('./pages/ClubSante'))
 const ClubPlanning = ecranDiffere(() => import('./pages/ClubPlanning'))
 const ClubJournal = ecranDiffere(() => import('./pages/ClubJournal'))
 const ClubCours = ecranDiffere(() => import('./pages/ClubCours'))
@@ -130,8 +130,11 @@ export default function App() {
           <Routes>
             {estClub ? (
               <>
-                <Route path="/" element={<ClubCavalerie />} />
-                <Route path="/sante" element={<ClubSante />} />
+                <Route path="/" element={<ClubAccueil />} />
+                <Route path="/chevaux" element={<ClubCavalerie />} />
+                {/* L'écran Santé a fusionné dans l'Accueil : ses données,
+                    elles, n'ont pas bougé — mêmes tables, mêmes fiches. */}
+                <Route path="/sante" element={<Navigate to="/" replace />} />
                 <Route path="/planning" element={<ClubPlanning />} />
                 <Route path="/journal" element={<ClubJournal />} />
                 <Route path="/cours" element={<ClubCours />} />
