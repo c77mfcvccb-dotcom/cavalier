@@ -4,11 +4,19 @@ import { supabase } from './supabase'
 import { COULEUR_SOIN, identiteCavalier, repertoireCavaliers } from './couleurs'
 import { cleJour, enDateLocale } from './format'
 
-/** Chevaux d'un cavalier, via la table de liaison (rôle + couleur inclus). */
+/**
+ * Chevaux d'un cavalier, via la table de liaison (rôle + couleur inclus).
+ *
+ * `cheval:cheval_id(...)` et non `cheval:chevaux(...)` : depuis la 0019 la
+ * table de liaison porte DEUX clés vers `chevaux` (la monture, et le cheval
+ * remplacé) — sans la colonne explicite, PostgREST refuse de choisir et
+ * répond « more than one relationship was found ». Même règle pour toute
+ * jointure qui part de `cheval_cavaliers` ou y revient.
+ */
 export async function chargerMesChevaux(cavalierId) {
   const { data, error } = await supabase
     .from('cheval_cavaliers')
-    .select('role, couleur, cheval:chevaux(*)')
+    .select('role, couleur, cheval:cheval_id(*)')
     .eq('cavalier_id', cavalierId)
     .order('cree_le', { ascending: true })
 
@@ -18,11 +26,11 @@ export async function chargerMesChevaux(cavalierId) {
     .map((ligne) => ({ ...ligne.cheval, role: ligne.role, couleur: ligne.couleur }))
 }
 
-/** Cavalerie d'un club. */
+/** Cavalerie d'un club. Jointure inverse désambiguïsée, même raison que ci-dessus. */
 export async function chargerChevauxClub(clubId) {
   const { data, error } = await supabase
     .from('chevaux')
-    .select('*, cheval_cavaliers(count)')
+    .select('*, cheval_cavaliers!cheval_id(count)')
     .eq('club_id', clubId)
     .order('nom')
 

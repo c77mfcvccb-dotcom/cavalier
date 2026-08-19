@@ -84,6 +84,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0017_cours_et_indisponibilites.sql` | L'outil écurie : planning des cours avec inscriptions et liste d'attente, attribution des chevaux, indisponibilités et charge de travail |
 | `0018_adhesion_club.sql` | Le modèle club : adhésion par code d'écurie, accès premium offert aux membres sur le périmètre du club, premium contextuel par cheval, pension |
 | `0019_remplacement_et_couts.sql` | Remplacement d'un cheval au repos, liaison directe d'un membre par le club, et coûts de soins visibles du seul auteur et du gestionnaire |
+| `0020_mes_cavaliers.sql` | La fiche d'un cheval en pension devient visible de son écurie, et l'attribution d'une monture porte son rôle (demi-pension ou cheval de club) |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

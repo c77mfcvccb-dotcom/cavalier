@@ -5,21 +5,24 @@ import Cloche from './Cloche'
 /**
  * Onglets de la barre du bas.
  *
- * Cinq entrées est le maximum tenable sur un écran de téléphone : au-delà,
- * les libellés passent sous la limite de lisibilité. « Chevaux » plutôt que
- * « Mes chevaux » pour cette raison — à cinq colonnes, le libellé long
- * revenait à la ligne.
+ * Six entrées est la limite absolue sur un écran de téléphone, et elle ne
+ * se paie qu'avec des libellés courts : « Agenda » plutôt que
+ * « Calendrier », « Club » plutôt que « Mon club ». Le club, lui, garde le
+ * mot juste — « Chevaux » pour sa cavalerie, « Cavaliers » pour ses
+ * membres et leurs montures.
  */
 const ONGLETS_CAVALIER = [
   { to: '/', icone: '🏠', libelle: 'Accueil' },
   { to: '/chevaux', icone: '🐴', libelle: 'Chevaux' },
-  { to: '/calendrier', icone: '📅', libelle: 'Calendrier' },
+  { to: '/calendrier', icone: '📅', libelle: 'Agenda' },
+  { to: '/club', icone: '🏇', libelle: 'Club' },
   { to: '/depenses', icone: '💶', libelle: 'Dépenses' },
   { to: '/profil', icone: '👤', libelle: 'Profil' },
 ]
 
 const ONGLETS_CLUB = [
-  { to: '/', icone: '🐴', libelle: 'Cavalerie' },
+  { to: '/', icone: '🐴', libelle: 'Chevaux' },
+  { to: '/club', icone: '👥', libelle: 'Cavaliers' },
   { to: '/sante', icone: '🩺', libelle: 'Santé' },
   { to: '/planning', icone: '📅', libelle: 'Planning' },
   { to: '/depenses', icone: '💶', libelle: 'Dépenses' },

@@ -4,15 +4,17 @@ import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
 import { chargerMesChevaux } from '../lib/requetes'
 import { useAgendaVivant } from '../lib/temps-reel'
-import { Avatar, Champ, Chargement, Erreur, EtatVide } from '../composants/Ui'
+import { Avatar, Champ, Chargement, Erreur, EtatVide, Feuille } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import CodeClub from '../composants/CodeClub'
+import { ROLES } from '../lib/constantes'
 import { traduireErreurClub } from '../lib/club'
 
 /**
- * La rubrique « Mon club » — deux visages pour une même route :
- * l'adhérent y voit ses écuries, son statut et ses chevaux ; le gérant y
- * tient ses membres, les accès offerts et le code d'adhésion.
+ * La même route pour deux visages : « Mon club » chez l'adhérent — ses
+ * écuries, son statut, le code d'adhésion — et « Mes cavaliers » chez le
+ * gérant : ses membres, leurs montures attribuées (demi-pension ou cheval
+ * de club), les chevaux de propriétaires en pension, et le code.
  */
 export default function MonClub() {
   const { estClub } = useAuth()
@@ -90,7 +92,7 @@ function ClubAdherent() {
 
   return (
     <>
-      <Entete titre="Mon club" retour />
+      <Entete titre="Mon club" />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
@@ -222,22 +224,48 @@ function ClubGerant() {
   const { profil, estPremium } = useAuth()
   const [code, setCode] = useState(null)
   const [membres, setMembres] = useState([])
+  const [cavalerie, setCavalerie] = useState([])
+  const [liaisons, setLiaisons] = useState([])
+  const [pensions, setPensions] = useState([])
+  const [attribution, setAttribution] = useState(null)
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
 
   const recharger = useCallback(async () => {
-    const [ligneCode, lignesMembres] = await Promise.all([
+    const [ligneCode, lignesMembres, lignesChevaux, lignesPensions] = await Promise.all([
       supabase.from('codes_adhesion').select('code').eq('club_id', profil.id).maybeSingle(),
       supabase
         .from('membres_club')
         .select('id, siege, siege_depuis, cree_le, cavalier:cavalier_id(id, nom, photo_url, niveau_galop)')
         .eq('club_id', profil.id)
         .order('cree_le'),
+      supabase.from('chevaux').select('id, nom').eq('club_id', profil.id).order('nom'),
+      // Les chevaux de propriétaires en pension à l'écurie (0020) : la
+      // fiche est visible, leurs données restent au propriétaire.
+      supabase
+        .from('chevaux')
+        .select('id, nom, cree_par')
+        .eq('ecurie_id', profil.id)
+        .order('nom'),
     ])
     if (lignesMembres.error) throw lignesMembres.error
     setCode(ligneCode.data?.code ?? null)
     setMembres(lignesMembres.data || [])
+    setCavalerie(lignesChevaux.data || [])
+    setPensions(lignesPensions.data || [])
+
+    // Qui monte quoi : toutes les liaisons de la cavalerie, d'un coup.
+    const ids = (lignesChevaux.data || []).map((c) => c.id)
+    if (ids.length) {
+      const { data } = await supabase
+        .from('cheval_cavaliers')
+        .select('id, cheval_id, cavalier_id, role, remplacement_de, cheval:cheval_id(id, nom)')
+        .in('cheval_id', ids)
+      setLiaisons(data || [])
+    } else {
+      setLiaisons([])
+    }
   }, [profil.id])
 
   useEffect(() => {
@@ -288,6 +316,25 @@ function ClubGerant() {
     else recharger()
   }
 
+  async function retirerMonture(liaison, membre) {
+    if (
+      !window.confirm(
+        `Retirer ${liaison.cheval?.nom} à ${membre.cavalier?.nom} ? Ses séances déjà notées restent sur le carnet du cheval.`
+      )
+    )
+      return
+    const { error } = await supabase.from('cheval_cavaliers').delete().eq('id', liaison.id)
+    if (error) setErreur(traduireErreurClub(error.message))
+    else recharger()
+  }
+
+  async function sortirDePension(cheval) {
+    if (!window.confirm(`${cheval.nom} quitte la pension de l'écurie ?`)) return
+    const { error } = await supabase.rpc('detacher_de_ecurie', { p_cheval: cheval.id })
+    if (error) setErreur(traduireErreurClub(error.message))
+    else recharger()
+  }
+
   if (chargement) return <Chargement />
 
   const avecAcces = membres.filter((m) => m.siege).length
@@ -295,9 +342,8 @@ function ClubGerant() {
   return (
     <>
       <Entete
-        titre="Mon club"
+        titre="Mes cavaliers"
         sousTitre={`${membres.length} membre${membres.length > 1 ? 's' : ''}`}
-        retour
       />
 
       <main className="contenu">
@@ -391,29 +437,95 @@ function ClubGerant() {
             />
           ) : (
             <div className="liste">
-              {membres.map((membre) => (
-                <div key={membre.id} className="element" style={{ flexWrap: 'wrap' }}>
-                  <Avatar profil={membre.cavalier} />
-                  <div className="corps">
-                    <div className="titre">{membre.cavalier?.nom}</div>
-                    <div className="meta">
-                      {membre.cavalier?.niveau_galop
-                        ? `Galop ${membre.cavalier.niveau_galop} · `
-                        : ''}
-                      {membre.siege ? 'Accès offert' : 'Sans accès offert'}
+              {membres.map((membre) => {
+                const montures = liaisons.filter(
+                  (l) => l.cavalier_id === membre.cavalier?.id
+                )
+                const sesPensions = pensions.filter(
+                  (c) => c.cree_par === membre.cavalier?.id
+                )
+                return (
+                  <div key={membre.id} className="carte" style={{ padding: 12 }}>
+                    <div className="rangee" style={{ flexWrap: 'wrap' }}>
+                      <Avatar profil={membre.cavalier} />
+                      <div className="corps" style={{ flex: 1, minWidth: 120 }}>
+                        <div className="titre gras">{membre.cavalier?.nom}</div>
+                        <div className="meta doux">
+                          {membre.cavalier?.niveau_galop
+                            ? `Galop ${membre.cavalier.niveau_galop} · `
+                            : ''}
+                          {membre.siege ? 'Accès offert' : 'Sans accès offert'}
+                        </div>
+                      </div>
+                      <button
+                        className={`bouton petit ${membre.siege ? 'fantome' : ''}`}
+                        onClick={() => changerSiege(membre, !membre.siege)}
+                      >
+                        {membre.siege ? "Retirer l'accès" : "Offrir l'accès"}
+                      </button>
+                      <button className="bouton fantome petit" onClick={() => retirer(membre)}>
+                        Retirer
+                      </button>
                     </div>
+
+                    {/* Qui monte quoi : les attributions posées par le club */}
+                    <div className="pile" style={{ gap: 6, marginTop: 10 }}>
+                      {montures.map((liaison) => (
+                        <div key={liaison.id} className="rangee espace">
+                          <span>
+                            🐴 {liaison.cheval?.nom}
+                            <span className="badge contour" style={{ marginLeft: 8 }}>
+                              {ROLES[liaison.role]?.court || liaison.role}
+                            </span>
+                            {liaison.remplacement_de && (
+                              <span className="badge contour" style={{ marginLeft: 6 }}>
+                                Remplacement
+                              </span>
+                            )}
+                          </span>
+                          <button
+                            className="bouton fantome petit"
+                            onClick={() => retirerMonture(liaison, membre)}
+                          >
+                            Retirer
+                          </button>
+                        </div>
+                      ))}
+
+                      {sesPensions.map((cheval) => (
+                        <div key={cheval.id} className="rangee espace">
+                          <span>
+                            🏠 {cheval.nom}
+                            <span className="badge contour" style={{ marginLeft: 8 }}>
+                              Son cheval, en pension
+                            </span>
+                          </span>
+                          <button
+                            className="bouton fantome petit"
+                            onClick={() => sortirDePension(cheval)}
+                          >
+                            Sortir
+                          </button>
+                        </div>
+                      ))}
+
+                      {montures.length + sesPensions.length === 0 && (
+                        <span className="doux" style={{ fontSize: '0.85rem' }}>
+                          Aucun cheval attribué pour l'instant
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      className="bouton secondaire petit"
+                      style={{ marginTop: 10 }}
+                      onClick={() => setAttribution(membre)}
+                    >
+                      + Attribuer un cheval
+                    </button>
                   </div>
-                  <button
-                    className={`bouton petit ${membre.siege ? 'fantome' : ''}`}
-                    onClick={() => changerSiege(membre, !membre.siege)}
-                  >
-                    {membre.siege ? "Retirer l'accès" : "Offrir l'accès"}
-                  </button>
-                  <button className="bouton fantome petit" onClick={() => retirer(membre)}>
-                    Retirer
-                  </button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
@@ -425,6 +537,105 @@ function ClubGerant() {
           </p>
         </section>
       </main>
+
+      <FeuilleAttribution
+        membre={attribution}
+        cavalerie={cavalerie}
+        liaisons={liaisons}
+        onFermer={() => setAttribution(null)}
+        onAttribue={() => {
+          setAttribution(null)
+          recharger()
+        }}
+      />
     </>
+  )
+}
+
+/**
+ * Le club attribue une monture : le cheval, et le rôle qui dit la réalité —
+ * demi-pension (elle paye sa DP sur ce cheval) ou cheval de club (elle
+ * tourne sur la cavalerie). C'est la migration 0020 qui pose le rôle.
+ */
+function FeuilleAttribution({ membre, cavalerie, liaisons, onFermer, onAttribue }) {
+  const [chevalId, setChevalId] = useState('')
+  const [role, setRole] = useState('demi_pension')
+  const [erreur, setErreur] = useState('')
+  const [envoi, setEnvoi] = useState(false)
+
+  const [dernierMembre, setDernierMembre] = useState(null)
+  if (membre !== dernierMembre) {
+    setDernierMembre(membre)
+    setChevalId('')
+    setRole('demi_pension')
+    setErreur('')
+  }
+
+  if (!membre) return null
+
+  const dejaMontes = new Set(
+    liaisons.filter((l) => l.cavalier_id === membre.cavalier?.id).map((l) => l.cheval_id)
+  )
+  const disponibles = cavalerie.filter((c) => !dejaMontes.has(c.id))
+
+  async function attribuer(evenement) {
+    evenement.preventDefault()
+    setErreur('')
+    setEnvoi(true)
+    const { error } = await supabase.rpc('lier_membre_au_cheval', {
+      p_cheval: chevalId,
+      p_cavalier: membre.cavalier.id,
+      p_role: role,
+    })
+    setEnvoi(false)
+    if (error) setErreur(traduireErreurClub(error.message))
+    else onAttribue()
+  }
+
+  return (
+    <Feuille
+      titre={`Attribuer un cheval à ${membre.cavalier?.nom}`}
+      ouverte={Boolean(membre)}
+      onFermer={onFermer}
+    >
+      <form onSubmit={attribuer}>
+        <Erreur>{erreur}</Erreur>
+
+        <Champ label="Cheval">
+          <select value={chevalId} onChange={(e) => setChevalId(e.target.value)} required>
+            <option value="">— Choisir un cheval —</option>
+            {disponibles.map((cheval) => (
+              <option key={cheval.id} value={cheval.id}>{cheval.nom}</option>
+            ))}
+          </select>
+        </Champ>
+
+        <Champ
+          label="Rôle"
+          aide="Le rôle s'affiche partout où la liaison apparaît — sur la fiche, le calendrier, le planning."
+        >
+          <div className="choix-puces">
+            <button
+              type="button"
+              className={role === 'demi_pension' ? 'actif' : undefined}
+              onClick={() => setRole('demi_pension')}
+            >
+              Demi-pension
+            </button>
+            <button
+              type="button"
+              className={role === 'cavalier_club' ? 'actif' : undefined}
+              onClick={() => setRole('cavalier_club')}
+            >
+              Cheval de club
+            </button>
+          </div>
+        </Champ>
+
+        <button className="bouton pleine-largeur" disabled={envoi || !chevalId}>
+          {envoi ? 'Attribution…' : 'Attribuer'}
+        </button>
+      </form>
+    </Feuille>
   )
 }

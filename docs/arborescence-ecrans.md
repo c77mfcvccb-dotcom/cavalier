@@ -35,7 +35,8 @@ d'y rester enfermé.
 
 ## Compte CAVALIER
 
-Barre d'onglets : **Accueil · Chevaux · Calendrier · Dépenses · Profil**
+Barre d'onglets : **Accueil · Chevaux · Agenda · Club · Dépenses · Profil**
+(six entrées est la limite absolue — d'où les libellés courts)
 
 ```
 /                     ACCUEIL — tableau de bord
@@ -111,7 +112,7 @@ Barre d'onglets : **Accueil · Chevaux · Calendrier · Dépenses · Profil**
 
 ## Compte CLUB
 
-Barre d'onglets : **Cavalerie · Santé · Planning · Dépenses · Profil**
+Barre d'onglets : **Chevaux · Cavaliers · Santé · Planning · Dépenses · Profil**
 
 ```
 /                     CAVALERIE — liste de tous les chevaux du club,
@@ -145,11 +146,16 @@ Barre d'onglets : **Cavalerie · Santé · Planning · Dépenses · Profil**
                       inquiétants (boiterie suspectée, blessure) remontent
                       en tête dans « À surveiller ». Accès depuis le Planning
 
-/club                 MON CLUB (gérant) — le code d'adhésion multi-usage
-                      (affichage, partage, régénération : l'ancien meurt),
-                      et la liste des membres : accès offert donné ou
-                      retiré membre par membre (sièges illimités), retrait
-                      du club. Bandeau si l'abonnement du club est inactif
+/club                 MES CAVALIERS (gérant, onglet « Cavaliers ») — par
+                      membre : ses montures attribuées avec leur rôle
+                      (demi-pension ou cheval de club) et leur retrait,
+                      « + Attribuer un cheval » (cheval + rôle, c'est le
+                      club qui attribue la monture d'une DP), ses chevaux
+                      de propriétaire en pension à l'écurie (fiche visible,
+                      données au propriétaire), accès offert donné/retiré,
+                      retrait du club. Plus le code d'adhésion multi-usage
+                      (affichage, partage, régénération : l'ancien meurt).
+                      Bandeau si l'abonnement du club est inactif
 
 /profil               Nom du club, photo, ville, présentation, déconnexion
 ```

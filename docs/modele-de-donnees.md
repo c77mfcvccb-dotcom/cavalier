@@ -110,10 +110,12 @@ cavaliers d'un cheval, l'autre les chevaux d'un compte : le plan gratuit
 reste à **un cheval par compte, créé ou rejoint** (migration 0006) — les
 chevaux de club en sont exclus depuis la 0018.
 
-**Liaison directe et remplacement** (migration 0019). Le club peut lier un
-de SES membres à un de SES chevaux en un geste, sans code, par
+**Liaison directe et remplacement** (migrations 0019/0020). Le club peut
+lier un de SES membres à un de SES chevaux en un geste, sans code, par
 `lier_membre_au_cheval()` — l'invitation reste la porte normale quand c'est
-le cavalier qui agit. La colonne `remplacement_de` (uuid → chevaux,
+le cavalier qui agit. La fonction pose aussi le **rôle** de l'attribution
+(`demi_pension` ou `cavalier_club`, jamais `proprietaire`) ; rappelée sur
+une liaison existante, elle ajuste le rôle au lieu d'échouer. La colonne `remplacement_de` (uuid → chevaux,
 nullable) mémorise le cheval indisponible qu'une liaison remplace : elle
 porte le badge « Remplace X » sur la fiche, et la levée de
 l'indisponibilité propose de clore d'un coup les remplacements qui
@@ -265,9 +267,19 @@ et un code faux ne révèle jamais l'existence de l'écurie.
 
 `club_id` signifie **propriété** et donne les droits de gestionnaire ;
 `ecurie_id` signifie **stationné chez** et n'ouvre aucun droit de gestion
-à l'écurie — il ne sert qu'au périmètre premium. Le propriétaire rattache
-son cheval (trigger : uniquement une écurie dont il est membre, sinon
+à l'écurie — il sert au périmètre premium et, depuis la 0020, à la
+**visibilité de la fiche** : l'écurie voit les chevaux en pension chez elle
+(sans quoi « Mes cavaliers » afficherait des pensions fantômes), mais
+`a_acces_cheval()` ne change pas — calendrier, séances, soins et documents
+restent au propriétaire et à ses invités. Le propriétaire rattache son
+cheval (trigger : uniquement une écurie dont il est membre, sinon
 `ECURIE_NON_MEMBRE`) ; lui ou le gérant détachent (`detacher_de_ecurie()`).
+
+> **Deux clés de `cheval_cavaliers` vers `chevaux`** depuis la 0019
+> (`cheval_id` et `remplacement_de`) : toute jointure PostgREST entre ces
+> deux tables doit nommer sa colonne — `cheval:cheval_id(...)`,
+> `cheval_cavaliers!cheval_id(count)` — sous peine de « more than one
+> relationship was found ».
 
 ### Le premium contextuel
 

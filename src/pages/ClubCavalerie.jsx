@@ -84,14 +84,9 @@ export default function ClubCavalerie() {
             : profil.nom
         }
         action={
-          <span className="rangee" style={{ gap: 6 }}>
-            <Link to="/club" className="bouton fantome petit">
-              Membres
-            </Link>
-            <Link to="/depenses/soins" className="bouton fantome petit">
-              Coûts de soins
-            </Link>
-          </span>
+          <Link to="/depenses/soins" className="bouton fantome petit">
+            Coûts de soins
+          </Link>
         }
       />
 

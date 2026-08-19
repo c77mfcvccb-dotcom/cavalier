@@ -84,7 +84,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
     if (estClubGestionnaire) {
       const { data: remplacements } = await supabase
         .from('cheval_cavaliers')
-        .select('id, profil:profils(nom), cheval:chevaux(nom)')
+        .select('id, profil:profils(nom), cheval:cheval_id(nom)')
         .eq('remplacement_de', cheval.id)
       if (remplacements?.length) {
         const detail = remplacements

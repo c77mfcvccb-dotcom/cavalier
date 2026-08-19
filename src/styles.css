@@ -138,6 +138,7 @@ button {
 
 .nav-bas a {
   flex: 1;
+  min-width: 0; /* six onglets : chaque colonne doit pouvoir se serrer */
   height: var(--nav-hauteur);
   display: flex;
   flex-direction: column;
@@ -145,8 +146,16 @@ button {
   justify-content: center;
   gap: 3px;
   font-size: 0.68rem;
+  white-space: nowrap;
+  overflow: hidden;
   color: var(--texte-doux);
   font-weight: 500;
+}
+
+/* À six colonnes sur un petit écran, « Cavaliers » ne tient qu'en
+   rapetissant d'un cran. */
+@media (max-width: 374px) {
+  .nav-bas a { font-size: 0.6rem; }
 }
 
 .nav-bas a .icone { font-size: 1.25rem; line-height: 1; }
