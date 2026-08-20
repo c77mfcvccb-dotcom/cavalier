@@ -76,6 +76,7 @@ export default function TableauBord() {
 
         {chevaux.length === 0 ? (
           <EtatVide
+            emoji="🐴"
             titre="Aucun cheval pour l'instant"
             texte="Ajoutez votre cheval ou rejoignez celui d'un autre cavalier avec un code de demi-pension."
             action={

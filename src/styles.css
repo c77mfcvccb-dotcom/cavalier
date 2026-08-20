@@ -98,8 +98,9 @@ button {
     calc(16px + var(--safe-gauche));
   /* Fond opaque d'abord : `color-mix` est inconnu avant Safari 16.2, et la
      barre deviendrait alors transparente, le contenu défilant au travers. */
-  background: var(--fond);
-  background: color-mix(in srgb, var(--fond) 88%, transparent);
+  /* Une pointe de sable : chaque écran s'ouvre sur une note chaude. */
+  background: #f8f0e2;
+  background: color-mix(in srgb, var(--sable) 42%, var(--fond));
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--bordure);
 }
@@ -651,6 +652,7 @@ button {
 }
 
 /* ---------- États ---------- */
+.etat-vide .emoji { font-size: 2.6rem; display: block; margin-bottom: 10px; }
 .etat-vide {
   text-align: center;
   padding: 38px 20px;
@@ -746,7 +748,8 @@ button {
 }
 .choix-puces button.actif {
   border-color: var(--vert);
-  background: #f2f7f4;
+  background: var(--vert);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -1363,3 +1366,10 @@ button {
 /* Les trois étapes, numérotées et aérées */
 .vitrine-etapes { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 10px; color: var(--texte-doux); }
 .vitrine-etapes li::marker { color: var(--vert); font-weight: 700; }
+
+/* La carte de célébration : tout est fait, et ça se voit */
+.carte.fete {
+  background: #eef6ef;
+  border-color: #cfe5d2;
+}
+.carte.fete .gras { color: var(--vert); font-size: 1.05rem; }
