@@ -193,7 +193,7 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                     <div className="meta">
                       {formatDate(soin.prochaine_echeance, { court: true })} —{' '}
                       {joursRelatifs(statut.jours)}
-                      {soin.prive ? ' · 🔒 privé' : ''}
+                      {soin.prive ? ' · privé' : ''}
                     </div>
                   </div>
                   <span className={`badge ${libelle.classe}`}>{libelle.libelle}</span>
@@ -290,7 +290,7 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                               {formatDate(soin.date_realisee)}
                               {soin.prive && (
                                 <span className="badge contour" style={{ marginLeft: 6 }}>
-                                  🔒 Privé
+                                  Privé
                                 </span>
                               )}
                             </span>
@@ -544,7 +544,7 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
               className={valeurs.prive ? 'actif' : ''}
               onClick={() => setValeurs((v) => ({ ...v, prive: true }))}
             >
-              🔒 Privé
+              Privé
             </button>
           </div>
         </Champ>

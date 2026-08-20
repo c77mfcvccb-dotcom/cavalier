@@ -146,7 +146,7 @@ export default function CarnetSante() {
                         <tr key={soin.id}>
                           <td>
                             {formatDate(soin.date_realisee, { court: true })}
-                            {soin.prive ? ' 🔒' : ''}
+                            {soin.prive ? ' (privé)' : ''}
                           </td>
                           <td>{[soin.praticien, soin.produit].filter(Boolean).join(' · ') || '—'}</td>
                           <td>

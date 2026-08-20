@@ -251,7 +251,7 @@ export default function ClubAccueil() {
                       <div className="meta">
                         {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
                         {joursRelatifs(ligne.jours)}
-                        {ligne.soin.prive ? ' · 🔒 privé' : ''}
+                        {ligne.soin.prive ? ' · privé' : ''}
                       </div>
                     </div>
                     <span className={`badge ${classeBadge(ligne.jours)}`}>
