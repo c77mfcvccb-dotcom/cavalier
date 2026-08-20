@@ -393,6 +393,29 @@ export async function verifier(base) {
       await page.close()
     }
 
+    // ── La vitrine : ce que voit un visiteur sans compte ──────────────
+    {
+      const { page } = await ouvrirPage(navigateur, base)
+      await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
+      await page.evaluate(() => localStorage.clear())
+      await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const texte = (await page.locator('.vitrine').innerText()).replace(/\s+/g, ' ')
+      noter('Vitrine — la racine sans session présente le produit',
+        texte.includes('Le carnet partagé de votre cheval') && texte.includes('Pour les écuries'),
+        texte.slice(0, 200))
+      noter('Vitrine — les prix sont annoncés sans détour',
+        texte.includes('4,99 €') && texte.includes('39,99 €') && texte.includes('Gratuit'),
+        texte.slice(0, 300))
+      noter('Vitrine — l\'entrée écurie a son appel à l\'action',
+        texte.includes('Créer le compte de mon écurie'))
+      await page.getByRole('link', { name: 'Créer un compte gratuit' }).first().click()
+      await page.waitForTimeout(700)
+      noter('Vitrine — l\'appel à l\'action mène à l\'inscription',
+        page.url().includes('/inscription'), page.url())
+      await page.close()
+    }
+
     // ── Bienvenue : le compte cavalier tout neuf se voit proposer le
     //    code d'écurie avant tout — et peut passer sans en avoir ─────────
     {

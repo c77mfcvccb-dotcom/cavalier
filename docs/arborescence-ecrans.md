@@ -6,6 +6,9 @@ différente selon le type de compte. Tout est en français.
 ## Public (non connecté)
 
 ```
+/                     VITRINE — la page publique qui présente le produit :
+                      cavaliers, écuries, prix (gratuit / premium / écurie),
+                      appels à l'inscription. C'est l'adresse à partager
 /connexion            Email + mot de passe, bouton « Continuer avec Google »
                       └─ lien « Mot de passe oublié ? »
 /inscription          Étape 1 : je suis CAVALIER ou CLUB

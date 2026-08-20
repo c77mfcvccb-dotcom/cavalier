@@ -1280,3 +1280,37 @@ button {
   cursor: pointer;
 }
 .liste-rappels .marquer:hover { background: var(--fond); }
+
+/* ============================================================
+   La vitrine — page d'accueil publique
+   ============================================================ */
+.vitrine { max-width: 900px; margin: 0 auto; padding: 0 18px calc(20px + var(--safe-bas)); }
+.vitrine-entete {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: calc(14px + var(--safe-haut)) 0 14px;
+}
+.vitrine-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; }
+.vitrine-logo img { border-radius: 9px; }
+
+.vitrine-heros { text-align: center; padding: 44px 8px 36px; }
+.vitrine-heros h1 { font-size: 1.9rem; line-height: 1.2; max-width: 560px; margin: 0 auto; }
+.vitrine-heros > p { color: var(--texte-doux); max-width: 520px; margin: 14px auto 22px; }
+.vitrine-heros .aide { margin-top: 12px; }
+
+.vitrine-section { padding: 26px 0; }
+.vitrine-titre { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--vert); }
+.vitrine-titre h2 { color: var(--texte); font-size: 1.3rem; }
+
+.vitrine-grille { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .vitrine-grille { grid-template-columns: 1fr 1fr; } }
+.vitrine-grille .carte { padding: 18px; }
+.vitrine-grille .carte h3 { margin-bottom: 6px; }
+
+.vitrine-grille.tarifs { align-items: start; }
+@media (min-width: 860px) { .vitrine-grille.tarifs { grid-template-columns: 1fr 1fr 1fr; } }
+.vitrine-prix { font-weight: 700; font-size: 1.25rem; margin: 6px 0 10px; }
+.vitrine-grille.tarifs ul { margin: 0 0 14px; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92rem; }
+.vitrine-mise-en-avant { border: 2px solid var(--vert); }
+
+.vitrine-finale { text-align: center; padding: 40px 8px 30px; }
+.vitrine-finale p { max-width: 480px; margin: 10px auto 18px; }

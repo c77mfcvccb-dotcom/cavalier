@@ -53,6 +53,7 @@ const CalendrierGlobal = ecranDiffere(() => import('./pages/CalendrierGlobal'))
 const MesCours = ecranDiffere(() => import('./pages/MesCours'))
 const MonClub = ecranDiffere(() => import('./pages/MonClub'))
 const Bienvenue = ecranDiffere(() => import('./pages/Bienvenue'))
+const Decouverte = ecranDiffere(() => import('./pages/Decouverte'))
 
 function ConfigurationRequise() {
   return (
@@ -101,6 +102,8 @@ export default function App() {
       <Suspense fallback={<Chargement />}>
         <Routes>
         {/* La fiche partagée s'ouvre sans compte : elle précède la redirection. */}
+        {/* La vitrine : ce que voit un visiteur sans compte. */}
+        <Route path="/" element={<Decouverte />} />
         <Route path="/public/:token" element={<FichePublique />} />
         {/* Les pages légales aussi : elles doivent être lisibles AVANT de
             créer un compte, sans quoi la case d'acceptation ne vaut rien. */}
@@ -163,7 +166,9 @@ export default function App() {
               </>
             )}
 
-            <Route path="/public/:token" element={<FichePublique />} />
+            {/* La vitrine : ce que voit un visiteur sans compte. */}
+        <Route path="/" element={<Decouverte />} />
+        <Route path="/public/:token" element={<FichePublique />} />
             {/* La même route pour les deux visages : adhérent ou gérant. */}
             <Route path="/club" element={<MonClub />} />
             <Route path="/chevaux/nouveau" element={<NouveauCheval />} />
