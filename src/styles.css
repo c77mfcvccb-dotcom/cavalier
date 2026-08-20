@@ -158,8 +158,17 @@ button {
   .nav-bas a { font-size: 0.6rem; }
 }
 
-.nav-bas a .icone { display: flex; line-height: 1; }
-.nav-bas a.actif { color: var(--vert); }
+/* Le picto porte l'onglet : grand, trait affirmé, et l'actif se voit de
+   loin — une pastille sable sous le picto, comme un vrai sélecteur. */
+.nav-bas a .icone {
+  display: flex;
+  line-height: 1;
+  padding: 3px 13px;
+  border-radius: 999px;
+  margin-bottom: 1px;
+}
+.nav-bas a.actif { color: var(--vert); font-weight: 650; }
+.nav-bas a.actif .icone { background: var(--sable); }
 
 /* ---------- Cartes ---------- */
 .carte {

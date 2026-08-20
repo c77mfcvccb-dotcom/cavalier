@@ -48,7 +48,7 @@ export function NavBas() {
           end={onglet.to === '/'}
           className={({ isActive }) => (isActive ? 'actif' : undefined)}
         >
-          <span className="icone"><Icone nom={onglet.icone} /></span>
+          <span className="icone"><Icone nom={onglet.icone} taille={25} epaisseur={2} /></span>
           <span>{onglet.libelle}</span>
         </NavLink>
       ))}
