@@ -137,7 +137,6 @@ export function repartitionParCategorie(depenses) {
     .map(([categorie, montant]) => ({
       categorie,
       libelle: CATEGORIES_DEPENSE[categorie]?.libelle ?? categorie,
-      emoji: CATEGORIES_DEPENSE[categorie]?.emoji ?? '💶',
       montant,
       part: total > 0 ? montant / total : 0,
     }))

@@ -175,7 +175,6 @@ export default function OngletDocuments({ cheval }) {
 
       {documents.length === 0 ? (
         <EtatVide
-          emoji="🪪"
           titre="Aucun document"
           texte="Carte d'immatriculation, contrat de demi-pension, assurance… ajoutez-les une fois pour toutes, ils resteront accessibles à tous les cavaliers liés au cheval."
         />
@@ -186,7 +185,6 @@ export default function OngletDocuments({ cheval }) {
             const taille = tailleLisible(document.taille_octets)
             return (
               <div key={document.id} className="element">
-                <span style={{ fontSize: '1.3rem' }}>{config.emoji}</span>
                 <button className="corps document-lien" onClick={() => ouvrir(document)}>
                   <div className="titre">{document.nom}</div>
                   <div className="meta">
@@ -375,7 +373,6 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
               className={categorie === cle ? 'actif' : undefined}
               onClick={() => choisirCategorie(cle)}
             >
-              <span className="emoji">{config.emoji}</span>
               <span>
                 <span className="titre">{config.libelle}</span>
               </span>

@@ -69,7 +69,6 @@ export default function RejoindreCheval() {
         <Entete titre="Rejoindre un cheval" retour />
         <main className="contenu">
           <BloquePremium
-            emoji="🐴"
             titre="Un cheval maximum"
             texte="Le plan gratuit s'arrête à un cheval. Passez en Premium pour rejoindre celui-ci en plus du vôtre — le code qu'on vous a transmis restera valable."
             motif="chevaux"

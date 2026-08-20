@@ -202,7 +202,7 @@ export function identiteCavalier(repertoire, cavalierId, nom) {
 
 /**
  * Étiquette d'un événement dans la grille du mois : prénom du cavalier pour
- * un créneau, emoji du type de soin pour une échéance.
+ * un créneau, libellé du type de soin pour une échéance.
  */
 export function etiquetteEvenement(evenement) {
   // Un passage en cours : le cheval travaille sous la bannière du club.
@@ -212,7 +212,7 @@ export function etiquetteEvenement(evenement) {
     return {
       cle: 'cours',
       libelle: 'Cours',
-      court: '🎓',
+      court: 'Cours',
       priorite: 0,
       fond: '#e3ecf7',
       texte: '#2b6cb0',
@@ -226,8 +226,8 @@ export function etiquetteEvenement(evenement) {
     // sinon l'échéance occupe la seule place visible et masque les prénoms.
     return {
       cle: `soin-${evenement.type}`,
-      libelle: type.libelle ?? type.emoji,
-      court: type.emoji,
+      libelle: type.libelle,
+      court: type.libelle,
       priorite: 1,
       ...COULEUR_SOIN,
     }

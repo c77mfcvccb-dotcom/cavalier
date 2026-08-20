@@ -3,8 +3,17 @@
 export const ROLES = {
   proprietaire: { libelle: 'Propriétaire', court: 'Proprio' },
   demi_pension: { libelle: 'Demi-pension', court: 'DP' },
+  tiers_pension: { libelle: 'Tiers de pension', court: 'TP' },
+  pension_complete: { libelle: 'Pension complète', court: 'Pension' },
   cavalier_club: { libelle: 'Cheval de club', court: 'Club' },
 }
+
+/**
+ * Les rôles qu'une écurie peut poser à l'attribution (migration 0023).
+ * « propriétaire » n'en fait pas partie : il se constate à la création
+ * du cheval, rien d'autre ne le confère.
+ */
+export const ROLES_ATTRIBUTION = ['demi_pension', 'tiers_pension', 'pension_complete', 'cavalier_club']
 
 export const TYPES_SEANCE = {
   plat: 'Plat',
@@ -37,24 +46,24 @@ export const TYPES_CRENEAU = {
 // Vétérinaire et « autre » n'en ont pas : une visite n'appelle pas
 // mécaniquement la suivante.
 export const TYPES_SOIN = {
-  ferrure: { libelle: 'Ferrure', emoji: '🔨', intervalleJours: 49 },
-  veterinaire: { libelle: 'Vétérinaire', emoji: '🩺', intervalleJours: null },
-  vaccin: { libelle: 'Vaccin', emoji: '💉', intervalleJours: 365 },
-  vermifuge: { libelle: 'Vermifuge', emoji: '💊', intervalleJours: 120 },
-  osteopathe: { libelle: 'Ostéopathe', emoji: '🖐️', intervalleJours: 365 },
-  dentiste: { libelle: 'Dentiste', emoji: '🦷', intervalleJours: 365 },
-  autre: { libelle: 'Autre', emoji: '📋', intervalleJours: null },
+  ferrure: { libelle: 'Ferrure', intervalleJours: 49 },
+  veterinaire: { libelle: 'Vétérinaire', intervalleJours: null },
+  vaccin: { libelle: 'Vaccin', intervalleJours: 365 },
+  vermifuge: { libelle: 'Vermifuge', intervalleJours: 120 },
+  osteopathe: { libelle: 'Ostéopathe', intervalleJours: 365 },
+  dentiste: { libelle: 'Dentiste', intervalleJours: 365 },
+  autre: { libelle: 'Autre', intervalleJours: null },
 }
 
 /** Ressenti noté après une séance — le signal faible qui compte en demi-pension. */
 export const RESSENTIS = {
-  ras: { libelle: 'RAS', emoji: '🙂', alerte: false },
-  en_forme: { libelle: 'En forme', emoji: '💪', alerte: false },
-  fatigue: { libelle: 'Fatigué', emoji: '😮‍💨', alerte: false },
-  tendu: { libelle: 'Tendu', emoji: '😬', alerte: false },
-  boiterie_suspectee: { libelle: 'Boiterie suspectée', emoji: '⚠️', alerte: true },
-  blessure: { libelle: 'Blessure', emoji: '🩹', alerte: true },
-  autre: { libelle: 'Autre', emoji: '📝', alerte: false },
+  ras: { libelle: 'RAS', alerte: false },
+  en_forme: { libelle: 'En forme', alerte: false },
+  fatigue: { libelle: 'Fatigué', alerte: false },
+  tendu: { libelle: 'Tendu', alerte: false },
+  boiterie_suspectee: { libelle: 'Boiterie suspectée', alerte: true },
+  blessure: { libelle: 'Blessure', alerte: true },
+  autre: { libelle: 'Autre', alerte: false },
 }
 
 /**
@@ -100,15 +109,15 @@ export const PROTOCOLES_VACCIN = {
  * pension et le maréchal reviennent tous les mois, le reste est plus rare.
  */
 export const CATEGORIES_DEPENSE = {
-  pension: { libelle: 'Pension', emoji: '🏠' },
-  marechal: { libelle: 'Maréchal', emoji: '🔨' },
-  veterinaire: { libelle: 'Vétérinaire', emoji: '🩺' },
-  osteo: { libelle: 'Ostéopathe', emoji: '🖐️' },
-  alimentation: { libelle: 'Alimentation', emoji: '🌾' },
-  materiel: { libelle: 'Matériel', emoji: '🎒' },
-  concours: { libelle: 'Concours', emoji: '🏆' },
-  transport: { libelle: 'Transport', emoji: '🚚' },
-  autre: { libelle: 'Autre', emoji: '💶' },
+  pension: { libelle: 'Pension' },
+  marechal: { libelle: 'Maréchal' },
+  veterinaire: { libelle: 'Vétérinaire' },
+  osteo: { libelle: 'Ostéopathe' },
+  alimentation: { libelle: 'Alimentation' },
+  materiel: { libelle: 'Matériel' },
+  concours: { libelle: 'Concours' },
+  transport: { libelle: 'Transport' },
+  autre: { libelle: 'Autre' },
 }
 
 /**
@@ -144,10 +153,10 @@ export const SEUIL_URGENCE_JOURS = 14
  * la notion créerait deux endroits où chercher la même information.
  */
 export const CATEGORIES_DOCUMENT = {
-  identification: { libelle: 'Document d’identification', emoji: '🪪' },
-  contrat_dp: { libelle: 'Contrat de demi-pension', emoji: '📄' },
-  assurance: { libelle: 'Assurance', emoji: '🛡️' },
-  autre: { libelle: 'Autre', emoji: '📎' },
+  identification: { libelle: 'Document d’identification' },
+  contrat_dp: { libelle: 'Contrat de demi-pension' },
+  assurance: { libelle: 'Assurance' },
+  autre: { libelle: 'Autre' },
 }
 
 /**
@@ -168,12 +177,12 @@ export const QUOTA_DOCUMENTS = { gratuit: 10, premium: 50 }
  * échouer la création du cours.
  */
 export const DISCIPLINES_COURS = {
-  dressage: { libelle: 'Dressage', emoji: '🎩' },
-  obstacle: { libelle: 'Obstacle', emoji: '🚧' },
-  cross: { libelle: 'Cross', emoji: '🌲' },
-  balade: { libelle: 'Balade', emoji: '🌤️' },
-  poney: { libelle: 'Poney', emoji: '🦄' },
-  autre: { libelle: 'Autre', emoji: '🐴' },
+  dressage: { libelle: 'Dressage' },
+  obstacle: { libelle: 'Obstacle' },
+  cross: { libelle: 'Cross' },
+  balade: { libelle: 'Balade' },
+  poney: { libelle: 'Poney' },
+  autre: { libelle: 'Autre' },
 }
 
 /**
@@ -182,11 +191,11 @@ export const DISCIPLINES_COURS = {
  * le plus fréquent, et le moins alarmant.
  */
 export const MOTIFS_INDISPO = {
-  repos: { libelle: 'Repos', emoji: '😴' },
-  boiterie: { libelle: 'Boiterie', emoji: '🩹' },
-  osteo: { libelle: 'Ostéopathie', emoji: '🖐️' },
-  veterinaire: { libelle: 'Vétérinaire', emoji: '🩺' },
-  autre: { libelle: 'Autre', emoji: '📋' },
+  repos: { libelle: 'Repos' },
+  boiterie: { libelle: 'Boiterie' },
+  osteo: { libelle: 'Ostéopathie' },
+  veterinaire: { libelle: 'Vétérinaire' },
+  autre: { libelle: 'Autre' },
 }
 
 export const SEXES = {

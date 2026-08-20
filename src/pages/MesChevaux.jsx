@@ -34,7 +34,6 @@ export default function MesChevaux() {
           <Chargement />
         ) : chevaux.length === 0 ? (
           <EtatVide
-            emoji="🐴"
             titre="Aucun cheval"
             texte="Ajoutez le vôtre, ou saisissez le code d'invitation qu'un autre cavalier vous a transmis."
             action={

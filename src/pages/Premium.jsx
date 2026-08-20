@@ -467,7 +467,6 @@ export default function Premium() {
           <div className="liste">
             {AVANTAGES_PREMIUM.map((avantage) => (
               <div key={avantage.titre} className="element">
-                <span style={{ fontSize: '1.4rem' }}>{avantage.emoji}</span>
                 <div className="corps">
                   <div className="titre">{avantage.titre}</div>
                   <div className="meta">{avantage.texte}</div>

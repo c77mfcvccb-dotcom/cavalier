@@ -74,7 +74,7 @@ accède à ses chevaux via `club_id`).
 |---------------|---------|----------------------------------------------------------|
 | `cheval_id`   | uuid FK |                                                          |
 | `cavalier_id` | uuid FK | profil de type `cavalier`                                |
-| `role`        | text    | `proprietaire` \| `demi_pension` \| `cavalier_club`        |
+| `role`        | text    | `proprietaire` \| `demi_pension` \| `tiers_pension` \| `pension_complete` \| `cavalier_club` (0023) |
 | `couleur`     | text    | hérité — voir la note ci-dessous                         |
 
 > La colonne `couleur` n'est plus lue par l'application. Elle attribuait une
@@ -110,12 +110,14 @@ cavaliers d'un cheval, l'autre les chevaux d'un compte : le plan gratuit
 reste à **un cheval par compte, créé ou rejoint** (migration 0006) — les
 chevaux de club en sont exclus depuis la 0018.
 
-**Liaison directe et remplacement** (migrations 0019/0020). Le club peut
-lier un de SES membres à un de SES chevaux en un geste, sans code, par
+**Liaison directe et remplacement** (migrations 0019/0020/0023). Le club
+peut lier un de SES membres à un de SES chevaux en un geste, sans code, par
 `lier_membre_au_cheval()` — l'invitation reste la porte normale quand c'est
-le cavalier qui agit. La fonction pose aussi le **rôle** de l'attribution
-(`demi_pension` ou `cavalier_club`, jamais `proprietaire`) ; rappelée sur
-une liaison existante, elle ajuste le rôle au lieu d'échouer. La colonne `remplacement_de` (uuid → chevaux,
+le cavalier qui agit. La fonction pose aussi le **rôle** de l'attribution,
+la formule réelle de l'écurie : `demi_pension`, `tiers_pension`,
+`pension_complete` ou `cavalier_club` — jamais `proprietaire`, qui se
+constate à la création du cheval ; rappelée sur une liaison existante, elle
+ajuste le rôle au lieu d'échouer. La colonne `remplacement_de` (uuid → chevaux,
 nullable) mémorise le cheval indisponible qu'une liaison remplace : elle
 porte le badge « Remplace X » sur la fiche, et la levée de
 l'indisponibilité propose de clore d'un coup les remplacements qui
@@ -283,12 +285,17 @@ et un code faux ne révèle jamais l'existence de l'écurie.
 ### `chevaux.ecurie_id` — la pension (demandée, puis confirmée)
 
 `club_id` signifie **propriété** et donne les droits de gestionnaire ;
-`ecurie_id` signifie **stationné chez** et n'ouvre aucun droit de gestion
-à l'écurie — il sert au périmètre premium et, depuis la 0020, à la
-**visibilité de la fiche** : l'écurie voit les chevaux en pension chez elle
-(sans quoi « Mes cavaliers » afficherait des pensions fantômes), mais
-`a_acces_cheval()` ne change pas — calendrier, séances, soins et documents
-restent au propriétaire et à ses invités. Le propriétaire rattache son
+`ecurie_id` signifie **stationné chez** — il sert au périmètre premium et,
+depuis la 0020, à la **visibilité de la fiche** : l'écurie voit les chevaux
+en pension chez elle (sans quoi « Mes cavaliers » afficherait des pensions
+fantômes). Depuis la **0024**, une pension **confirmée** entre aussi dans
+`a_acces_cheval()` : l'écurie lit et écrit les soins du cheval qu'elle
+héberge (c'est ce qui fait vivre les tâches de son Accueil), voit son
+calendrier, ses séances et ses documents. Elle n'en devient pas pour
+autant **gestionnaire** : modifier la fiche, supprimer le cheval, poser
+une indisponibilité, générer le lien public et lire les coûts des soins
+d'autrui restent au propriétaire — et une demande de pension en attente
+n'ouvre rien. Le propriétaire rattache son
 cheval (trigger : uniquement une écurie dont il est membre, sinon
 `ECURIE_NON_MEMBRE`) ; lui ou le gérant détachent (`detacher_de_ecurie()`).
 

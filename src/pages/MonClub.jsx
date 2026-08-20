@@ -7,7 +7,7 @@ import { useAgendaVivant } from '../lib/temps-reel'
 import { Avatar, Champ, Chargement, Erreur, EtatVide, Feuille, PhotoCheval } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import CodeClub from '../composants/CodeClub'
-import { ROLES } from '../lib/constantes'
+import { ROLES, ROLES_ATTRIBUTION } from '../lib/constantes'
 import { traduireErreurClub } from '../lib/club'
 
 /**
@@ -110,7 +110,6 @@ function ClubAdherent() {
         {adhesions.length === 0 ? (
           <>
             <EtatVide
-              emoji="🏇"
               titre="Aucune écurie"
               texte="Votre écurie est sur Licol ? Saisissez son code d'adhésion : vous verrez ses cours, et si elle offre l'accès à ses membres, tout le suivi de ses chevaux s'ouvre — sans abonnement."
             />
@@ -497,7 +496,6 @@ function ClubGerant() {
 
           {membres.length === 0 ? (
             <EtatVide
-              emoji="👥"
               titre="Aucun membre"
               texte="Partagez le code d'adhésion : chaque cavalier qui le saisit apparaîtra ici, avec l'accès offert d'office. Vous pourrez le retirer membre par membre."
             />
@@ -539,7 +537,6 @@ function ClubGerant() {
                     <div className="liste" style={{ marginTop: 10 }}>
                       {montures.map((liaison) => (
                         <div key={liaison.id} className="element" style={{ padding: 8 }}>
-                          <span style={{ fontSize: '1.2rem' }}>🐴</span>
                           <div className="corps">
                             <div className="titre" style={{ fontSize: '0.9rem' }}>
                               {liaison.cheval?.nom}
@@ -560,7 +557,6 @@ function ClubGerant() {
 
                       {sesPensions.map((cheval) => (
                         <div key={cheval.id} className="element" style={{ padding: 8 }}>
-                          <span style={{ fontSize: '1.2rem' }}>🏠</span>
                           <div className="corps">
                             <div className="titre" style={{ fontSize: '0.9rem' }}>{cheval.nom}</div>
                             <div className="meta">
@@ -716,20 +712,16 @@ function FeuilleAttribution({ membre, cavalerie, liaisons, onFermer, onAttribue 
           aide="Le rôle s'affiche partout où la liaison apparaît — sur la fiche, le calendrier, le planning."
         >
           <div className="choix-puces">
-            <button
-              type="button"
-              className={role === 'demi_pension' ? 'actif' : undefined}
-              onClick={() => setRole('demi_pension')}
-            >
-              Demi-pension
-            </button>
-            <button
-              type="button"
-              className={role === 'cavalier_club' ? 'actif' : undefined}
-              onClick={() => setRole('cavalier_club')}
-            >
-              Cheval de club
-            </button>
+            {ROLES_ATTRIBUTION.map((cle) => (
+              <button
+                key={cle}
+                type="button"
+                className={role === cle ? 'actif' : undefined}
+                onClick={() => setRole(cle)}
+              >
+                {ROLES[cle].libelle}
+              </button>
+            ))}
           </div>
         </Champ>
 

@@ -52,6 +52,7 @@ const RejoindreCheval = ecranDiffere(() => import('./pages/RejoindreCheval'))
 const CalendrierGlobal = ecranDiffere(() => import('./pages/CalendrierGlobal'))
 const MesCours = ecranDiffere(() => import('./pages/MesCours'))
 const MonClub = ecranDiffere(() => import('./pages/MonClub'))
+const Bienvenue = ecranDiffere(() => import('./pages/Bienvenue'))
 
 function ConfigurationRequise() {
   return (
@@ -140,7 +141,18 @@ export default function App() {
               </>
             ) : (
               <>
-                <Route path="/" element={<TableauBord />} />
+                {/* Compte tout neuf : l'inscription pose un drapeau, le
+                    premier passage sur l'accueil propose le code d'écurie.
+                    L'écran retire le drapeau dès son affichage. */}
+                <Route
+                  path="/"
+                  element={
+                    sessionStorage.getItem('licol.bienvenue') === '1'
+                      ? <Navigate to="/bienvenue" replace />
+                      : <TableauBord />
+                  }
+                />
+                <Route path="/bienvenue" element={<Bienvenue />} />
                 <Route path="/chevaux" element={<MesChevaux />} />
                 <Route path="/calendrier" element={<CalendrierGlobal />} />
                 <Route path="/cours" element={<MesCours />} />

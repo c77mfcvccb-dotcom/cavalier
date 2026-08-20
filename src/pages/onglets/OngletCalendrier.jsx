@@ -115,7 +115,6 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
                 return (
                   <div key={creneau.id} className="element">
                     <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
-                    <span style={{ fontSize: '1.2rem' }}>🎓</span>
                     <div className="corps">
                       <div className="titre">
                         Cours{creneau.niveau ? ` · ${creneau.niveau}` : ''}

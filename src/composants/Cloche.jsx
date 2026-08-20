@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import Icone from './Icone'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexte/AuthContexte'
@@ -104,7 +105,7 @@ export default function Cloche() {
             : 'Rappels de soins'
         }
       >
-        <span aria-hidden="true">🔔</span>
+        <Icone nom="cloche" />
         {nonLus.length > 0 && (
           <span className="pastille" aria-hidden="true">
             {nonLus.length > 9 ? '9+' : nonLus.length}
@@ -115,7 +116,7 @@ export default function Cloche() {
       <Feuille titre="Rappels de soins" ouverte={ouvert} onFermer={() => setOuvert(false)}>
         {tries.length === 0 ? (
           <p className="doux centre" style={{ padding: '18px 0' }}>
-            Rien à prévoir dans les quinze jours 👌
+            Rien à prévoir dans les quinze jours
           </p>
         ) : (
           <>
@@ -141,7 +142,6 @@ export default function Cloche() {
                       className="corps"
                       onClick={() => setOuvert(false)}
                     >
-                      <span className="emoji" aria-hidden="true">{type.emoji}</span>
                       <span className="texte">
                         <span className="titre">
                           {rappel.cheval_nom} — {type.libelle.toLowerCase()} le{' '}

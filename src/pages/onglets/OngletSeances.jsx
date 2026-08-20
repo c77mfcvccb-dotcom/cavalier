@@ -64,7 +64,6 @@ export default function OngletSeances({ cheval, cavaliers, estGestionnaire }) {
       {alerteSante && (
         <div className="carte" style={{ borderColor: '#f0c8c2', background: '#fdf3f1' }}>
           <div className="rangee">
-            <span style={{ fontSize: '1.3rem' }}>{RESSENTIS[alerteSante.ressenti].emoji}</span>
             <div>
               <div className="gras">{RESSENTIS[alerteSante.ressenti].libelle}</div>
               <div className="meta">
@@ -96,7 +95,6 @@ export default function OngletSeances({ cheval, cavaliers, estGestionnaire }) {
 
       {seances.length === 0 ? (
         <EtatVide
-          emoji="📓"
           titre="Carnet vide"
           texte="Notez vos séances : elles sont visibles par tous les cavaliers liés au cheval."
         />
@@ -136,7 +134,7 @@ export default function OngletSeances({ cheval, cavaliers, estGestionnaire }) {
                     {ressenti && (
                       <div style={{ marginTop: 5 }}>
                         <span className={`badge ${ressenti.alerte ? 'retard' : 'ok'}`}>
-                          {ressenti.emoji} {ressenti.libelle}
+                          {ressenti.libelle}
                         </span>
                       </div>
                     )}
@@ -273,7 +271,7 @@ function FeuilleSeance({ cheval, cavaliers, estGestionnaire, ouverte, onFermer, 
                 className={`badge ${valeurs.ressenti === cle ? (config.alerte ? 'retard' : '') : 'contour'}`}
                 onClick={() => setValeurs((v) => ({ ...v, ressenti: cle }))}
               >
-                {config.emoji} {config.libelle}
+                {config.libelle}
               </button>
             ))}
           </div>

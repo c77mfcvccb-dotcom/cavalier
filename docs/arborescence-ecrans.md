@@ -10,6 +10,15 @@ différente selon le type de compte. Tout est en français.
                       └─ lien « Mot de passe oublié ? »
 /inscription          Étape 1 : je suis CAVALIER ou CLUB
                       Étape 2 : nom, email, mot de passe
+                      Étape 3 (cavalier, une fois connecté) : « Rejoindre
+                      une écurie » — le code d'adhésion proposé d'emblée,
+                      ou « Je n'ai pas de code » pour passer. L'écran vit
+                      sur /bienvenue dans l'arbre CONNECTÉ (l'inscription
+                      ouvre une session qui fait basculer le routeur) :
+                      l'inscription pose un drapeau sessionStorage, le
+                      premier passage sur l'accueil y redirige une seule
+                      fois — voie Google comprise, le drapeau survit à
+                      l'aller-retour OAuth
 /mot-de-passe-oublie  Saisie de l'email → même message de confirmation que
                       l'adresse existe ou non, et rappel que la connexion
                       Google ne demande aucun mot de passe
@@ -68,19 +77,29 @@ sur la fiche de chaque cheval.
 
 /rejoindre            Saisie du code d'invitation à 6 caractères
 
-/chevaux/:id          FICHE CHEVAL — 5 onglets internes
-   ├─ Fiche           photo, âge, race, robe, sexe, propriétaire,
-   │                  cavaliers liés (avec leur couleur), bouton
-   │                  « Inviter en demi-pension » → génère le code.
+/chevaux/:id          FICHE CHEVAL — 6 onglets internes
+   ├─ Fiche           photo, âge, race, robe, sexe, propriétaire.
    │                  Section Disponibilité : le gestionnaire met le cheval
    │                  au repos (motif, dates, « jusqu'à nouvel ordre ») et
    │                  le remet au travail ; tous les cavaliers le voient.
-   │                  Côté club : « + Ajouter » lie un membre sans code, et
-   │                  un cheval au repos propose de REPORTER ses cavaliers
-   │                  sur un autre cheval — la liaison porte « Remplace X »
-   │                  et la levée du repos propose d'y mettre fin.
+   │                  « Lever » ferme le repos à HIER — le cheval est
+   │                  disponible immédiatement — et garde la ligne en
+   │                  historique ; « ✕ » l'efface entièrement, c'est le
+   │                  geste de la saisie par erreur (« il n'est pas
+   │                  blessé »), avec confirmation.
+   │                  Un cheval de club au repos propose de REPORTER ses
+   │                  cavaliers sur un autre cheval — la liaison porte
+   │                  « Remplace X » et la levée du repos propose d'y
+   │                  mettre fin.
    │                  « Dépenses de ce cheval » ouvre le suivi déjà filtré
    │                  (propriétaire cavalier seulement — pas côté club)
+   ├─ Cavaliers       qui monte le cheval, chacun avec sa couleur de
+   │                  calendrier et son rôle. « + Inviter » génère le code
+   │                  (demi-pension). Côté club, « + Attribuer » lie un
+   │                  membre sans code en posant la FORMULE : demi-pension,
+   │                  tiers de pension, pension complète ou cheval de club
+   │                  (migration 0023) — réattribuer ajuste le rôle sans
+   │                  rien refaire. Retrait d'une liaison au même endroit
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
@@ -101,7 +120,7 @@ sur la fiche de chaque cheval.
 /calendrier           CALENDRIER GLOBAL — tous mes chevaux fusionnés,
                       vue mois puis détail du jour. Deux natures d'événement :
                       créneaux de monte (pastille ronde, couleur du cavalier)
-                      et échéances de soins (marque carrée neutre + emoji du
+                      et échéances de soins (marque neutre au libellé du
                       type de soin + badge d'urgence).
                       Second appui sur le jour choisi → création : direct
                       avec un seul cheval, sinon on demande lequel
@@ -129,17 +148,20 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
 ```
 /                     ACCUEIL — la page par défaut du club, recalculée à
                       chaque chargement depuis les soins (aucun cron) :
-                      ├─ TÂCHES : vermifuges, vaccins, ferrures… commutables
-                      │  Jour (d'office) / Semaine / Mois pour voir venir ce
+                      ├─ TÂCHES : vermifuges, vaccins, ferrures… — sur les
+                      │  chevaux du club ET les pensions confirmées —
+                      │  commutables Jour (d'office) / Semaine / Mois pour
+                      │  voir venir ce
                       │  qu'il y aura à faire — la borne du mois est à
                       │  30 jours parce que la saisie d'un soin pré-remplit
                       │  l'échéance à 4-12 semaines selon le type. Chaque
-                      │  tâche : cheval, type, échéance, badge (🔴 retard,
-                      │  🟠 aujourd'hui, 🟡 à venir — les retards restent
-                      │  sur tous les horizons) et une case « Fait » qui
+                      │  tâche : cheval, type, échéance, badge d'urgence
+                      │  (En retard / Aujourd'hui / Cette semaine / Ce
+                      │  mois-ci — les retards restent sur tous les
+                      │  horizons) et une case « Fait » qui
                       │  écrit le soin au carnet et recalcule la prochaine
                       │  échéance selon la périodicité du cheval.
-                      │  Rien à faire → « Tout est à jour ✅ », avec la
+                      │  Rien à faire → « Tout est à jour », avec la
                       │  prochaine échéance annoncée pour que l'écran ne
                       │  paraisse jamais mort
                       └─ COURS DU JOUR : le programme de la journée, avec
@@ -147,8 +169,10 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       L'ancien onglet Santé a fusionné ici — les données
                       n'ont pas bougé, l'historique reste sur chaque fiche
 
-/chevaux              CAVALERIE — liste de tous les chevaux du club,
-                      recherche, nombre de cavaliers liés par cheval,
+/chevaux              CAVALERIE — liste de tous les chevaux du club ET des
+                      pensions confirmées (badge « En pension » —
+                      l'Accueil rappelle leurs soins, le cheval doit donc
+                      se trouver ici), recherche, nombre de cavaliers liés,
                       charge de travail (« 2 aujourd'hui · 5 sur la
                       semaine ») et badge « Au repos » quand une
                       indisponibilité court

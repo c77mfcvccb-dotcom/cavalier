@@ -76,7 +76,6 @@ export default function TableauBord() {
 
         {chevaux.length === 0 ? (
           <EtatVide
-            emoji="🐴"
             titre="Aucun cheval pour l'instant"
             texte="Ajoutez votre cheval ou rejoignez celui d'un autre cavalier avec un code de demi-pension."
             action={
@@ -155,7 +154,6 @@ export default function TableauBord() {
                         <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
                         <div className="corps">
                           <div className="titre">
-                            {DISCIPLINES_COURS[c.discipline]?.emoji}{' '}
                             {DISCIPLINES_COURS[c.discipline]?.libelle}
                             {c.niveau ? ` · ${c.niveau}` : ''}
                           </div>

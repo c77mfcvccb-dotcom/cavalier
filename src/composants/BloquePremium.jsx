@@ -9,7 +9,6 @@ import { JOURS_ESSAI } from '../lib/abonnement'
  * plutôt que de laisser une liste vide.
  */
 export default function BloquePremium({
-  emoji = '🔒',
   titre,
   texte,
   motif,
@@ -17,7 +16,6 @@ export default function BloquePremium({
 }) {
   return (
     <div className="etat-vide">
-      <span className="emoji">{emoji}</span>
       <h3 style={{ marginBottom: 6 }}>{titre}</h3>
       <p>{texte}</p>
       <Link to={`/premium${motif ? `?motif=${motif}` : ''}`} className="bouton">
