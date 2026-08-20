@@ -211,7 +211,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
               <dt>Disponibilité</dt>
               <dd>
                 <span className="badge retard">
-                  {MOTIFS_INDISPO[indispoEnCours.motif]?.emoji}{' '}
                   {MOTIFS_INDISPO[indispoEnCours.motif]?.libelle || 'Indisponible'}
                   {indispoEnCours.fin
                     ? ` jusqu'au ${formatDate(indispoEnCours.fin, { court: true })}`
@@ -261,7 +260,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
                   <div key={indispo.id} className="element">
                     <div className="corps">
                       <div className="titre">
-                        {MOTIFS_INDISPO[indispo.motif]?.emoji}{' '}
                         {MOTIFS_INDISPO[indispo.motif]?.libelle || indispo.motif}
                         {aVenir && <span className="doux"> (à venir)</span>}
                         {!aVenir && !enCours && <span className="doux"> (terminée)</span>}
@@ -613,7 +611,7 @@ function FeuilleIndispo({ cheval, ouverte, onFermer, onEnregistre }) {
                 className={motif === cle ? 'actif' : undefined}
                 onClick={() => setMotif(cle)}
               >
-                {m.emoji} {m.libelle}
+                {m.libelle}
               </button>
             ))}
           </div>

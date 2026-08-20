@@ -393,6 +393,30 @@ export async function verifier(base) {
       await page.close()
     }
 
+    // ── Bienvenue : le compte cavalier tout neuf se voit proposer le
+    //    code d'écurie avant tout — et peut passer sans en avoir ─────────
+    {
+      const { page } = await ouvrirPage(navigateur, base)
+      await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
+      await page.evaluate(() => sessionStorage.setItem('licol.bienvenue', '1'))
+      await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
+      await page.waitForTimeout(900)
+      const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Bienvenue — l\'accueil redirige vers la proposition de code',
+        page.url().includes('/bienvenue') && texte.includes('Rejoindre une écurie') &&
+        texte.includes('Code d\'adhésion'), texte.slice(0, 200))
+      noter('Bienvenue — la sortie sans code est offerte, sans culpabiliser',
+        texte.includes('Je n\'ai pas de code') && texte.includes('plus tard'), texte.slice(0, 300))
+      noter('Bienvenue — le drapeau tombe dès l\'affichage (une seule visite)',
+        (await page.evaluate(() => sessionStorage.getItem('licol.bienvenue'))) === null)
+      await page.getByRole('button', { name: 'Je n\'ai pas de code' }).click()
+      await page.waitForTimeout(800)
+      const accueil = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Bienvenue — « Je n\'ai pas de code » mène à l\'accueil',
+        !page.url().includes('/bienvenue') && accueil.length > 0, page.url())
+      await page.close()
+    }
+
     // ── L'onglet Cavaliers : la gestion des liaisons a son onglet ─────
     {
       const { page } = await ouvrirPage(navigateur, base)

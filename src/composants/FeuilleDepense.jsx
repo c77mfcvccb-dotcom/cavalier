@@ -125,7 +125,7 @@ export default function FeuilleDepense({
           <select value={categorie} onChange={(e) => setCategorie(e.target.value)}>
             {Object.entries(CATEGORIES_DEPENSE).map(([cle, item]) => (
               <option key={cle} value={cle}>
-                {item.emoji} {item.libelle}
+                {item.libelle}
               </option>
             ))}
           </select>

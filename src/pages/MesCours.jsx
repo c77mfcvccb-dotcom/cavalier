@@ -113,7 +113,6 @@ export default function MesCours() {
 
         {clubs.length === 0 ? (
           <EtatVide
-            emoji="🎓"
             titre="Aucun club"
             texte="Les cours apparaissent ici quand vous êtes membre d'une écurie — elle vous transmet son code d'adhésion, à saisir dans Mon club."
             action={
@@ -131,7 +130,6 @@ export default function MesCours() {
 
         {clubs.length > 0 && (cours.length === 0 ? (
           <EtatVide
-            emoji="📅"
             titre={
               periode === 'jour'
                 ? "Aucun cours aujourd'hui"
@@ -184,7 +182,6 @@ export default function MesCours() {
                         />
                         <div className="corps">
                           <div className="titre">
-                            {DISCIPLINES_COURS[c.discipline]?.emoji}{' '}
                             {formatHeure(c.debut)} · {DISCIPLINES_COURS[c.discipline]?.libelle}
                             {c.niveau ? ` · ${c.niveau}` : ''}
                           </div>

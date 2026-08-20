@@ -94,7 +94,6 @@ export default function ClubCavalerie() {
           <Chargement />
         ) : chevaux.length === 0 ? (
           <EtatVide
-            emoji="🏇"
             titre="Cavalerie vide"
             texte="Ajoutez les chevaux de votre écurie pour suivre leurs soins et leur planning."
             action={<Link to="/chevaux/nouveau" className="bouton">Ajouter un cheval</Link>}
@@ -127,14 +126,14 @@ export default function ClubCavalerie() {
                       <div className="detail">{details || 'Fiche à compléter'}</div>
                       <div className="puces" style={{ marginTop: 5 }}>
                         {cheval.ecurie_id === profil.id && (
-                          <span className="badge contour">🏠 En pension</span>
+                          <span className="badge contour">En pension</span>
                         )}
                         <span className="badge contour">
                           {cheval.nb_cavaliers} cavalier{cheval.nb_cavaliers > 1 ? 's' : ''}
                         </span>
                         {indispo ? (
                           <span className="badge retard">
-                            {MOTIFS_INDISPO[indispo.motif]?.emoji} Au repos
+                            Au repos
                           </span>
                         ) : (
                           charge &&

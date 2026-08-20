@@ -144,7 +144,6 @@ export default function ClubCours() {
           <Chargement />
         ) : joursRemplis.length === 0 ? (
           <EtatVide
-            emoji="🎓"
             titre={
               periode === 'jour'
                 ? "Aucun cours aujourd'hui"
@@ -179,7 +178,6 @@ export default function ClubCours() {
                       <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
                       <div className="corps">
                         <div className="titre">
-                          {DISCIPLINES_COURS[c.discipline]?.emoji}{' '}
                           {formatHeure(c.debut)} · {DISCIPLINES_COURS[c.discipline]?.libelle}
                           {c.niveau ? ` · ${c.niveau}` : ''}
                         </div>
@@ -304,7 +302,7 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
                 className={discipline === cle ? 'actif' : undefined}
                 onClick={() => setDiscipline(cle)}
               >
-                {d.emoji} {d.libelle}
+                {d.libelle}
               </button>
             ))}
           </div>

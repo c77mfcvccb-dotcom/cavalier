@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import Icone from './Icone'
 import { createPortal } from 'react-dom'
 import { initiales } from '../lib/format'
 
@@ -13,10 +14,9 @@ export function Chargement({ texte = 'Chargement…' }) {
   )
 }
 
-export function EtatVide({ emoji = '🐴', titre, texte, action }) {
+export function EtatVide({ titre, texte, action }) {
   return (
     <div className="etat-vide">
-      <span className="emoji">{emoji}</span>
       {titre && <h3 style={{ marginBottom: 6 }}>{titre}</h3>}
       {texte && <p>{texte}</p>}
       {action}
@@ -69,7 +69,11 @@ export function PhotoCheval({ cheval, grande = false }) {
       />
     )
   }
-  return <div className={`${classe} vide`}>🐴</div>
+  return (
+    <div className={`${classe} vide`}>
+      <Icone nom="chevaux" taille={28} />
+    </div>
+  )
 }
 
 /** Feuille modale qui remonte du bas — le réflexe mobile pour les formulaires. */

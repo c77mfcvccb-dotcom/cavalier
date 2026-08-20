@@ -72,7 +72,6 @@ export default function CalendrierGlobal() {
 
         {chevaux.length === 0 ? (
           <EtatVide
-            emoji="📅"
             titre="Rien à afficher"
             texte="Ajoutez un cheval pour commencer à poser vos créneaux."
             action={<Link to="/chevaux/nouveau" className="bouton">Ajouter un cheval</Link>}

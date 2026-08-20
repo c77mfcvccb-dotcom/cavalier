@@ -141,7 +141,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
   if (!premium) {
     return (
       <BloquePremium
-        emoji="🩺"
         titre="Carnet de santé"
         texte="Ferrure, vaccins, vermifuges, ostéopathe, dentiste : tout le suivi du cheval, avec les rappels d'échéance et le carnet imprimable pour le vétérinaire."
         motif="soins"
@@ -171,7 +170,7 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
           className="bouton secondaire"
           aria-label="Réglages des rappels"
         >
-          🔔
+          Rappels
         </Link>
       </div>
 
@@ -189,7 +188,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
               const libelle = STATUTS_ECHEANCE[statut.cle] || STATUTS_ECHEANCE.ok
               return (
                 <div key={`echeance-${soin.id}`} className="element">
-                  <span style={{ fontSize: '1.4rem' }}>{type.emoji}</span>
                   <div className="corps">
                     <div className="titre">{type.libelle}</div>
                     <div className="meta">
@@ -229,7 +227,7 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                 return (
                   <div key={type}>
                     <div className="rangee espace" style={{ fontSize: '0.85rem' }}>
-                      <span>{config.emoji} {config.libelle}</span>
+                      <span>{config.libelle}</span>
                       <span className="doux">{euros(montant)}</span>
                     </div>
                     <div className="jauge">
@@ -259,7 +257,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
 
         {soins.length === 0 ? (
           <EtatVide
-            emoji="🩺"
             titre="Aucun soin enregistré"
             texte="Ferrure, vaccins, vermifuges, ostéo… tout le suivi est partagé entre les cavaliers du cheval."
           />
@@ -276,7 +273,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                     className="entete-groupe"
                     onClick={() => setTypeDeplie(deplie ? null : type)}
                   >
-                    <span style={{ fontSize: '1.2rem' }}>{config.emoji}</span>
                     <span className="gras" style={{ flex: 1, textAlign: 'left' }}>
                       {config.libelle}
                     </span>
@@ -457,7 +453,7 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
           >
             {Object.entries(TYPES_SOIN).map(([cle, config]) => (
               <option key={cle} value={cle}>
-                {config.emoji} {config.libelle}
+                {config.libelle}
               </option>
             ))}
           </select>

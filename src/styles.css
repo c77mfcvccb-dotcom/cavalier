@@ -158,7 +158,7 @@ button {
   .nav-bas a { font-size: 0.6rem; }
 }
 
-.nav-bas a .icone { font-size: 1.25rem; line-height: 1; }
+.nav-bas a .icone { display: flex; line-height: 1; }
 .nav-bas a.actif { color: var(--vert); }
 
 /* ---------- Cartes ---------- */
@@ -648,7 +648,6 @@ button {
   color: var(--texte-doux);
 }
 
-.etat-vide .emoji { font-size: 2.4rem; display: block; margin-bottom: 10px; }
 .etat-vide p { font-size: 0.9rem; margin-bottom: 14px; }
 
 .chargement {
@@ -756,7 +755,6 @@ button {
 }
 
 .choix-compte button.actif { border-color: var(--vert); background: #f2f7f4; }
-.choix-compte button .emoji { font-size: 1.7rem; }
 /* display:block, sinon le libellé et sa description se collent sur une ligne */
 .choix-compte button .titre { display: block; font-weight: 650; }
 .choix-compte button .desc {
@@ -1254,7 +1252,6 @@ button {
   gap: 10px;
   padding: 12px 14px;
 }
-.liste-rappels .emoji { font-size: 1.3rem; flex-shrink: 0; }
 .liste-rappels .texte { flex: 1; min-width: 0; }
 .liste-rappels .titre {
   display: block;

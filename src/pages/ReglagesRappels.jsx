@@ -139,7 +139,6 @@ export default function ReglagesRappels() {
         <Entete titre="Rappels" retour />
         <main className="contenu">
           <BloquePremium
-            emoji="🔔"
             titre="Rappels de soins"
             texte="Vermifuge, ferrure, vaccin — Licol calcule la prochaine échéance et vous prévient par email."
             motif="soins"
@@ -182,7 +181,7 @@ export default function ReglagesRappels() {
               <div className={actif ? 'reglage' : 'reglage inactif'} key={cle}>
                 <div className="entete">
                   <span className="nom">
-                    {type.emoji} {type.libelle}
+                    {type.libelle}
                     {estPersonnalise(cle) && (
                       <span className="badge contour" style={{ marginLeft: 8 }}>
                         personnalisé

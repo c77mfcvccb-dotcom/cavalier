@@ -182,7 +182,6 @@ export default function ClubAccueil() {
     recharger()
   }
 
-  const pastille = (jours) => (jours < 0 ? '🔴' : jours === 0 ? '🟠' : '🟡')
   const classeBadge = (jours) => (jours < 0 ? 'retard' : jours === 0 ? 'urgent' : 'contour')
   const libelleBadge = (jours) =>
     jours < 0
@@ -223,7 +222,7 @@ export default function ClubAccueil() {
 
           {taches.length === 0 ? (
             <div className="carte centre">
-              <p className="gras">Tout est à jour ✅</p>
+              <p className="gras">Tout est à jour</p>
               <p className="doux" style={{ marginTop: 6 }}>
                 {HORIZONS[horizon].vide}
               </p>
@@ -242,13 +241,11 @@ export default function ClubAccueil() {
                 const cle = `${ligne.cheval.id}:${ligne.soin.type}`
                 return (
                   <div key={ligne.soin.id} className="element">
-                    <span style={{ fontSize: '1.3rem' }}>{type.emoji}</span>
                     <div className="corps">
                       <div className="titre">
                         {ligne.cheval.nom} — {type.libelle}
                       </div>
                       <div className="meta">
-                        {pastille(ligne.jours)}{' '}
                         {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
                         {joursRelatifs(ligne.jours)}
                       </div>
@@ -301,7 +298,6 @@ export default function ClubAccueil() {
                     <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
                     <div className="corps">
                       <div className="titre">
-                        {DISCIPLINES_COURS[c.discipline]?.emoji}{' '}
                         {formatHeure(c.debut)} · {DISCIPLINES_COURS[c.discipline]?.libelle}
                         {c.niveau ? ` · ${c.niveau}` : ''}
                       </div>

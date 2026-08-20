@@ -32,7 +32,6 @@ export default function FichePublique() {
       <div className="app">
         <main className="contenu" style={{ paddingTop: 40 }}>
           <EtatVide
-            emoji="🔒"
             titre="Lien indisponible"
             texte="Ce lien de partage a été révoqué ou n'existe pas."
           />
@@ -102,7 +101,7 @@ export default function FichePublique() {
               return (
                 <section key={type}>
                   <h2>
-                    {config.emoji} {config.libelle}
+                    {config.libelle}
                   </h2>
                   <table className="tableau">
                     <thead>

@@ -9,7 +9,6 @@ export default function CarteEcheance({ echeance, avecCheval = true }) {
 
   return (
     <Link to={`/chevaux/${echeance.cheval_id}?onglet=soins`} className="element">
-      <span style={{ fontSize: '1.4rem' }}>{type.emoji}</span>
 
       <div className="corps">
         <div className="titre">

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import Icone from './Icone'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexte/AuthContexte'
 
@@ -70,10 +71,10 @@ export default function ChargeurPhoto({ valeur, onChange, forme = 'carre', label
               display: 'grid',
               placeItems: 'center',
               background: 'var(--sable)',
-              fontSize: '1.6rem',
+              color: 'var(--encre-douce, #8a8578)',
             }}
           >
-            📷
+            <Icone nom="photo" taille={26} />
           </div>
         )}
 

@@ -75,7 +75,6 @@ export default function FicheCheval() {
         <main className="contenu">
           <Erreur>{erreur}</Erreur>
           <EtatVide
-            emoji="🔒"
             titre="Cheval introuvable"
             texte="Cette fiche n'existe plus ou vous n'y avez pas accès."
           />

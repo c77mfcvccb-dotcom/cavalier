@@ -12,7 +12,6 @@ export default function LigneEvenement({ evenement, avecCheval = true }) {
     return (
       <Link to="/cours" className="element">
         <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
-        <span style={{ fontSize: '1.3rem' }}>🎓</span>
         <div className="corps">
           <div className="titre">
             Cours{evenement.niveau ? ` · ${evenement.niveau}` : ''}
@@ -36,7 +35,6 @@ export default function LigneEvenement({ evenement, avecCheval = true }) {
     return (
       <Link to={`/chevaux/${evenement.cheval_id}?onglet=soins`} className="element">
         <span className="bordure-couleur" style={{ background: evenement.couleur }} />
-        <span style={{ fontSize: '1.3rem' }}>{type.emoji}</span>
         <div className="corps">
           <div className="titre">
             {type.libelle}

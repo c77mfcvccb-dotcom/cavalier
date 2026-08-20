@@ -160,21 +160,18 @@ function joursEssai(produit) {
 
 export const AVANTAGES_PREMIUM = [
   {
-    emoji: '🐴',
     titre: 'Chevaux illimités',
     texte: 'Le plan gratuit s’arrête à un cheval, qu’il soit créé ou rejoint avec un code.',
   },
   {
-    emoji: '🩺',
     titre: 'Carnet de santé complet',
     texte: 'Ferrure, vaccins, vermifuges, ostéo — avec les rappels d’échéance.',
   },
   {
-    emoji: '📅',
     titre: 'Calendrier sans limite',
     texte: 'Le plan gratuit s’arrête au dimanche de la semaine en cours.',
   },
-  { emoji: '💶', titre: 'Suivi des dépenses', texte: 'Totaux par mois, par type et par cheval.' },
+  { titre: 'Suivi des dépenses', texte: 'Totaux par mois, par type et par cheval.' },
 ]
 
 /**

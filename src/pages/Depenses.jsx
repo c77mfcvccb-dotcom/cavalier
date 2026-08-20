@@ -137,7 +137,6 @@ export default function Depenses() {
         <Entete titre="Dépenses" retour />
         <main className="contenu">
           <BloquePremium
-            emoji="💶"
             titre="Suivi des dépenses"
             texte="Pension, maréchal, vétérinaire, concours — le budget réel de votre cheval, mois par mois."
             motif="depenses"
@@ -278,7 +277,7 @@ export default function Depenses() {
                     <div className="poste" key={poste.categorie}>
                       <div className="entete">
                         <span>
-                          {poste.emoji} {poste.libelle}
+                          {poste.libelle}
                         </span>
                         <span className="gras">{euros(poste.montant)}</span>
                       </div>
@@ -302,7 +301,6 @@ export default function Depenses() {
 
               {duMois.length === 0 ? (
                 <EtatVide
-                  emoji="💶"
                   titre="Rien d’enregistré"
                   texte={`Aucune dépense en ${formatMoisAnnee(mois).toLowerCase()}.`}
                   action={
@@ -323,7 +321,6 @@ export default function Depenses() {
                     const categorie = CATEGORIES_DEPENSE[depense.categorie]
                     return (
                       <div className="element" key={depense.id}>
-                        <span style={{ fontSize: '1.3rem' }}>{categorie?.emoji ?? '💶'}</span>
                         <div className="corps">
                           <div className="titre">
                             {categorie?.libelle ?? depense.categorie}

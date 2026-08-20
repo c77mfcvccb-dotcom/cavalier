@@ -31,6 +31,10 @@ export default function Inscription() {
 
     setEnvoi(true)
     try {
+      // Posé AVANT la création : dès que la session s'ouvre, le routeur
+      // bascule en mode connecté et ce composant disparaît — le drapeau
+      // fait alors rediriger l'accueil vers « Rejoindre une écurie ».
+      if (typeCompte === 'cavalier') sessionStorage.setItem('licol.bienvenue', '1')
       await inscription({
         email: email.trim(),
         motDePasse,
@@ -41,6 +45,7 @@ export default function Inscription() {
       // Si la confirmation par email est activée, aucune session n'est ouverte.
       setMessage('Compte créé. Vérifiez votre boîte mail si une confirmation vous est demandée.')
     } catch (e) {
+      sessionStorage.removeItem('licol.bienvenue')
       setErreur(
         e.message?.includes('already registered')
           ? 'Un compte existe déjà avec cet email'
@@ -71,7 +76,6 @@ export default function Inscription() {
               className={typeCompte === 'cavalier' ? 'actif' : undefined}
               onClick={() => setTypeCompte('cavalier')}
             >
-              <span className="emoji">🧑‍🌾</span>
               <span>
                 <span className="titre">Cavalier</span>
                 <span className="desc">
@@ -85,7 +89,6 @@ export default function Inscription() {
               className={typeCompte === 'club' ? 'actif' : undefined}
               onClick={() => setTypeCompte('club')}
             >
-              <span className="emoji">🏇</span>
               <span>
                 <span className="titre">Club / écurie</span>
                 <span className="desc">
@@ -159,8 +162,13 @@ export default function Inscription() {
             disabled={!cgvAcceptees}
             onClick={async () => {
               try {
+                // Même drapeau que la voie email : il survit à l'aller-retour
+                // OAuth (sessionStorage est propre à l'onglet) et l'accueil
+                // proposera le code d'écurie au retour.
+                if (typeCompte === 'cavalier') sessionStorage.setItem('licol.bienvenue', '1')
                 await connexionGoogle(typeCompte)
               } catch (e) {
+                sessionStorage.removeItem('licol.bienvenue')
                 setErreur(e.message || 'Connexion Google impossible')
               }
             }}

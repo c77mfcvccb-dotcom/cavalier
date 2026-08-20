@@ -54,7 +54,7 @@ export default function CarnetSante() {
         <Entete titre="Carnet de santé" retour />
         <main className="contenu">
           <Erreur>{erreur}</Erreur>
-          <EtatVide emoji="🔒" titre="Fiche introuvable" />
+          <EtatVide titre="Fiche introuvable" />
         </main>
       </>
     )
@@ -130,7 +130,7 @@ export default function CarnetSante() {
               return (
                 <section key={type}>
                   <h2>
-                    {config.emoji} {config.libelle}
+                    {config.libelle}
                   </h2>
                   <table className="tableau">
                     <thead>

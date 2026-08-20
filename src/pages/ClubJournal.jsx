@@ -97,9 +97,6 @@ export default function ClubJournal() {
                       to={`/chevaux/${seance.cheval_id}?onglet=seances`}
                       className="element"
                     >
-                      <span style={{ fontSize: '1.3rem' }}>
-                        {RESSENTIS[seance.ressenti].emoji}
-                      </span>
                       <div className="corps">
                         <div className="titre">
                           {seance.cheval?.nom} — {RESSENTIS[seance.ressenti].libelle}
@@ -119,7 +116,6 @@ export default function ClubJournal() {
 
             {parJour.length === 0 ? (
               <EtatVide
-                emoji="📓"
                 titre="Aucune séance notée"
                 texte="Quand vos cavaliers noteront leurs séances sur les fiches des chevaux, tout apparaîtra ici, du plus récent au plus ancien."
               />
@@ -159,7 +155,7 @@ export default function ClubJournal() {
                               className={`badge ${ressenti.alerte ? 'retard' : 'contour'}`}
                               title={ressenti.libelle}
                             >
-                              {ressenti.emoji} {ressenti.libelle}
+                              {ressenti.libelle}
                             </span>
                           )}
                         </Link>

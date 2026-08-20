@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Icone from './Icone'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { chargerEcheances } from '../lib/requetes'
@@ -64,7 +65,7 @@ export default function Rappels() {
   return (
     <div className={`bandeau-rappel ${retards > 0 ? 'retard' : 'urgent'}`}>
       <div className="rangee" style={{ alignItems: 'flex-start' }}>
-        <span style={{ fontSize: '1.2rem' }}>{retards > 0 ? '⚠️' : '🔔'}</span>
+        <Icone nom={retards > 0 ? 'alerte' : 'cloche'} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="gras">{resume}</div>
           <div className="doux" style={{ fontSize: '0.82rem' }}>

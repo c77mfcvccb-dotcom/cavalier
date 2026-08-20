@@ -160,7 +160,7 @@ export default function ClubPlanning() {
         {reposFiltre && (
           <div className="carte" style={{ marginBottom: 12 }}>
             <span className="badge retard">
-              {MOTIFS_INDISPO[reposFiltre.motif]?.emoji} Au repos
+              Au repos
               {reposFiltre.fin
                 ? ` jusqu'au ${formatDate(reposFiltre.fin, { court: true })}`
                 : " jusqu'à nouvel ordre"}
@@ -172,7 +172,6 @@ export default function ClubPlanning() {
           <Chargement />
         ) : joursRemplis.length === 0 ? (
           <EtatVide
-            emoji="📅"
             titre={
               periode === 'jour'
                 ? 'Journée vide'
@@ -213,7 +212,7 @@ export default function ClubPlanning() {
                           {ligne.cours.moniteur ? ` · Coach : ${ligne.cours.moniteur}` : ''}
                         </div>
                       </div>
-                      <span className="badge contour">🎓 Cours</span>
+                      <span className="badge contour">Cours</span>
                     </Link>
                   )
                 )}
