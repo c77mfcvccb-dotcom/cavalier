@@ -407,6 +407,11 @@ export async function verifier(base) {
       noter('Vitrine — les prix sont annoncés sans détour',
         texte.includes('4,99 €') && texte.includes('39,99 €') && texte.includes('Gratuit'),
         texte.slice(0, 300))
+      noter('Vitrine — le parcours est expliqué en trois étapes',
+        texte.includes('Comment ça marche') && texte.includes('Créez votre compte gratuit'),
+        texte.slice(0, 400))
+      noter('Vitrine — l\'aperçu de l\'application est dessiné',
+        (await page.locator('.vitrine-telephone').count()) === 1)
       noter('Vitrine — l\'entrée écurie a son appel à l\'action',
         texte.includes('Créer le compte de mon écurie'))
       await page.getByRole('link', { name: 'Créer un compte gratuit' }).first().click()

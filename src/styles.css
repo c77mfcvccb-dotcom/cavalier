@@ -1314,3 +1314,43 @@ button {
 
 .vitrine-finale { text-align: center; padding: 40px 8px 30px; }
 .vitrine-finale p { max-width: 480px; margin: 10px auto 18px; }
+
+/* L'aperçu téléphone du héros : un écran d'accueil dessiné, pas une capture */
+.vitrine-telephone {
+  width: 270px; margin: 34px auto 0; padding: 12px 10px 10px;
+  background: var(--vert); border-radius: 30px; box-shadow: var(--ombre);
+}
+.tel-ecran {
+  background: var(--fond); border-radius: 20px; padding: 14px 12px 10px;
+  display: grid; gap: 8px; text-align: left;
+}
+.tel-entete { display: grid; gap: 1px; margin-bottom: 2px; }
+.tel-titre { font-weight: 700; }
+.tel-sous { color: var(--texte-doux); font-size: 0.72rem; }
+.tel-bloc { font-weight: 650; font-size: 0.78rem; margin-top: 4px; }
+.tel-ligne {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--carte); border-radius: var(--rayon-sm);
+  padding: 8px 9px; box-shadow: var(--ombre);
+}
+.tel-ligne .badge { margin-left: auto; font-size: 0.62rem; }
+.tel-texte { font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tel-pastille { width: 8px; height: 26px; border-radius: 4px; flex-shrink: 0; }
+.tel-pastille.rouge { background: var(--rouge); }
+.tel-pastille.orange { background: var(--orange); }
+.tel-pastille.bleue { background: var(--bleu); }
+.tel-nav {
+  display: flex; justify-content: space-around; padding: 8px 4px 2px;
+  border-top: 1px solid var(--bordure); color: var(--texte-doux); margin-top: 4px;
+}
+
+/* Cartes d'arguments : le picto au-dessus du titre */
+.vitrine-picto {
+  display: inline-flex; width: 40px; height: 40px; border-radius: 12px;
+  align-items: center; justify-content: center; margin-bottom: 10px;
+  background: var(--sable); color: var(--vert);
+}
+
+/* Les trois étapes, numérotées et aérées */
+.vitrine-etapes { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 10px; color: var(--texte-doux); }
+.vitrine-etapes li::marker { color: var(--vert); font-weight: 700; }
