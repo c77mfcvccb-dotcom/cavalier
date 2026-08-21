@@ -368,6 +368,12 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
   })
 
   const [valeurs, setValeurs] = useState(valeursParDefaut)
+  // « Déjà fait » enregistre l'histoire ; « À faire » crée la tâche —
+  // c'est le geste attendu quand on note « vermifuge à donner » : la
+  // date choisie devient l'échéance, et la tâche sonne ce jour-là sur
+  // l'accueil de l'écurie (aujourd'hui par défaut).
+  const [mode, setMode] = useState('fait')
+  const [dateAFaire, setDateAFaire] = useState(() => cleJour(new Date()))
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
 
@@ -376,6 +382,8 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
     setEtaitOuverte(ouverte)
     if (ouverte) {
       setValeurs(valeursParDefaut())
+      setMode('fait')
+      setDateAFaire(cleJour(new Date()))
       setErreur('')
     }
   }
@@ -421,18 +429,37 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
     setErreur('')
     setEnvoi(true)
 
-    const { error } = await supabase.from('soins').insert({
-      cheval_id: cheval.id,
-      type: valeurs.type,
-      protocole: valeurs.type === 'vaccin' ? valeurs.protocole || null : null,
-      date_realisee: valeurs.date_realisee,
-      prochaine_echeance: valeurs.prochaine_echeance || null,
-      praticien: valeurs.praticien || null,
-      produit: valeurs.produit || null,
-      cout: valeurs.cout ? Number(valeurs.cout) : null,
-      notes: valeurs.notes || null,
-      cree_par: profilId,
-    })
+    // Mode « à faire » : la ligne porte la date du jour (celle de la
+    // programmation) et l'échéance choisie — c'est l'échéance du soin le
+    // plus récent qui fait la tâche de l'accueil, elle apparaît donc
+    // immédiatement, et « Fait » l'éteindra le moment venu.
+    const ligne =
+      mode === 'afaire'
+        ? {
+            cheval_id: cheval.id,
+            type: valeurs.type,
+            protocole: null,
+            date_realisee: cleJour(new Date()),
+            prochaine_echeance: dateAFaire,
+            praticien: valeurs.praticien || null,
+            produit: null,
+            cout: null,
+            notes: valeurs.notes ? `À faire — ${valeurs.notes}` : 'À faire',
+            cree_par: profilId,
+          }
+        : {
+            cheval_id: cheval.id,
+            type: valeurs.type,
+            protocole: valeurs.type === 'vaccin' ? valeurs.protocole || null : null,
+            date_realisee: valeurs.date_realisee,
+            prochaine_echeance: valeurs.prochaine_echeance || null,
+            praticien: valeurs.praticien || null,
+            produit: valeurs.produit || null,
+            cout: valeurs.cout ? Number(valeurs.cout) : null,
+            notes: valeurs.notes || null,
+            cree_par: profilId,
+          }
+    const { error } = await supabase.from('soins').insert(ligne)
 
     setEnvoi(false)
     if (error) setErreur(error.message)
@@ -445,6 +472,23 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
     <Feuille titre="Nouveau soin" ouverte={ouverte} onFermer={onFermer}>
       <form onSubmit={enregistrer}>
         <Erreur>{erreur}</Erreur>
+
+        <div className="choix-puces" role="group" aria-label="Fait ou à faire" style={{ marginBottom: 14 }}>
+          <button
+            type="button"
+            className={mode === 'fait' ? 'actif' : undefined}
+            onClick={() => setMode('fait')}
+          >
+            Déjà fait ✓
+          </button>
+          <button
+            type="button"
+            className={mode === 'afaire' ? 'actif' : undefined}
+            onClick={() => setMode('afaire')}
+          >
+            À faire
+          </button>
+        </div>
 
         <Champ label="Type de soin">
           <select
@@ -459,7 +503,7 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
           </select>
         </Champ>
 
-        {valeurs.type === 'vaccin' && (
+        {mode === 'fait' && valeurs.type === 'vaccin' && (
           <Champ label="Protocole" aide={aideProtocole}>
             <select
               value={valeurs.protocole}
@@ -473,6 +517,21 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
           </Champ>
         )}
 
+        {mode === 'afaire' && (
+          <Champ
+            label="À faire le"
+            aide="La tâche apparaît sur l'accueil — dès maintenant dans « Plus tard », puis dans les tâches du jour à cette date."
+          >
+            <input
+              type="date"
+              value={dateAFaire}
+              onChange={(e) => setDateAFaire(e.target.value)}
+              required
+            />
+          </Champ>
+        )}
+
+        {mode === 'fait' && (
         <div className="ligne-champs">
           <Champ label="Date">
             <input
@@ -493,12 +552,13 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
             />
           </Champ>
         </div>
+        )}
 
         <Champ label="Praticien" aide="Maréchal, vétérinaire, ostéopathe…">
           <input value={valeurs.praticien} onChange={modifier('praticien')} />
         </Champ>
 
-        {['vaccin', 'vermifuge'].includes(valeurs.type) && (
+        {mode === 'fait' && ['vaccin', 'vermifuge'].includes(valeurs.type) && (
           <Champ label="Produit">
             <input
               value={valeurs.produit}
@@ -508,7 +568,7 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
           </Champ>
         )}
 
-        {!estClub && (
+        {mode === 'fait' && !estClub && (
           <Champ label="Montant (€)" aide="Facultatif — alimente le suivi des dépenses">
             <input type="number" min="0" step="0.01" value={valeurs.cout} onChange={modifier('cout')} />
           </Champ>
@@ -519,7 +579,11 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
         </Champ>
 
         <button className="bouton pleine-largeur" disabled={envoi}>
-          {envoi ? 'Enregistrement…' : 'Enregistrer'}
+          {envoi
+            ? 'Enregistrement…'
+            : mode === 'afaire'
+              ? 'Ajouter à la liste des tâches'
+              : 'Enregistrer'}
         </button>
       </form>
     </Feuille>

@@ -332,7 +332,6 @@ export default function ClubAccueil() {
           <section className="section">
             <div className="titre-section">
               <h2>Plus tard</h2>
-              <span className="doux">les prochaines échéances</span>
             </div>
             <div className="liste">
               {plusTardVisibles.map((ligne) => {
@@ -383,7 +382,6 @@ export default function ClubAccueil() {
           <section className="section">
             <div className="titre-section">
               <h2>Derniers soins notés</h2>
-              <span className="doux">bien enregistrés</span>
             </div>
             <div className="liste">
               {derniersSoins.map((ligne) => {
