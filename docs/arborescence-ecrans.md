@@ -150,8 +150,12 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       chaque chargement depuis les soins (aucun cron) :
                       ├─ TÂCHES : vermifuges, vaccins, ferrures… — sur les
                       │  chevaux du club ET les pensions confirmées —
-                      │  commutables Jour (d'office) / Semaine / Mois pour
-                      │  voir venir ce
+                      │  commutables Aujourd'hui (d'office) / 7 jours /
+                      │  30 jours, GROUPÉES « En retard / Aujourd'hui /
+                      │  À venir » avec compteur coloré : un moniteur lit
+                      │  l'écran en trois secondes. Chaque ligne dit
+                      │  l'action d'abord (« Vermifuge · Quenotte ») et
+                      │  porte un vrai bouton « Fait » pour voir venir ce
                       │  qu'il y aura à faire — la borne du mois est à
                       │  30 jours parce que la saisie d'un soin pré-remplit
                       │  l'échéance à 4-12 semaines selon le type. Chaque

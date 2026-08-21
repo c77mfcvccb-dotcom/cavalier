@@ -16,9 +16,9 @@ import { ajouterJours, cleJour, formatDate, formatHeure, joursRelatifs } from '.
  * tout juste saisi. Les retards restent visibles sur tous les horizons.
  */
 const HORIZONS = {
-  jour: { libelle: 'Jour', limite: 0, vide: "Aucun soin en retard ni dû aujourd'hui sur la cavalerie." },
-  semaine: { libelle: 'Semaine', limite: 7, vide: 'Rien à faire cette semaine sur la cavalerie.' },
-  mois: { libelle: 'Mois', limite: 30, vide: 'Rien à prévoir ce mois-ci sur la cavalerie.' },
+  jour: { libelle: "Aujourd'hui", limite: 0, vide: "Aucun soin en retard ni dû aujourd'hui sur la cavalerie." },
+  semaine: { libelle: '7 jours', limite: 7, vide: 'Rien à faire ces 7 prochains jours sur la cavalerie.' },
+  mois: { libelle: '30 jours', limite: 30, vide: 'Rien à prévoir ces 30 prochains jours sur la cavalerie.' },
 }
 
 /**
@@ -142,6 +142,13 @@ export default function ClubAccueil() {
 
   const limite = HORIZONS[horizon].limite
   const taches = echeances.filter((l) => l.jours <= limite)
+  // Trois groupes au lieu d'un badge par ligne : un moniteur entre deux
+  // cours lit un titre de groupe, pas trois redondances par tâche.
+  const groupes = [
+    { cle: 'retard', titre: 'En retard', couleur: 'var(--rouge)', lignes: taches.filter((l) => l.jours < 0) },
+    { cle: 'jour', titre: "Aujourd'hui", couleur: 'var(--orange)', lignes: taches.filter((l) => l.jours === 0) },
+    { cle: 'avenir', titre: 'À venir', couleur: '#c9a227', lignes: taches.filter((l) => l.jours > 0) },
+  ].filter((g) => g.lignes.length > 0)
   // Au-delà de l'horizon choisi : la saisie d'un soin pré-remplit son
   // échéance à 7 semaines (ferrure), 4 mois (vermifuge), un an (vaccin) —
   // plus loin que TOUS les horizons. Sans cette section, un soin tout
@@ -187,16 +194,6 @@ export default function ClubAccueil() {
     recharger()
   }
 
-  const classeBadge = (jours) => (jours < 0 ? 'retard' : jours === 0 ? 'urgent' : 'contour')
-  const libelleBadge = (jours) =>
-    jours < 0
-      ? 'En retard'
-      : jours === 0
-        ? "Aujourd'hui"
-        : jours <= 7
-          ? 'Cette semaine'
-          : 'Ce mois-ci'
-
   if (chargement) return <Chargement />
 
   return (
@@ -233,59 +230,51 @@ export default function ClubAccueil() {
               </p>
             </div>
           ) : (
-            <div className="liste">
-              {taches.map((ligne) => {
-                const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
-                const cle = `${ligne.cheval.id}:${ligne.soin.type}`
-                return (
-                  <div key={ligne.soin.id} className="element">
-                    <span
-                      className="bordure-couleur"
-                      style={{
-                        background:
-                          ligne.jours < 0
-                            ? 'var(--rouge)'
-                            : ligne.jours === 0
-                              ? 'var(--orange)'
-                              : '#c9a227',
-                      }}
-                    />
-                    <div className="corps">
-                      <div className="titre">
-                        {ligne.cheval.nom} — {type.libelle}
+            groupes.map((groupe) => (
+              <div key={groupe.cle} style={{ marginBottom: 12 }}>
+                <div className="groupe-taches" style={{ color: groupe.couleur }}>
+                  {groupe.titre}
+                  <span className="compte" style={{ background: groupe.couleur }}>{groupe.lignes.length}</span>
+                </div>
+                <div className="liste">
+                  {groupe.lignes.map((ligne) => {
+                    const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
+                    const cle = `${ligne.cheval.id}:${ligne.soin.type}`
+                    return (
+                      <div key={ligne.soin.id} className="element">
+                        <span
+                          className="bordure-couleur"
+                          style={{ background: groupe.couleur }}
+                        />
+                        <div className="corps">
+                          <div className="titre">
+                            {type.libelle} · {ligne.cheval.nom}
+                          </div>
+                          {ligne.jours !== 0 && (
+                            <div className="meta">{joursRelatifs(ligne.jours)}</div>
+                          )}
+                        </div>
+                        <button
+                          className="bouton-fait"
+                          disabled={envoiCle === cle}
+                          onClick={() => marquerFait(ligne)}
+                          aria-label={`${type.libelle} de ${ligne.cheval.nom} fait`}
+                        >
+                          {envoiCle === cle ? '…' : 'Fait ✓'}
+                        </button>
                       </div>
-                      <div className="meta">
-                        {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
-                        {joursRelatifs(ligne.jours)}
-                      </div>
-                    </div>
-                    <span className={`badge ${classeBadge(ligne.jours)}`}>
-                      {libelleBadge(ligne.jours)}
-                    </span>
-                    <label
-                      className="rangee"
-                      style={{ gap: 6, fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={false}
-                        disabled={envoiCle === cle}
-                        onChange={() => marquerFait(ligne)}
-                        aria-label={`${type.libelle} de ${ligne.cheval.nom} fait`}
-                      />
-                      Fait
-                    </label>
-                  </div>
-                )
-              })}
-            </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))
           )}
 
           {plusTard.length > 0 && (
             <>
               <div className="titre-section" style={{ marginTop: 16 }}>
                 <h2 style={{ fontSize: '0.95rem' }}>Plus tard</h2>
-                <span className="doux">au-delà de l'horizon</span>
+                <span className="doux">les prochaines échéances</span>
               </div>
               <div className="liste">
                 {plusTard.map((ligne) => {
@@ -299,7 +288,7 @@ export default function ClubAccueil() {
                     >
                       <div className="corps">
                         <div className="titre" style={{ fontSize: '0.88rem' }}>
-                          {ligne.cheval.nom} — {type.libelle}
+                          {type.libelle} · {ligne.cheval.nom}
                         </div>
                       </div>
                       <span className="doux" style={{ fontSize: '0.82rem' }}>
@@ -314,11 +303,8 @@ export default function ClubAccueil() {
           )}
 
           <p className="aide" style={{ marginTop: 10 }}>
-            Les échéances viennent du carnet de santé de chaque cheval —
-            l'historique complet reste sur sa fiche, onglet Soins. Cocher
-            « Fait » y ajoute le soin du jour et recalcule la prochaine
-            échéance selon la périodicité du cheval. Un soin tout juste
-            saisi apparaît dans « Plus tard » jusqu'à l'approche de sa date.
+            « Fait » ajoute le soin au carnet du cheval et programme la
+            prochaine échéance.
           </p>
         </section>
 

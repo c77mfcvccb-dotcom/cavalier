@@ -1374,3 +1374,41 @@ button {
   border-color: #cfe5d2;
 }
 .carte.fete .gras { color: var(--vert); font-size: 1.05rem; }
+
+/* Les groupes de tâches de l'accueil : un titre coloré qui se lit en
+   passant, et un vrai bouton « Fait » — un moniteur n'a pas le temps de
+   viser une petite case. */
+.groupe-taches {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 2px 0 7px;
+}
+.groupe-taches .compte {
+  border-radius: 999px;
+  min-width: 19px;
+  height: 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  padding: 0 5px;
+}
+.groupe-taches .compte { color: #fff; }
+.bouton-fait {
+  border: 1.5px solid var(--vert);
+  color: var(--vert);
+  background: var(--carte);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.bouton-fait:active { background: var(--sable); }
+.bouton-fait:disabled { opacity: 0.5; }
