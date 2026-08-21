@@ -46,6 +46,9 @@ export default function ClubAccueil() {
   // le mois d'un appui — pour voir venir ce qu'il y aura à faire.
   const [horizon, setHorizon] = useState('jour')
   const [plusTardOuvert, setPlusTardOuvert] = useState(false)
+  // Chercher UN cheval : le maréchal est là pour Caramel, on veut ses
+  // soins à lui, pas la cavalerie entière.
+  const [chevalFiltre, setChevalFiltre] = useState('')
 
   const recharger = useCallback(async () => {
     // Avec les pensions confirmées : le vaccin d'un cheval en pension à
@@ -147,13 +150,16 @@ export default function ClubAccueil() {
   }, [soins, cavalerie])
 
   const limite = HORIZONS[horizon].limite
-  const taches = echeances.filter((l) => l.jours <= limite)
+  const filtrees = chevalFiltre
+    ? echeances.filter((l) => l.cheval.id === chevalFiltre)
+    : echeances
+  const taches = filtrees.filter((l) => l.jours <= limite)
   // Trois groupes au lieu d'un badge par ligne : un moniteur entre deux
   // cours lit un titre de groupe, pas trois redondances par tâche.
   const groupes = [
-    { cle: 'retard', titre: 'En retard', couleur: 'var(--rouge)', lignes: taches.filter((l) => l.jours < 0) },
-    { cle: 'jour', titre: "Aujourd'hui", couleur: 'var(--orange)', lignes: taches.filter((l) => l.jours === 0) },
-    { cle: 'avenir', titre: 'À venir', couleur: '#c9a227', lignes: taches.filter((l) => l.jours > 0) },
+    { cle: 'retard', titre: 'En retard', couleur: 'var(--rouge)', fond: '#fdf0ee', lignes: taches.filter((l) => l.jours < 0) },
+    { cle: 'jour', titre: "Aujourd'hui", couleur: 'var(--orange)', fond: '#fdf6ea', lignes: taches.filter((l) => l.jours === 0) },
+    { cle: 'avenir', titre: 'À venir', couleur: '#c9a227', fond: '#fbf7e6', lignes: taches.filter((l) => l.jours > 0) },
   ].filter((g) => g.lignes.length > 0)
   // Au-delà de l'horizon choisi : la saisie d'un soin pré-remplit son
   // échéance à 7 semaines (ferrure), 4 mois (vermifuge), un an (vaccin) —
@@ -162,7 +168,7 @@ export default function ClubAccueil() {
   // s'était perdu. SANS PLAFOND : un plafond à cinq lignes recréait le
   // bug — le sixième soin saisi disparaissait. Au-delà de cinq, la liste
   // se replie derrière « Tout afficher ».
-  const plusTard = echeances.filter((l) => l.jours > limite)
+  const plusTard = filtrees.filter((l) => l.jours > limite)
   const plusTardVisibles = plusTardOuvert ? plusTard : plusTard.slice(0, 5)
 
   // Les dernières saisies, échéance ou pas : la preuve immédiate que le
@@ -170,11 +176,12 @@ export default function ClubAccueil() {
   // échéance n'apparaîtrait sinon nulle part.
   const derniersSoins = useMemo(() => {
     return [...soins]
+      .filter((soin) => !chevalFiltre || soin.cheval_id === chevalFiltre)
       .sort((a, b) => (b.cree_le || '').localeCompare(a.cree_le || ''))
       .slice(0, 3)
       .map((soin) => ({ soin, cheval: cavalerie.find((c) => c.id === soin.cheval_id) }))
       .filter((l) => l.cheval)
-  }, [soins, cavalerie])
+  }, [soins, cavalerie, chevalFiltre])
 
   /**
    * « Fait » : le soin est réalisé aujourd'hui. L'historique du cheval
@@ -238,7 +245,11 @@ export default function ClubAccueil() {
         <section className="section">
           <div className="titre-section">
             <h2>Tâches</h2>
-            {taches.length > 0 && <span className="doux">{taches.length}</span>}
+            {taches.length > 0 && (
+              <span className={`badge ${taches.some((l) => l.jours < 0) ? 'retard' : 'urgent'}`}>
+                {taches.length}
+              </span>
+            )}
           </div>
 
           <div className="choix-puces" role="group" aria-label="Horizon des tâches">
@@ -254,11 +265,28 @@ export default function ClubAccueil() {
             ))}
           </div>
 
+          {cavalerie.length > 1 && (
+            <div className="champ" style={{ marginBottom: 12 }}>
+              <select
+                value={chevalFiltre}
+                onChange={(e) => setChevalFiltre(e.target.value)}
+                aria-label="Filtrer par cheval"
+              >
+                <option value="">Tous les chevaux</option>
+                {cavalerie.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nom}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {taches.length === 0 ? (
             <div className="carte centre fete">
               <p className="gras">Tout est à jour 🎉</p>
               <p className="doux" style={{ marginTop: 6 }}>
-                {HORIZONS[horizon].vide}
+                {chevalFiltre
+                  ? `Rien à faire pour ${cavalerie.find((c) => c.id === chevalFiltre)?.nom ?? 'ce cheval'} sur cette période.`
+                  : HORIZONS[horizon].vide}
               </p>
             </div>
           ) : (
@@ -273,7 +301,11 @@ export default function ClubAccueil() {
                     const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
                     const cle = `${ligne.cheval.id}:${ligne.soin.type}`
                     return (
-                      <div key={ligne.soin.id} className="element">
+                      <div
+                        key={ligne.soin.id}
+                        className="element"
+                        style={{ background: groupe.fond }}
+                      >
                         <span
                           className="bordure-couleur"
                           style={{ background: groupe.couleur }}
@@ -359,6 +391,7 @@ export default function ClubAccueil() {
                 const cle = `${ligne.cheval.id}:${ligne.soin.type}`
                 return (
                   <div key={`plus-tard-${ligne.soin.id}`} className="element" style={{ padding: 8 }}>
+                    <span className="bordure-couleur" style={{ background: '#8fae9b' }} />
                     <Link
                       to={`/chevaux/${ligne.cheval.id}?onglet=soins`}
                       className="corps"
@@ -414,6 +447,7 @@ export default function ClubAccueil() {
                     className="element"
                     style={{ padding: 8 }}
                   >
+                    <span className="bordure-couleur" style={{ background: 'var(--vert-clair)' }} />
                     <div className="corps">
                       <div className="titre" style={{ fontSize: '0.88rem' }}>
                         {type.libelle} · {ligne.cheval.nom}
