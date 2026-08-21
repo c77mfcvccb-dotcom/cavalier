@@ -45,6 +45,7 @@ export default function ClubAccueil() {
   // L'horizon choisi pour les tâches : la journée d'office, la semaine ou
   // le mois d'un appui — pour voir venir ce qu'il y aura à faire.
   const [horizon, setHorizon] = useState('jour')
+  const [plusTardOuvert, setPlusTardOuvert] = useState(false)
 
   const recharger = useCallback(async () => {
     // Avec les pensions confirmées : le vaccin d'un cheval en pension à
@@ -153,8 +154,22 @@ export default function ClubAccueil() {
   // échéance à 7 semaines (ferrure), 4 mois (vermifuge), un an (vaccin) —
   // plus loin que TOUS les horizons. Sans cette section, un soin tout
   // juste enregistré n'apparaissait nulle part sur l'accueil, comme s'il
-  // s'était perdu. Ici, il se voit dans la seconde, avec sa date.
-  const plusTard = echeances.filter((l) => l.jours > limite).slice(0, 5)
+  // s'était perdu. SANS PLAFOND : un plafond à cinq lignes recréait le
+  // bug — le sixième soin saisi disparaissait. Au-delà de cinq, la liste
+  // se replie derrière « Tout afficher ».
+  const plusTard = echeances.filter((l) => l.jours > limite)
+  const plusTardVisibles = plusTardOuvert ? plusTard : plusTard.slice(0, 5)
+
+  // Les dernières saisies, échéance ou pas : la preuve immédiate que le
+  // soin enregistré est bien arrivé — un soin vétérinaire sans prochaine
+  // échéance n'apparaîtrait sinon nulle part.
+  const derniersSoins = useMemo(() => {
+    return [...soins]
+      .sort((a, b) => (b.cree_le || '').localeCompare(a.cree_le || ''))
+      .slice(0, 5)
+      .map((soin) => ({ soin, cheval: cavalerie.find((c) => c.id === soin.cheval_id) }))
+      .filter((l) => l.cheval)
+  }, [soins, cavalerie])
 
   /**
    * « Fait » : le soin est réalisé aujourd'hui. L'historique du cheval
@@ -270,38 +285,6 @@ export default function ClubAccueil() {
             ))
           )}
 
-          {plusTard.length > 0 && (
-            <>
-              <div className="titre-section" style={{ marginTop: 16 }}>
-                <h2 style={{ fontSize: '0.95rem' }}>Plus tard</h2>
-                <span className="doux">les prochaines échéances</span>
-              </div>
-              <div className="liste">
-                {plusTard.map((ligne) => {
-                  const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
-                  return (
-                    <Link
-                      key={`plus-tard-${ligne.soin.id}`}
-                      to={`/chevaux/${ligne.cheval.id}?onglet=soins`}
-                      className="element"
-                      style={{ padding: 8 }}
-                    >
-                      <div className="corps">
-                        <div className="titre" style={{ fontSize: '0.88rem' }}>
-                          {type.libelle} · {ligne.cheval.nom}
-                        </div>
-                      </div>
-                      <span className="doux" style={{ fontSize: '0.82rem' }}>
-                        {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
-                        {joursRelatifs(ligne.jours)}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </>
-          )}
-
           <p className="aide" style={{ marginTop: 10 }}>
             « Fait » ajoute le soin au carnet du cheval et programme la
             prochaine échéance.
@@ -344,6 +327,92 @@ export default function ClubAccueil() {
             </div>
           )}
         </section>
+
+        {plusTard.length > 0 && (
+          <section className="section">
+            <div className="titre-section">
+              <h2>Plus tard</h2>
+              <span className="doux">les prochaines échéances</span>
+            </div>
+            <div className="liste">
+              {plusTardVisibles.map((ligne) => {
+                const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
+                const cle = `${ligne.cheval.id}:${ligne.soin.type}`
+                return (
+                  <div key={`plus-tard-${ligne.soin.id}`} className="element" style={{ padding: 8 }}>
+                    <Link
+                      to={`/chevaux/${ligne.cheval.id}?onglet=soins`}
+                      className="corps"
+                      style={{ minWidth: 0 }}
+                    >
+                      <div className="titre" style={{ fontSize: '0.88rem' }}>
+                        {type.libelle} · {ligne.cheval.nom}
+                      </div>
+                      <div className="meta">
+                        {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
+                        {joursRelatifs(ligne.jours)}
+                      </div>
+                    </Link>
+                    {/* Le maréchal passé en avance : la tâche se pointe
+                        d'ici, sans attendre son jour. */}
+                    <button
+                      className="bouton-fait"
+                      disabled={envoiCle === cle}
+                      onClick={() => marquerFait(ligne)}
+                      aria-label={`${type.libelle} de ${ligne.cheval.nom} fait`}
+                    >
+                      {envoiCle === cle ? '…' : 'Fait ✓'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+            {plusTard.length > plusTardVisibles.length && (
+              <button
+                className="bouton secondaire pleine-largeur"
+                style={{ marginTop: 8 }}
+                onClick={() => setPlusTardOuvert(true)}
+              >
+                Tout afficher ({plusTard.length})
+              </button>
+            )}
+          </section>
+        )}
+
+        {derniersSoins.length > 0 && (
+          <section className="section">
+            <div className="titre-section">
+              <h2>Derniers soins notés</h2>
+              <span className="doux">bien enregistrés</span>
+            </div>
+            <div className="liste">
+              {derniersSoins.map((ligne) => {
+                const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
+                return (
+                  <Link
+                    key={`recent-${ligne.soin.id}`}
+                    to={`/chevaux/${ligne.cheval.id}?onglet=soins`}
+                    className="element"
+                    style={{ padding: 8 }}
+                  >
+                    <div className="corps">
+                      <div className="titre" style={{ fontSize: '0.88rem' }}>
+                        {type.libelle} · {ligne.cheval.nom}
+                      </div>
+                      <div className="meta">
+                        fait le {formatDate(ligne.soin.date_realisee, { court: true })}
+                        {ligne.soin.prochaine_echeance
+                          ? ` · prochain le ${formatDate(ligne.soin.prochaine_echeance, { court: true })}`
+                          : ''}
+                      </div>
+                    </div>
+                    <span className="fleche">›</span>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
       </main>
     </>

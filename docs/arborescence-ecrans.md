@@ -171,8 +171,16 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       │  saisi à l'instant (échéance pré-remplie à 7-52
                       │  semaines) y apparaît immédiatement au lieu de
                       │  sembler perdu
-                      └─ COURS DU JOUR : le programme de la journée, avec
-                         l'alerte « N sans cheval » et le lien vers l'onglet.
+                      ├─ COURS DU JOUR : le programme de la journée, avec
+                      │  l'alerte « N sans cheval » et le lien vers l'onglet
+                      ├─ PLUS TARD : TOUTES les échéances au-delà de
+                      │  l'horizon (replié à 5, « Tout afficher » au-delà —
+                      │  un plafond recréait le bug du soin invisible),
+                      │  chacune avec son bouton « Fait » : le maréchal
+                      │  passé en avance se pointe d'ici
+                      └─ DERNIERS SOINS NOTÉS : les 5 dernières saisies,
+                         échéance ou pas — la preuve immédiate que le soin
+                         enregistré est bien arrivé.
                       L'ancien onglet Santé a fusionné ici — les données
                       n'ont pas bougé, l'historique reste sur chaque fiche
 
