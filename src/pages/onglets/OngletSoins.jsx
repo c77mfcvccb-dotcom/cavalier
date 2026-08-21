@@ -361,16 +361,16 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
   // Le suivi des dépenses n'existe que côté cavalier : une écurie note le
   // soin et son échéance, jamais un montant.
   const { estClub } = useAuth()
-  const intervalleDeType = (type) =>
-    type in intervalles ? intervalles[type] : TYPES_SOIN[type]?.intervalleJours
 
+  // L'échéance ne se remplit JAMAIS toute seule : une date que
+  // l'utilisateur n'a pas posée passait pour une erreur de l'app
+  // (« ça me met une date alors que j'ai rien mis »). Le rythme habituel
+  // du type reste proposé d'un appui, sous le champ.
   const valeursParDefaut = () => ({
     type: 'ferrure',
     protocole: '',
     date_realisee: cleJour(new Date()),
-    prochaine_echeance: intervalleDeType('ferrure')
-      ? ajouterJours(new Date(), intervalleDeType('ferrure'))
-      : '',
+    prochaine_echeance: '',
     praticien: '',
     produit: '',
     cout: '',
@@ -425,18 +425,20 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
   function recalculer(champs) {
     setValeurs((v) => {
       const suivant = { ...v, ...champs }
-      const intervalle = intervalleDe(suivant.type, suivant.protocole)
-      return {
-        ...suivant,
-        prochaine_echeance:
-          intervalle && suivant.date_realisee
-            ? ajouterJours(suivant.date_realisee, intervalle)
-            : suivant.type === 'vaccin' && !suivant.protocole
-              ? v.prochaine_echeance
-              : '',
-      }
+      // Changer de type ou de protocole rend caduque l'échéance liée à
+      // l'ancien choix : le champ revient vierge, la suggestion suit.
+      if ('type' in champs || 'protocole' in champs) suivant.prochaine_echeance = ''
+      return suivant
     })
   }
+
+  // La date que suggère le rythme habituel du type (ou le réglage du
+  // cheval, ou le protocole de vaccin) — proposée, jamais imposée.
+  const intervalleSuggere = intervalleDe(valeurs.type, valeurs.protocole)
+  const echeanceSuggeree =
+    intervalleSuggere && valeurs.date_realisee
+      ? ajouterJours(valeurs.date_realisee, intervalleSuggere)
+      : null
 
   async function enregistrer(evenement) {
     evenement.preventDefault()
@@ -560,13 +562,28 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
           </Champ>
           <Champ
             label="Prochaine échéance"
-            aide="La tâche sonnera à cette date sur l'accueil — visible dès maintenant dans « Plus tard »."
+            aide={
+              valeurs.prochaine_echeance
+                ? 'La tâche sonnera à cette date sur l\'accueil — visible dès maintenant dans « Plus tard ».'
+                : 'Facultatif — laisser vide si rien à programmer.'
+            }
           >
             <input
               type="date"
               value={valeurs.prochaine_echeance || ''}
               onChange={modifier('prochaine_echeance')}
             />
+            {!valeurs.prochaine_echeance && echeanceSuggeree && (
+              <button
+                type="button"
+                className="suggestion-echeance"
+                onClick={() =>
+                  setValeurs((v) => ({ ...v, prochaine_echeance: echeanceSuggeree }))
+                }
+              >
+                Suggestion : {formatDate(echeanceSuggeree, { court: true })}
+              </button>
+            )}
           </Champ>
         </div>
         )}

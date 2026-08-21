@@ -116,7 +116,7 @@ export default function ClubAccueil() {
    * point qui permet à « Fait » de clore aussi les soins sans périodicité
    * (vétérinaire, autre).
    */
-  const echeances = useMemo(() => {
+  const actifs = useMemo(() => {
     const parCle = new Map()
     for (const soin of soins) {
       const cle = `${soin.cheval_id}:${soin.type}`
@@ -129,10 +129,13 @@ export default function ClubAccueil() {
         parCle.set(cle, soin)
       }
     }
+    return [...parCle.values()]
+  }, [soins])
 
+  const echeances = useMemo(() => {
     const aujourdhui = cleJour(new Date())
     const lignes = []
-    for (const soin of parCle.values()) {
+    for (const soin of actifs) {
       // « Ferrure le 22 août » saisie hier pour demain : la date du soin
       // est dans le futur, c'est donc un soin PRÉVU — la tâche porte SA
       // date, pas l'échéance suivante calculée derrière.
@@ -147,7 +150,18 @@ export default function ClubAccueil() {
       lignes.push({ soin, cheval, jours, echeance, planifie })
     }
     return lignes.sort((a, b) => a.jours - b.jours)
-  }, [soins, cavalerie])
+  }, [actifs, cavalerie])
+
+  // Ce qui a été coché aujourd'hui reste affiché, barré, jusqu'à demain —
+  // le moniteur voit ce qui est réglé, et peut décocher une erreur.
+  const faitsDuJour = useMemo(() => {
+    const aujourdhui = cleJour(new Date())
+    return actifs
+      .filter((soin) => soin.date_realisee === aujourdhui)
+      .filter((soin) => !chevalFiltre || soin.cheval_id === chevalFiltre)
+      .map((soin) => ({ soin, cheval: cavalerie.find((c) => c.id === soin.cheval_id) }))
+      .filter((l) => l.cheval)
+  }, [actifs, cavalerie, chevalFiltre])
 
   const limite = HORIZONS[horizon].limite
   const filtrees = chevalFiltre
@@ -190,14 +204,6 @@ export default function ClubAccueil() {
    * simplement.
    */
   async function marquerFait(ligne) {
-    const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
-    if (
-      !window.confirm(
-        `${type.libelle} de ${ligne.cheval.nom} : fait aujourd'hui ? Le soin sera ajouté à son carnet et la prochaine échéance recalculée.`
-      )
-    )
-      return
-
     setErreur('')
     setEnvoiCle(`${ligne.cheval.id}:${ligne.soin.type}`)
     const intervalle = intervallePour(ligne.cheval.id, ligne.soin.type)
@@ -231,6 +237,23 @@ export default function ClubAccueil() {
       return
     }
     recharger()
+  }
+
+  async function decocherFait(ligne) {
+    setErreur('')
+    const cle = `${ligne.cheval.id}:${ligne.soin.type}`
+    setEnvoiCle(cle)
+    const aujourdhui = cleJour(new Date())
+    const creeAujourdhui = (ligne.soin.cree_le || '').startsWith(aujourdhui)
+    const { error } = creeAujourdhui
+      ? await supabase.from('soins').delete().eq('id', ligne.soin.id)
+      : await supabase
+          .from('soins')
+          .update({ prochaine_echeance: aujourdhui })
+          .eq('id', ligne.soin.id)
+    setEnvoiCle(null)
+    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
+    else recharger()
   }
 
   if (chargement) return <Chargement />
@@ -337,9 +360,49 @@ export default function ClubAccueil() {
             ))
           )}
 
+          {faitsDuJour.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div className="groupe-taches" style={{ color: 'var(--vert)' }}>
+                Fait aujourd'hui
+                <span className="compte" style={{ background: 'var(--vert)' }}>{faitsDuJour.length}</span>
+              </div>
+              <div className="liste">
+                {faitsDuJour.map((ligne) => {
+                  const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
+                  const cle = `${ligne.cheval.id}:${ligne.soin.type}`
+                  return (
+                    <div
+                      key={`fait-${ligne.soin.id}`}
+                      className="element"
+                      style={{ background: '#eef6ef' }}
+                    >
+                      <span className="bordure-couleur" style={{ background: 'var(--vert-clair)' }} />
+                      <div className="corps">
+                        <div className="titre" style={{ textDecoration: 'line-through', opacity: 0.75 }}>
+                          {type.libelle} · {ligne.cheval.nom}
+                        </div>
+                      </div>
+                      {/* Le même bouton, plein : un appui décoche — le soin
+                          saisi par erreur s'efface, la tâche renaît. */}
+                      <button
+                        className="bouton-fait coche"
+                        disabled={envoiCle === cle}
+                        onClick={() => decocherFait(ligne)}
+                        aria-label={`Annuler ${type.libelle} de ${ligne.cheval.nom}`}
+                      >
+                        {envoiCle === cle ? '…' : 'Fait ✓'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <p className="aide" style={{ marginTop: 10 }}>
             « Fait » ajoute le soin au carnet du cheval et programme la
-            prochaine échéance.
+            prochaine échéance. La tâche cochée reste ici jusqu'à demain —
+            un appui la décoche.
           </p>
         </section>
 

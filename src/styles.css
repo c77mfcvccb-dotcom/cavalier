@@ -1412,3 +1412,24 @@ button {
 }
 .bouton-fait:active { background: var(--sable); }
 .bouton-fait:disabled { opacity: 0.5; }
+/* La tâche cochée : le bouton se remplit — un appui la décoche. */
+.bouton-fait.coche {
+  background: var(--vert);
+  color: #fff;
+  border-color: var(--vert);
+}
+.bouton-fait.coche:active { background: var(--vert-clair); }
+/* La date proposée sous « Prochaine échéance » : un appui la pose, rien
+   ne se remplit tout seul. */
+.suggestion-echeance {
+  align-self: flex-start;
+  margin-top: 6px;
+  border: 1px dashed var(--vert);
+  color: var(--vert);
+  background: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.suggestion-echeance:active { background: var(--sable); }
