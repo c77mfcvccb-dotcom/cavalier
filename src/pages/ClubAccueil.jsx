@@ -199,7 +199,7 @@ export default function ClubAccueil() {
 
   return (
     <>
-      <Entete titre="Accueil" sousTitre={profil.nom} />
+      <Entete titre={`Bonjour ${profil.nom}`} sousTitre={formatDate(new Date(), { avecJour: true })} />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
@@ -224,8 +224,8 @@ export default function ClubAccueil() {
           </div>
 
           {taches.length === 0 ? (
-            <div className="carte centre">
-              <p className="gras">Tout est à jour</p>
+            <div className="carte centre fete">
+              <p className="gras">Tout est à jour 🎉</p>
               <p className="doux" style={{ marginTop: 6 }}>
                 {HORIZONS[horizon].vide}
               </p>
@@ -244,6 +244,17 @@ export default function ClubAccueil() {
                 const cle = `${ligne.cheval.id}:${ligne.soin.type}`
                 return (
                   <div key={ligne.soin.id} className="element">
+                    <span
+                      className="bordure-couleur"
+                      style={{
+                        background:
+                          ligne.jours < 0
+                            ? 'var(--rouge)'
+                            : ligne.jours === 0
+                              ? 'var(--orange)'
+                              : '#c9a227',
+                      }}
+                    />
                     <div className="corps">
                       <div className="titre">
                         {ligne.cheval.nom} — {type.libelle}

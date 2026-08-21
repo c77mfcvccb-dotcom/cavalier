@@ -1,6 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
-import Icone from './Icone'
 import Cloche from './Cloche'
 
 /**
@@ -16,23 +15,23 @@ import Cloche from './Cloche'
  * budget n'a pas à occuper une place de premier plan.
  */
 const ONGLETS_CAVALIER = [
-  { to: '/', icone: 'accueil', libelle: 'Accueil' },
-  { to: '/chevaux', icone: 'chevaux', libelle: 'Chevaux' },
-  { to: '/calendrier', icone: 'agenda', libelle: 'Agenda' },
-  { to: '/cours', icone: 'cours', libelle: 'Cours' },
-  { to: '/club', icone: 'club', libelle: 'Club' },
-  { to: '/profil', icone: 'profil', libelle: 'Profil' },
+  { to: '/', icone: '🏠', libelle: 'Accueil' },
+  { to: '/chevaux', icone: '🐴', libelle: 'Chevaux' },
+  { to: '/calendrier', icone: '📅', libelle: 'Agenda' },
+  { to: '/cours', icone: '🎓', libelle: 'Cours' },
+  { to: '/club', icone: '🏇', libelle: 'Club' },
+  { to: '/profil', icone: '👤', libelle: 'Profil' },
 ]
 
 const ONGLETS_CLUB = [
   // L'accueil remplace l'écran Santé : les échéances y deviennent des
   // TÂCHES à cocher, et l'historique reste sur la fiche de chaque cheval.
-  { to: '/', icone: 'accueil', libelle: 'Accueil' },
-  { to: '/chevaux', icone: 'chevaux', libelle: 'Chevaux' },
-  { to: '/club', icone: 'club', libelle: 'Cavaliers' },
-  { to: '/planning', icone: 'agenda', libelle: 'Planning' },
-  { to: '/cours', icone: 'cours', libelle: 'Cours' },
-  { to: '/profil', icone: 'profil', libelle: 'Profil' },
+  { to: '/', icone: '🏠', libelle: 'Accueil' },
+  { to: '/chevaux', icone: '🐴', libelle: 'Chevaux' },
+  { to: '/club', icone: '👥', libelle: 'Cavaliers' },
+  { to: '/planning', icone: '📅', libelle: 'Planning' },
+  { to: '/cours', icone: '🎓', libelle: 'Cours' },
+  { to: '/profil', icone: '👤', libelle: 'Profil' },
 ]
 
 export function NavBas() {
@@ -48,7 +47,7 @@ export function NavBas() {
           end={onglet.to === '/'}
           className={({ isActive }) => (isActive ? 'actif' : undefined)}
         >
-          <span className="icone"><Icone nom={onglet.icone} /></span>
+          <span className="icone">{onglet.icone}</span>
           <span>{onglet.libelle}</span>
         </NavLink>
       ))}

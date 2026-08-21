@@ -144,6 +144,7 @@ export default function ClubCours() {
           <Chargement />
         ) : joursRemplis.length === 0 ? (
           <EtatVide
+            emoji="🎠"
             titre={
               periode === 'jour'
                 ? "Aucun cours aujourd'hui"

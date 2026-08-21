@@ -68,7 +68,7 @@ const TRACES = {
   ),
 }
 
-export default function Icone({ nom, taille = 22 }) {
+export default function Icone({ nom, taille = 22, epaisseur = 1.7 }) {
   const trace = TRACES[nom]
   if (!trace) return null
   return (
@@ -78,7 +78,7 @@ export default function Icone({ nom, taille = 22 }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.7"
+      strokeWidth={epaisseur}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

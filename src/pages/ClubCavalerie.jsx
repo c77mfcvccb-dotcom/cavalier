@@ -94,6 +94,7 @@ export default function ClubCavalerie() {
           <Chargement />
         ) : chevaux.length === 0 ? (
           <EtatVide
+            emoji="🏇"
             titre="Cavalerie vide"
             texte="Ajoutez les chevaux de votre écurie pour suivre leurs soins et leur planning."
             action={<Link to="/chevaux/nouveau" className="bouton">Ajouter un cheval</Link>}

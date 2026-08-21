@@ -98,8 +98,9 @@ button {
     calc(16px + var(--safe-gauche));
   /* Fond opaque d'abord : `color-mix` est inconnu avant Safari 16.2, et la
      barre deviendrait alors transparente, le contenu défilant au travers. */
-  background: var(--fond);
-  background: color-mix(in srgb, var(--fond) 88%, transparent);
+  /* Une pointe de sable : chaque écran s'ouvre sur une note chaude. */
+  background: #f8f0e2;
+  background: color-mix(in srgb, var(--sable) 42%, var(--fond));
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--bordure);
 }
@@ -158,8 +159,18 @@ button {
   .nav-bas a { font-size: 0.6rem; }
 }
 
-.nav-bas a .icone { display: flex; line-height: 1; }
-.nav-bas a.actif { color: var(--vert); }
+/* L'emoji porte l'onglet : grand, et l'actif se voit de loin — une
+   pastille sable dessous, comme un vrai sélecteur. */
+.nav-bas a .icone {
+  display: flex;
+  line-height: 1;
+  font-size: 1.45rem;
+  padding: 2px 13px;
+  border-radius: 999px;
+  margin-bottom: 1px;
+}
+.nav-bas a.actif { color: var(--vert); font-weight: 650; }
+.nav-bas a.actif .icone { background: var(--sable); }
 
 /* ---------- Cartes ---------- */
 .carte {
@@ -642,6 +653,7 @@ button {
 }
 
 /* ---------- États ---------- */
+.etat-vide .emoji { font-size: 2.6rem; display: block; margin-bottom: 10px; }
 .etat-vide {
   text-align: center;
   padding: 38px 20px;
@@ -737,7 +749,8 @@ button {
 }
 .choix-puces button.actif {
   border-color: var(--vert);
-  background: #f2f7f4;
+  background: var(--vert);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -1280,3 +1293,84 @@ button {
   cursor: pointer;
 }
 .liste-rappels .marquer:hover { background: var(--fond); }
+
+/* ============================================================
+   La vitrine — page d'accueil publique
+   ============================================================ */
+.vitrine { max-width: 900px; margin: 0 auto; padding: 0 18px calc(20px + var(--safe-bas)); }
+.vitrine-entete {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: calc(14px + var(--safe-haut)) 0 14px;
+}
+.vitrine-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; }
+.vitrine-logo img { border-radius: 9px; }
+
+.vitrine-heros { text-align: center; padding: 44px 8px 36px; }
+.vitrine-heros h1 { font-size: 1.9rem; line-height: 1.2; max-width: 560px; margin: 0 auto; }
+.vitrine-heros > p { color: var(--texte-doux); max-width: 520px; margin: 14px auto 22px; }
+.vitrine-heros .aide { margin-top: 12px; }
+
+.vitrine-section { padding: 26px 0; }
+.vitrine-titre { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; color: var(--vert); }
+.vitrine-titre h2 { color: var(--texte); font-size: 1.3rem; }
+
+.vitrine-grille { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .vitrine-grille { grid-template-columns: 1fr 1fr; } }
+.vitrine-grille .carte { padding: 18px; }
+.vitrine-grille .carte h3 { margin-bottom: 6px; }
+
+.vitrine-grille.tarifs { align-items: start; }
+@media (min-width: 860px) { .vitrine-grille.tarifs { grid-template-columns: 1fr 1fr 1fr; } }
+.vitrine-prix { font-weight: 700; font-size: 1.25rem; margin: 6px 0 10px; }
+.vitrine-grille.tarifs ul { margin: 0 0 14px; padding-left: 18px; display: grid; gap: 5px; font-size: 0.92rem; }
+.vitrine-mise-en-avant { border: 2px solid var(--vert); }
+
+.vitrine-finale { text-align: center; padding: 40px 8px 30px; }
+.vitrine-finale p { max-width: 480px; margin: 10px auto 18px; }
+
+/* L'aperçu téléphone du héros : un écran d'accueil dessiné, pas une capture */
+.vitrine-telephone {
+  width: 270px; margin: 34px auto 0; padding: 12px 10px 10px;
+  background: var(--vert); border-radius: 30px; box-shadow: var(--ombre);
+}
+.tel-ecran {
+  background: var(--fond); border-radius: 20px; padding: 14px 12px 10px;
+  display: grid; gap: 8px; text-align: left;
+}
+.tel-entete { display: grid; gap: 1px; margin-bottom: 2px; }
+.tel-titre { font-weight: 700; }
+.tel-sous { color: var(--texte-doux); font-size: 0.72rem; }
+.tel-bloc { font-weight: 650; font-size: 0.78rem; margin-top: 4px; }
+.tel-ligne {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--carte); border-radius: var(--rayon-sm);
+  padding: 8px 9px; box-shadow: var(--ombre);
+}
+.tel-ligne .badge { margin-left: auto; font-size: 0.62rem; }
+.tel-texte { font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tel-pastille { width: 8px; height: 26px; border-radius: 4px; flex-shrink: 0; }
+.tel-pastille.rouge { background: var(--rouge); }
+.tel-pastille.orange { background: var(--orange); }
+.tel-pastille.bleue { background: var(--bleu); }
+.tel-nav {
+  display: flex; justify-content: space-around; padding: 8px 4px 2px;
+  border-top: 1px solid var(--bordure); color: var(--texte-doux); margin-top: 4px;
+}
+
+/* Cartes d'arguments : le picto au-dessus du titre */
+.vitrine-picto {
+  display: inline-flex; width: 40px; height: 40px; border-radius: 12px;
+  align-items: center; justify-content: center; margin-bottom: 10px;
+  background: var(--sable); color: var(--vert);
+}
+
+/* Les trois étapes, numérotées et aérées */
+.vitrine-etapes { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 10px; color: var(--texte-doux); }
+.vitrine-etapes li::marker { color: var(--vert); font-weight: 700; }
+
+/* La carte de célébration : tout est fait, et ça se voit */
+.carte.fete {
+  background: #eef6ef;
+  border-color: #cfe5d2;
+}
+.carte.fete .gras { color: var(--vert); font-size: 1.05rem; }
