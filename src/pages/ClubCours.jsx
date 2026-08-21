@@ -48,6 +48,9 @@ export default function ClubCours() {
   const [ancre, setAncre] = useState(() => new Date())
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
+  // Filtre par coach : plusieurs monitrices publient sur le même planning,
+  // chacune doit pouvoir n'afficher que ses cours d'un geste.
+  const [coachFiltre, setCoachFiltre] = useState('')
   const [creationOuverte, setCreationOuverte] = useState(false)
   const [coursOuvertId, setCoursOuvertId] = useState(null)
 
@@ -91,9 +94,20 @@ export default function ClubCours() {
     return liste
   }, [periode, ancre])
 
+  // Les coachs du planning chargé — le filtre choisi survit à un
+  // changement de période, même si son coach n'a rien cette semaine-là.
+  const coachs = useMemo(() => {
+    const noms = new Set(cours.map((c) => (c.moniteur || '').trim()).filter(Boolean))
+    if (coachFiltre) noms.add(coachFiltre)
+    return [...noms].sort((a, b) => a.localeCompare(b, 'fr'))
+  }, [cours, coachFiltre])
+
   const joursRemplis = useMemo(() => {
+    const filtres = coachFiltre
+      ? cours.filter((c) => (c.moniteur || '').trim() === coachFiltre)
+      : cours
     const carte = new Map()
-    for (const c of cours) {
+    for (const c of filtres) {
       const cle = cleJour(c.debut)
       if (!carte.has(cle)) carte.set(cle, [])
       carte.get(cle).push(c)
@@ -101,7 +115,7 @@ export default function ClubCours() {
     return jours
       .map((jour) => ({ jour, cours: carte.get(cleJour(jour)) || [] }))
       .filter((entree) => entree.cours.length > 0)
-  }, [cours, jours])
+  }, [cours, jours, coachFiltre])
 
   /**
    * Ce que le cheval a déjà ce jour-là — créneaux et attributions d'autres
@@ -140,19 +154,40 @@ export default function ClubCours() {
           onAncre={setAncre}
         />
 
+        {coachs.length > 0 && (
+          <div className="champ" style={{ marginBottom: 12 }}>
+            <select
+              value={coachFiltre}
+              onChange={(e) => setCoachFiltre(e.target.value)}
+              aria-label="Filtrer par coach"
+            >
+              <option value="">Tous les coachs</option>
+              {coachs.map((nom) => (
+                <option key={nom} value={nom}>Coach : {nom}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {chargement ? (
           <Chargement />
         ) : joursRemplis.length === 0 ? (
           <EtatVide
             emoji="🎠"
             titre={
-              periode === 'jour'
-                ? "Aucun cours aujourd'hui"
-                : periode === 'mois'
-                  ? 'Aucun cours ce mois-ci'
-                  : 'Aucun cours cette semaine'
+              coachFiltre
+                ? `Aucun cours de ${coachFiltre} sur la période`
+                : periode === 'jour'
+                  ? "Aucun cours aujourd'hui"
+                  : periode === 'mois'
+                    ? 'Aucun cours ce mois-ci'
+                    : 'Aucun cours cette semaine'
             }
-            texte="Créez un cours avec le bouton + : vos cavaliers le verront aussitôt et pourront s'y inscrire depuis leur téléphone."
+            texte={
+              coachFiltre
+                ? 'Changez de période avec les flèches, ou repassez sur « Tous les coachs ».'
+                : "Créez un cours avec le bouton + : vos cavaliers le verront aussitôt et pourront s'y inscrire depuis leur téléphone."
+            }
           />
         ) : (
           joursRemplis.map(({ jour, cours: coursDuJour }) => (

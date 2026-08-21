@@ -362,6 +362,21 @@ export async function verifier(base) {
       await page.waitForTimeout(700)
       const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
       noter('Cours — le cours du club est affiché', texte.includes('Obstacle') && texte.includes('Galop 3-4'), texte.slice(0, 120))
+      // Le filtre par coach, même mécanique que côté écurie : ne voir que
+      // les cours de SA monitrice.
+      {
+        const filtre = page.locator('select[aria-label="Filtrer par coach"]')
+        noter('Cours — le filtre par coach est proposé au cavalier',
+          (await filtre.count()) === 1 &&
+          (await filtre.locator('option', { hasText: 'Coach : Julie' }).count()) === 1)
+        await filtre.selectOption('Julie')
+        await page.waitForTimeout(400)
+        const filtreTexte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+        noter('Cours — filtré sur sa coach, le cours reste affiché',
+          filtreTexte.includes('Obstacle'), filtreTexte.slice(0, 150))
+        await filtre.selectOption('')
+        await page.waitForTimeout(300)
+      }
       noter('Cours — le statut « Inscrit » est visible', texte.includes('Inscrit'), texte.slice(0, 120))
       noter('Cours — le cheval attribué est annoncé', texte.includes('Quenotte'), texte.slice(0, 120))
       // Le détail s'ouvre au premier appui et propose la désinscription

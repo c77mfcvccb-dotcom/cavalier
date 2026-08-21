@@ -64,7 +64,8 @@ sur la fiche de chaque cheval.
 /cours                COURS DU CLUB — le planning publié par mon club, en
                       vue JOUR par défaut, commutable Semaine ou Mois (même
                       sélecteur que l'écurie) : discipline, niveau, coach,
-                      places.
+                      places. Filtre par coach : ne voir que les cours de
+                      SA monitrice, d'un geste.
                       Un appui déplie le détail : qui vient, sur quel cheval,
                       m'inscrire ou me désinscrire. Complet → inscription en
                       liste d'attente, avec ma position ; une place libérée
@@ -191,7 +192,9 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       l'Accueil et les fiches, les cours dans leur onglet
 
 /cours                COURS (onglet dédié) — les cours de la JOURNÉE par
-                      défaut, commutables Semaine ou Mois ; création par le
+                      défaut, commutables Semaine ou Mois, filtrables par
+                      COACH (chaque monitrice isole son planning d'un
+                      geste) ; création par le
                       bouton + (capacité 1-30, discipline, niveau, coach),
                       cartes par jour avec inscrits/attente et alerte « N
                       sans cheval ». Un appui ouvre la feuille : inscrits et
