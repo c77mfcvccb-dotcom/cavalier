@@ -482,7 +482,10 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
               required
             />
           </Champ>
-          <Champ label="Prochaine échéance">
+          <Champ
+            label="Prochaine échéance"
+            aide="La tâche sonnera à cette date sur l'accueil — visible dès maintenant dans « Plus tard »."
+          >
             <input
               type="date"
               value={valeurs.prochaine_echeance || ''}

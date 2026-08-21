@@ -142,7 +142,12 @@ export default function ClubAccueil() {
 
   const limite = HORIZONS[horizon].limite
   const taches = echeances.filter((l) => l.jours <= limite)
-  const prochaine = echeances.find((l) => l.jours > limite)
+  // Au-delà de l'horizon choisi : la saisie d'un soin pré-remplit son
+  // échéance à 7 semaines (ferrure), 4 mois (vermifuge), un an (vaccin) —
+  // plus loin que TOUS les horizons. Sans cette section, un soin tout
+  // juste enregistré n'apparaissait nulle part sur l'accueil, comme s'il
+  // s'était perdu. Ici, il se voit dans la seconde, avec sa date.
+  const plusTard = echeances.filter((l) => l.jours > limite).slice(0, 5)
 
   /**
    * « Fait » : le soin est réalisé aujourd'hui. L'historique du cheval
@@ -226,13 +231,6 @@ export default function ClubAccueil() {
               <p className="doux" style={{ marginTop: 6 }}>
                 {HORIZONS[horizon].vide}
               </p>
-              {prochaine && (
-                <p className="meta" style={{ marginTop: 8 }}>
-                  Prochaine échéance :{' '}
-                  {(TYPES_SOIN[prochaine.soin.type] || TYPES_SOIN.autre).libelle} de{' '}
-                  {prochaine.cheval.nom} — {joursRelatifs(prochaine.jours)}
-                </p>
-              )}
             </div>
           ) : (
             <div className="liste">
@@ -283,11 +281,44 @@ export default function ClubAccueil() {
             </div>
           )}
 
+          {plusTard.length > 0 && (
+            <>
+              <div className="titre-section" style={{ marginTop: 16 }}>
+                <h2 style={{ fontSize: '0.95rem' }}>Plus tard</h2>
+                <span className="doux">au-delà de l'horizon</span>
+              </div>
+              <div className="liste">
+                {plusTard.map((ligne) => {
+                  const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
+                  return (
+                    <Link
+                      key={`plus-tard-${ligne.soin.id}`}
+                      to={`/chevaux/${ligne.cheval.id}?onglet=soins`}
+                      className="element"
+                      style={{ padding: 8 }}
+                    >
+                      <div className="corps">
+                        <div className="titre" style={{ fontSize: '0.88rem' }}>
+                          {ligne.cheval.nom} — {type.libelle}
+                        </div>
+                      </div>
+                      <span className="doux" style={{ fontSize: '0.82rem' }}>
+                        {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
+                        {joursRelatifs(ligne.jours)}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
           <p className="aide" style={{ marginTop: 10 }}>
             Les échéances viennent du carnet de santé de chaque cheval —
             l'historique complet reste sur sa fiche, onglet Soins. Cocher
             « Fait » y ajoute le soin du jour et recalcule la prochaine
-            échéance selon la périodicité du cheval.
+            échéance selon la périodicité du cheval. Un soin tout juste
+            saisi apparaît dans « Plus tard » jusqu'à l'approche de sa date.
           </p>
         </section>
 
