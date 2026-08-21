@@ -171,7 +171,7 @@ export default function ClubAccueil() {
   const derniersSoins = useMemo(() => {
     return [...soins]
       .sort((a, b) => (b.cree_le || '').localeCompare(a.cree_le || ''))
-      .slice(0, 5)
+      .slice(0, 3)
       .map((soin) => ({ soin, cheval: cavalerie.find((c) => c.id === soin.cheval_id) }))
       .filter((l) => l.cheval)
   }, [soins, cavalerie])
@@ -368,9 +368,9 @@ export default function ClubAccueil() {
                         {type.libelle} · {ligne.cheval.nom}
                       </div>
                       <div className="meta">
-                        {formatDate(ligne.echeance, { court: true })} ·{' '}
-                        {ligne.planifie ? 'prévu ' : ''}
-                        {joursRelatifs(ligne.jours)}
+                        {ligne.jours <= 7
+                          ? `${ligne.planifie ? 'prévu ' : ''}${joursRelatifs(ligne.jours)}`
+                          : `${ligne.planifie ? 'prévu le ' : ''}${formatDate(ligne.echeance, { court: true })}`}
                       </div>
                     </Link>
                     {/* Le maréchal passé en avance : la tâche se pointe
@@ -418,13 +418,10 @@ export default function ClubAccueil() {
                       <div className="titre" style={{ fontSize: '0.88rem' }}>
                         {type.libelle} · {ligne.cheval.nom}
                       </div>
-                      <div className="meta">
-                        fait le {formatDate(ligne.soin.date_realisee, { court: true })}
-                        {ligne.soin.prochaine_echeance
-                          ? ` · prochain le ${formatDate(ligne.soin.prochaine_echeance, { court: true })}`
-                          : ''}
-                      </div>
                     </div>
+                    <span className="doux" style={{ fontSize: '0.82rem' }}>
+                      {formatDate(ligne.soin.date_realisee, { court: true })}
+                    </span>
                     <span className="fleche">›</span>
                   </Link>
                 )
