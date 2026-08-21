@@ -382,7 +382,11 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
   // c'est le geste attendu quand on note « vermifuge à donner » : la
   // date choisie devient l'échéance, et la tâche sonne ce jour-là sur
   // l'accueil de l'écurie (aujourd'hui par défaut).
-  const [mode, setMode] = useState('fait')
+  // L'écurie planifie d'abord (« qui a les soins à donner ? ») : la
+  // feuille s'y ouvre en « À faire » — type + date, et la tâche est sur
+  // l'accueil, aujourd'hui compris. Le cavalier tient un carnet : chez
+  // lui, « Déjà fait » reste le premier geste.
+  const [mode, setMode] = useState(estClub ? 'afaire' : 'fait')
   const [dateAFaire, setDateAFaire] = useState(() => cleJour(new Date()))
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -392,7 +396,7 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
     setEtaitOuverte(ouverte)
     if (ouverte) {
       setValeurs(valeursParDefaut())
-      setMode('fait')
+      setMode(estClub ? 'afaire' : 'fait')
       setDateAFaire(cleJour(new Date()))
       setErreur('')
     }
@@ -484,20 +488,16 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
         <Erreur>{erreur}</Erreur>
 
         <div className="choix-puces" role="group" aria-label="Fait ou à faire" style={{ marginBottom: 14 }}>
-          <button
-            type="button"
-            className={mode === 'fait' ? 'actif' : undefined}
-            onClick={() => setMode('fait')}
-          >
-            Déjà fait ✓
-          </button>
-          <button
-            type="button"
-            className={mode === 'afaire' ? 'actif' : undefined}
-            onClick={() => setMode('afaire')}
-          >
-            À faire
-          </button>
+          {(estClub ? ['afaire', 'fait'] : ['fait', 'afaire']).map((cle) => (
+            <button
+              key={cle}
+              type="button"
+              className={mode === cle ? 'actif' : undefined}
+              onClick={() => setMode(cle)}
+            >
+              {cle === 'fait' ? 'Déjà fait ✓' : 'À faire'}
+            </button>
+          ))}
         </div>
 
         <Champ label="Type de soin">
