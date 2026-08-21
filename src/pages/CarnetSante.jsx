@@ -144,7 +144,10 @@ export default function CarnetSante() {
                     <tbody>
                       {entrees.map((soin) => (
                         <tr key={soin.id}>
-                          <td>{formatDate(soin.date_realisee, { court: true })}</td>
+                          <td>
+                            {formatDate(soin.date_realisee, { court: true })}
+                            {soin.prive ? ' (privé)' : ''}
+                          </td>
                           <td>{[soin.praticien, soin.produit].filter(Boolean).join(' · ') || '—'}</td>
                           <td>
                             {soin.prochaine_echeance
