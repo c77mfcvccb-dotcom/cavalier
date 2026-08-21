@@ -13,7 +13,7 @@ import { Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import LigneEvenement from '../composants/LigneEvenement'
 import SelecteurPeriode, { fenetrePeriode } from '../composants/SelecteurPeriode'
-import { DISCIPLINES_COURS, MOTIFS_INDISPO } from '../lib/constantes'
+import { DISCIPLINES_COURS } from '../lib/constantes'
 import { cleJour, formatDate, formatHeure } from '../lib/format'
 
 /**

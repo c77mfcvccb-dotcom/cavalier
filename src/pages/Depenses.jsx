@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
 import { chargerChevauxVisibles } from '../lib/requetes'

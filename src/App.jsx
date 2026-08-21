@@ -113,7 +113,9 @@ export default function App() {
         <Route path="/connexion" element={<Connexion />} />
         <Route path="/inscription" element={<Inscription />} />
         <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
-          <Route path="*" element={<Navigate to="/connexion" replace />} />
+          {/* Une adresse inconnue sans session mène à la vitrine, qui
+              présente le produit — la connexion n'est qu'à un appui. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     )

@@ -10,7 +10,6 @@ import {
 } from '../lib/requetes'
 import { Chargement, Erreur, EtatVide, PhotoCheval } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
-import { MOTIFS_INDISPO } from '../lib/constantes'
 import { texteAge } from '../lib/format'
 
 export default function ClubCavalerie() {
