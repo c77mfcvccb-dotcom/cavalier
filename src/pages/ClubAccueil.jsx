@@ -74,7 +74,7 @@ export default function ClubAccueil() {
     const [lignes, periodicites] = await Promise.all([
       supabase
         .from('v_soins')
-        .select('id, cheval_id, type, date_realisee, prochaine_echeance, cree_le')
+        .select('id, cheval_id, type, date_realisee, prochaine_echeance, cree_le, notes')
         .in('cheval_id', ids),
       supabase
         .from('rappels_soins')
@@ -132,10 +132,24 @@ export default function ClubAccueil() {
     return [...parCle.values()]
   }, [soins])
 
+  /**
+   * Un soin COCHÉ aujourd'hui : réalisé ce jour, plus rien à faire avant
+   * demain. Les lignes « À faire » posées depuis une fiche portent aussi
+   * la date du jour (celle de la saisie) : leur marqueur en notes les
+   * garde du côté des tâches — programmer n'est pas cocher.
+   */
+  const estFaite = useCallback((soin, jour) =>
+    soin.date_realisee === jour &&
+    (!soin.prochaine_echeance || soin.prochaine_echeance > jour) &&
+    !(soin.notes || '').startsWith('À faire'), [])
+
   const echeances = useMemo(() => {
     const aujourdhui = cleJour(new Date())
     const lignes = []
     for (const soin of actifs) {
+      // Coché aujourd'hui : la ligne reste dans les tâches, barrée — elle
+      // est construite plus bas, pas ici.
+      if (estFaite(soin, aujourdhui)) continue
       // « Ferrure le 22 août » saisie hier pour demain : la date du soin
       // est dans le futur, c'est donc un soin PRÉVU — la tâche porte SA
       // date, pas l'échéance suivante calculée derrière.
@@ -150,31 +164,61 @@ export default function ClubAccueil() {
       lignes.push({ soin, cheval, jours, echeance, planifie })
     }
     return lignes.sort((a, b) => a.jours - b.jours)
-  }, [actifs, cavalerie])
+  }, [actifs, cavalerie, estFaite])
 
-  // Ce qui a été coché aujourd'hui reste affiché, barré, jusqu'à demain —
-  // le moniteur voit ce qui est réglé, et peut décocher une erreur.
-  const faitsDuJour = useMemo(() => {
+  // Ce qui a été coché aujourd'hui reste À SA PLACE dans la liste, barré,
+  // jusqu'à demain — le moniteur voit ce qui est réglé et décoche une
+  // erreur d'un appui. La place d'avant se retrouve par l'échéance du
+  // soin précédent du même type : une tâche en retard cochée reste
+  // barrée dans « En retard ».
+  const faites = useMemo(() => {
     const aujourdhui = cleJour(new Date())
-    return actifs
-      .filter((soin) => soin.date_realisee === aujourdhui)
-      .filter((soin) => !chevalFiltre || soin.cheval_id === chevalFiltre)
-      .map((soin) => ({ soin, cheval: cavalerie.find((c) => c.id === soin.cheval_id) }))
-      .filter((l) => l.cheval)
-  }, [actifs, cavalerie, chevalFiltre])
+    const lignes = []
+    for (const soin of actifs) {
+      if (!estFaite(soin, aujourdhui)) continue
+      const cheval = cavalerie.find((c) => c.id === soin.cheval_id)
+      if (!cheval) continue
+      const avant = soins.reduce((tenu, s) => {
+        if (s.id === soin.id || s.cheval_id !== soin.cheval_id || s.type !== soin.type) return tenu
+        if (
+          !tenu ||
+          s.date_realisee > tenu.date_realisee ||
+          (s.date_realisee === tenu.date_realisee && (s.cree_le || '') > (tenu.cree_le || ''))
+        ) return s
+        return tenu
+      }, null)
+      const echeanceAvant = avant
+        ? (avant.date_realisee > aujourdhui ? avant.date_realisee : avant.prochaine_echeance)
+        : null
+      const jours = echeanceAvant
+        ? Math.round((new Date(echeanceAvant) - new Date(aujourdhui)) / 86400000)
+        : 0
+      lignes.push({ soin, cheval, jours, echeance: echeanceAvant || aujourdhui, planifie: false, faite: true })
+    }
+    return lignes
+  }, [actifs, soins, cavalerie, estFaite])
 
   const limite = HORIZONS[horizon].limite
   const filtrees = chevalFiltre
     ? echeances.filter((l) => l.cheval.id === chevalFiltre)
     : echeances
   const taches = filtrees.filter((l) => l.jours <= limite)
+  // Les lignes cochées rejoignent la liste à leur place d'avant. Celles
+  // cochées depuis « Plus tard » se ramènent dans l'horizon visible : une
+  // tâche réglée se voit, quel que soit le réglage.
+  const faitesVisibles = (chevalFiltre ? faites.filter((l) => l.cheval.id === chevalFiltre) : faites)
+    .map((l) => ({ ...l, jours: Math.min(l.jours, limite) }))
+  const lignesListe = [...taches, ...faitesVisibles].sort((a, b) => a.jours - b.jours)
   // Trois groupes au lieu d'un badge par ligne : un moniteur entre deux
-  // cours lit un titre de groupe, pas trois redondances par tâche.
+  // cours lit un titre de groupe, pas trois redondances par tâche. Le
+  // compteur de chaque groupe ne compte que ce qui reste à faire.
   const groupes = [
-    { cle: 'retard', titre: 'En retard', couleur: 'var(--rouge)', fond: '#fdf0ee', lignes: taches.filter((l) => l.jours < 0) },
-    { cle: 'jour', titre: "Aujourd'hui", couleur: 'var(--orange)', fond: '#fdf6ea', lignes: taches.filter((l) => l.jours === 0) },
-    { cle: 'avenir', titre: 'À venir', couleur: '#c9a227', fond: '#fbf7e6', lignes: taches.filter((l) => l.jours > 0) },
-  ].filter((g) => g.lignes.length > 0)
+    { cle: 'retard', titre: 'En retard', couleur: 'var(--rouge)', fond: '#fdf0ee', lignes: lignesListe.filter((l) => l.jours < 0) },
+    { cle: 'jour', titre: "Aujourd'hui", couleur: 'var(--orange)', fond: '#fdf6ea', lignes: lignesListe.filter((l) => l.jours === 0) },
+    { cle: 'avenir', titre: 'À venir', couleur: '#c9a227', fond: '#fbf7e6', lignes: lignesListe.filter((l) => l.jours > 0) },
+  ]
+    .map((g) => ({ ...g, restantes: g.lignes.filter((l) => !l.faite).length }))
+    .filter((g) => g.lignes.length > 0)
   // Au-delà de l'horizon choisi : la saisie d'un soin pré-remplit son
   // échéance à 7 semaines (ferrure), 4 mois (vermifuge), un an (vaccin) —
   // plus loin que TOUS les horizons. Sans cette section, un soin tout
@@ -303,8 +347,8 @@ export default function ClubAccueil() {
             </div>
           )}
 
-          {taches.length === 0 ? (
-            <div className="carte centre fete">
+          {taches.length === 0 && (
+            <div className="carte centre fete" style={{ marginBottom: groupes.length ? 12 : 0 }}>
               <p className="gras">Tout est à jour 🎉</p>
               <p className="doux" style={{ marginTop: 6 }}>
                 {chevalFiltre
@@ -312,83 +356,55 @@ export default function ClubAccueil() {
                   : HORIZONS[horizon].vide}
               </p>
             </div>
-          ) : (
-            groupes.map((groupe) => (
-              <div key={groupe.cle} style={{ marginBottom: 12 }}>
-                <div className="groupe-taches" style={{ color: groupe.couleur }}>
-                  {groupe.titre}
-                  <span className="compte" style={{ background: groupe.couleur }}>{groupe.lignes.length}</span>
-                </div>
-                <div className="liste">
-                  {groupe.lignes.map((ligne) => {
-                    const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
-                    const cle = `${ligne.cheval.id}:${ligne.soin.type}`
-                    return (
-                      <div
-                        key={ligne.soin.id}
-                        className="element"
-                        style={{ background: groupe.fond }}
-                      >
-                        <span
-                          className="bordure-couleur"
-                          style={{ background: groupe.couleur }}
-                        />
-                        <div className="corps">
-                          <div className="titre">
-                            {type.libelle} · {ligne.cheval.nom}
-                          </div>
-                          {(ligne.jours !== 0 || ligne.planifie) && (
-                            <div className="meta">
-                              {ligne.planifie ? 'prévu ' : ''}
-                              {joursRelatifs(ligne.jours)}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          className="bouton-fait"
-                          disabled={envoiCle === cle}
-                          onClick={() => marquerFait(ligne)}
-                          aria-label={`${type.libelle} de ${ligne.cheval.nom} fait`}
-                        >
-                          {envoiCle === cle ? '…' : 'Fait ✓'}
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))
           )}
-
-          {faitsDuJour.length > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <div className="groupe-taches" style={{ color: 'var(--vert)' }}>
-                Fait aujourd'hui
-                <span className="compte" style={{ background: 'var(--vert)' }}>{faitsDuJour.length}</span>
+          {groupes.map((groupe) => (
+            <div key={groupe.cle} style={{ marginBottom: 12 }}>
+              <div className="groupe-taches" style={{ color: groupe.couleur }}>
+                {groupe.titre}
+                {groupe.restantes > 0 && (
+                  <span className="compte" style={{ background: groupe.couleur }}>{groupe.restantes}</span>
+                )}
               </div>
               <div className="liste">
-                {faitsDuJour.map((ligne) => {
+                {groupe.lignes.map((ligne) => {
                   const type = TYPES_SOIN[ligne.soin.type] || TYPES_SOIN.autre
                   const cle = `${ligne.cheval.id}:${ligne.soin.type}`
                   return (
                     <div
-                      key={`fait-${ligne.soin.id}`}
+                      key={ligne.soin.id}
                       className="element"
-                      style={{ background: '#eef6ef' }}
+                      style={{ background: ligne.faite ? '#eef6ef' : groupe.fond }}
                     >
-                      <span className="bordure-couleur" style={{ background: 'var(--vert-clair)' }} />
+                      <span
+                        className="bordure-couleur"
+                        style={{ background: ligne.faite ? 'var(--vert-clair)' : groupe.couleur }}
+                      />
                       <div className="corps">
-                        <div className="titre" style={{ textDecoration: 'line-through', opacity: 0.75 }}>
+                        <div
+                          className="titre"
+                          style={ligne.faite ? { textDecoration: 'line-through', opacity: 0.75 } : undefined}
+                        >
                           {type.libelle} · {ligne.cheval.nom}
                         </div>
+                        {!ligne.faite && (ligne.jours !== 0 || ligne.planifie) && (
+                          <div className="meta">
+                            {ligne.planifie ? 'prévu ' : ''}
+                            {joursRelatifs(ligne.jours)}
+                          </div>
+                        )}
                       </div>
-                      {/* Le même bouton, plein : un appui décoche — le soin
-                          saisi par erreur s'efface, la tâche renaît. */}
+                      {/* Une seule case : vide elle coche (le soin part au
+                          carnet), pleine elle décoche (le soin coché par
+                          erreur s'efface, la tâche revient). */}
                       <button
-                        className="bouton-fait coche"
+                        className={ligne.faite ? 'bouton-fait coche' : 'bouton-fait'}
                         disabled={envoiCle === cle}
-                        onClick={() => decocherFait(ligne)}
-                        aria-label={`Annuler ${type.libelle} de ${ligne.cheval.nom}`}
+                        onClick={() => (ligne.faite ? decocherFait(ligne) : marquerFait(ligne))}
+                        aria-label={
+                          ligne.faite
+                            ? `Annuler ${type.libelle} de ${ligne.cheval.nom}`
+                            : `${type.libelle} de ${ligne.cheval.nom} fait`
+                        }
                       >
                         {envoiCle === cle ? '…' : 'Fait ✓'}
                       </button>
@@ -397,12 +413,12 @@ export default function ClubAccueil() {
                 })}
               </div>
             </div>
-          )}
+          ))}
 
           <p className="aide" style={{ marginTop: 10 }}>
             « Fait » ajoute le soin au carnet du cheval et programme la
-            prochaine échéance. La tâche cochée reste ici jusqu'à demain —
-            un appui la décoche.
+            prochaine échéance. La tâche cochée reste à sa place, barrée,
+            jusqu'à demain — un appui la décoche.
           </p>
         </section>
 
