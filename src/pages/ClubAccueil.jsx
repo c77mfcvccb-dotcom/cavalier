@@ -130,13 +130,18 @@ export default function ClubAccueil() {
     const aujourdhui = cleJour(new Date())
     const lignes = []
     for (const soin of parCle.values()) {
-      if (!soin.prochaine_echeance) continue
+      // « Ferrure le 22 août » saisie hier pour demain : la date du soin
+      // est dans le futur, c'est donc un soin PRÉVU — la tâche porte SA
+      // date, pas l'échéance suivante calculée derrière.
+      const planifie = soin.date_realisee > aujourdhui
+      const echeance = planifie ? soin.date_realisee : soin.prochaine_echeance
+      if (!echeance) continue
       const cheval = cavalerie.find((c) => c.id === soin.cheval_id)
       if (!cheval) continue
       const jours = Math.round(
-        (new Date(soin.prochaine_echeance) - new Date(aujourdhui)) / 86400000
+        (new Date(echeance) - new Date(aujourdhui)) / 86400000
       )
-      lignes.push({ soin, cheval, jours })
+      lignes.push({ soin, cheval, jours, echeance, planifie })
     }
     return lignes.sort((a, b) => a.jours - b.jours)
   }, [soins, cavalerie])
@@ -189,13 +194,25 @@ export default function ClubAccueil() {
     setErreur('')
     setEnvoiCle(`${ligne.cheval.id}:${ligne.soin.type}`)
     const intervalle = intervallePour(ligne.cheval.id, ligne.soin.type)
-    const { error } = await supabase.from('soins').insert({
-      cheval_id: ligne.cheval.id,
-      type: ligne.soin.type,
+    const fait = {
       date_realisee: cleJour(new Date()),
       prochaine_echeance: intervalle ? ajouterJours(new Date(), intervalle) : null,
-      cree_par: profil.id,
-    })
+    }
+    let error = null
+    if (ligne.planifie) {
+      // La ligne prévue devient le soin fait : pas de doublon au carnet,
+      // et un soin fait EN AVANCE éteint la tâche au lieu de la laisser.
+      ;({ error } = await supabase.from('soins').update(fait).eq('id', ligne.soin.id))
+      // Ligne posée par quelqu'un d'autre : la modification est refusée —
+      // on enregistre alors un soin à son propre nom, comme d'habitude.
+      if (error) error = null, ({ error } = await supabase.from('soins').insert({
+        cheval_id: ligne.cheval.id, type: ligne.soin.type, cree_par: profil.id, ...fait,
+      }))
+    } else {
+      ;({ error } = await supabase.from('soins').insert({
+        cheval_id: ligne.cheval.id, type: ligne.soin.type, cree_par: profil.id, ...fait,
+      }))
+    }
     setEnvoiCle(null)
 
     if (error) {
@@ -265,8 +282,11 @@ export default function ClubAccueil() {
                           <div className="titre">
                             {type.libelle} · {ligne.cheval.nom}
                           </div>
-                          {ligne.jours !== 0 && (
-                            <div className="meta">{joursRelatifs(ligne.jours)}</div>
+                          {(ligne.jours !== 0 || ligne.planifie) && (
+                            <div className="meta">
+                              {ligne.planifie ? 'prévu ' : ''}
+                              {joursRelatifs(ligne.jours)}
+                            </div>
                           )}
                         </div>
                         <button
@@ -348,7 +368,8 @@ export default function ClubAccueil() {
                         {type.libelle} · {ligne.cheval.nom}
                       </div>
                       <div className="meta">
-                        {formatDate(ligne.soin.prochaine_echeance, { court: true })} ·{' '}
+                        {formatDate(ligne.echeance, { court: true })} ·{' '}
+                        {ligne.planifie ? 'prévu ' : ''}
                         {joursRelatifs(ligne.jours)}
                       </div>
                     </Link>

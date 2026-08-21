@@ -81,16 +81,23 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
     recharger()
   }, [recharger])
 
-  // Échéance active = le soin le plus récent de chaque type qui en porte une.
+  // Échéance active = le soin le plus récent de chaque type. S'il est daté
+  // dans le futur, c'est un soin PRÉVU : sa date est l'échéance — même
+  // lecture que les tâches de l'accueil de l'écurie.
   const echeances = useMemo(() => {
     const parType = new Map()
     for (const soin of soins) {
-      if (!soin.prochaine_echeance) continue
       if (!parType.has(soin.type)) parType.set(soin.type, soin)
     }
-    return [...parType.values()].sort(
-      (a, b) => new Date(a.prochaine_echeance) - new Date(b.prochaine_echeance)
-    )
+    const aujourdhui = cleJour(new Date())
+    return [...parType.values()]
+      .map((soin) => {
+        const planifie = soin.date_realisee > aujourdhui
+        const echeance = planifie ? soin.date_realisee : soin.prochaine_echeance
+        return echeance ? { soin, echeance, planifie } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(a.echeance) - new Date(b.echeance))
   }, [soins])
 
   // Historique regroupé par type de soin, du plus récent au plus ancien
@@ -180,18 +187,21 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
             <h2>Prochaines échéances</h2>
           </div>
           <div className="liste">
-            {echeances.map((soin) => {
+            {echeances.map(({ soin, echeance, planifie }) => {
               const type = TYPES_SOIN[soin.type] || TYPES_SOIN.autre
-              const statut = statutEcheance(soin.prochaine_echeance)
+              const statut = statutEcheance(echeance)
               // Repli, comme partout ailleurs : un libellé manquant doit
               // dégrader l'affichage, pas effacer l'écran.
-              const libelle = STATUTS_ECHEANCE[statut.cle] || STATUTS_ECHEANCE.ok
+              const libelle = planifie
+                ? { classe: 'urgent', libelle: 'Prévu' }
+                : STATUTS_ECHEANCE[statut.cle] || STATUTS_ECHEANCE.ok
               return (
                 <div key={`echeance-${soin.id}`} className="element">
                   <div className="corps">
                     <div className="titre">{type.libelle}</div>
                     <div className="meta">
-                      {formatDate(soin.prochaine_echeance, { court: true })} —{' '}
+                      {formatDate(echeance, { court: true })} —{' '}
+                      {planifie ? 'prévu ' : ''}
                       {joursRelatifs(statut.jours)}
                     </div>
                   </div>
@@ -533,7 +543,14 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
 
         {mode === 'fait' && (
         <div className="ligne-champs">
-          <Champ label="Date">
+          <Champ
+            label="Date"
+            aide={
+              valeurs.date_realisee > cleJour(new Date())
+                ? 'Date future : ce soin comptera comme À FAIRE ce jour-là sur l\'accueil.'
+                : undefined
+            }
+          >
             <input
               type="date"
               value={valeurs.date_realisee}
