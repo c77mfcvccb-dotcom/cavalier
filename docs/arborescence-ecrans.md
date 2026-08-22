@@ -204,7 +204,13 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       repos » sur le cheval filtré). Deux natures de ligne
                       seulement : créneaux de monte, et passages en cours
                       (cheval attribué). Les échéances de soins vivent sur
-                      l'Accueil et les fiches, les cours dans leur onglet
+                      l'Accueil et les fiches, les cours dans leur onglet.
+                      Bascule LISTE / TABLEAU : le tableau affiche la
+                      semaine comme le tableau blanc de la sellerie —
+                      chevaux de CLUB en lignes (pas les pensions), jours
+                      en colonnes, colonne Soins au bout (échéances de la
+                      semaine, retards compris), cases Repos teintées,
+                      défilement horizontal avec colonne des noms collante
 
 /cours                COURS (onglet dédié) — les cours de la JOURNÉE par
                       défaut, commutables Semaine ou Mois, filtrables par

@@ -1433,3 +1433,80 @@ button {
   font-weight: 600;
 }
 .suggestion-echeance:active { background: var(--sable); }
+
+/* ── Planning en tableau : le tableau blanc de la sellerie ──
+   Chevaux en lignes, jours en colonnes, soins au bout. Plus large que
+   l'écran : la grille défile horizontalement, la colonne des noms reste
+   collée à gauche pour toujours savoir de quel cheval on lit la ligne. */
+.tableau-planning {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--bordure);
+  border-radius: 14px;
+  background: var(--carte);
+}
+.tableau-planning table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 720px;
+  width: 100%;
+  font-size: 0.78rem;
+}
+.tableau-planning th,
+.tableau-planning td {
+  border-bottom: 1px solid var(--bordure);
+  border-right: 1px solid var(--bordure);
+  padding: 7px 8px;
+  vertical-align: top;
+  text-align: left;
+  min-width: 82px;
+}
+.tableau-planning th:last-child,
+.tableau-planning td:last-child { border-right: none; min-width: 116px; }
+.tableau-planning tbody tr:last-child th,
+.tableau-planning tbody tr:last-child td { border-bottom: none; }
+.tableau-planning thead th {
+  background: var(--vert);
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  font-size: 0.76rem;
+}
+.tableau-planning thead th.jour-actuel { background: var(--vert-clair); }
+.tableau-planning th:first-child,
+.tableau-planning td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--carte);
+  min-width: 92px;
+  max-width: 110px;
+  box-shadow: 2px 0 0 var(--bordure);
+}
+.tableau-planning thead th:first-child { background: var(--vert); z-index: 2; }
+.tableau-planning tbody th a {
+  color: var(--texte);
+  font-weight: 700;
+  text-decoration: none;
+}
+.tableau-planning td.jour-actuel { background: color-mix(in srgb, var(--sable) 45%, var(--carte)); }
+.tableau-planning td.repos { background: #fdf0ee; }
+.tableau-planning .entree {
+  display: block;
+  white-space: nowrap;
+  margin-bottom: 3px;
+  line-height: 1.35;
+}
+.tableau-planning .entree:last-child { margin-bottom: 0; }
+.tableau-planning .point {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: 1px;
+}
+.tableau-planning .repos-texte { color: var(--rouge); font-weight: 600; }
+.tableau-planning .soin-retard { color: var(--rouge); font-weight: 700; }
+.tableau-planning .quand { color: var(--texte-doux); font-weight: 400; }
+.tableau-planning .soin-retard .quand { color: var(--rouge); }
