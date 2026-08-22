@@ -14,7 +14,7 @@ import { Entete } from '../composants/Mise'
 import SelecteurPeriode, { decalerAncre, fenetrePeriode } from '../composants/SelecteurPeriode'
 import { prenom } from '../lib/couleurs'
 import { DISCIPLINES_COURS, MOTIFS_INDISPO } from '../lib/constantes'
-import { cleJour, formatDate, formatHeure } from '../lib/format'
+import { ajouterJours, cleJour, formatDate, formatHeure } from '../lib/format'
 
 /**
  * Les triggers de la migration 0017 répondent par des codes : c'est ici
@@ -393,6 +393,10 @@ const DUREES = [
   { minutes: 120, libelle: '2 h' },
 ]
 
+// Un an de cours d'un coup, au plus — au-delà, mieux vaut une seconde
+// saisie que soixante lignes posées par erreur d'un tapotement.
+const MAX_OCCURRENCES = 52
+
 function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
   const [date, setDate] = useState(() => cleJour(new Date()))
   const [heure, setHeure] = useState('18:00')
@@ -402,6 +406,11 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
   const [places, setPlaces] = useState(6)
   const [moniteur, setMoniteur] = useState('')
   const [notes, setNotes] = useState('')
+  // Le cours du mercredi 14h qui revient toutes les semaines : plutôt que
+  // de le ressaisir chaque fois, on pose sa date de fin et l'app pose
+  // une ligne par semaine jusque-là, au même jour, à la même heure.
+  const [recurrent, setRecurrent] = useState(false)
+  const [finRecurrence, setFinRecurrence] = useState('')
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
 
@@ -413,8 +422,21 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
     setEtaitOuverte(ouverte)
     if (ouverte) {
       setDate(cleJour(new Date()))
+      setRecurrent(false)
+      setFinRecurrence('')
       setErreur('')
     }
+  }
+
+  // Les dates de chaque occurrence — la première, puis une par semaine
+  // jusqu'à la date de fin choisie (incluse).
+  const occurrences = []
+  if (recurrent && finRecurrence > date) {
+    for (let d = date; d <= finRecurrence && occurrences.length < MAX_OCCURRENCES; d = ajouterJours(d, 7)) {
+      occurrences.push(d)
+    }
+  } else {
+    occurrences.push(date)
   }
 
   async function enregistrer(evenement) {
@@ -422,18 +444,21 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
     setErreur('')
     setEnvoi(true)
 
-    const debut = new Date(`${date}T${heure}`)
-    const fin = new Date(debut.getTime() + duree * 60000)
-    const { error } = await supabase.from('cours').insert({
-      club_id: clubId,
-      debut: debut.toISOString(),
-      fin: fin.toISOString(),
-      discipline,
-      niveau: niveau.trim() || null,
-      places,
-      moniteur: moniteur.trim() || null,
-      notes: notes.trim() || null,
+    const lignes = occurrences.map((jour) => {
+      const debut = new Date(`${jour}T${heure}`)
+      const fin = new Date(debut.getTime() + duree * 60000)
+      return {
+        club_id: clubId,
+        debut: debut.toISOString(),
+        fin: fin.toISOString(),
+        discipline,
+        niveau: niveau.trim() || null,
+        places,
+        moniteur: moniteur.trim() || null,
+        notes: notes.trim() || null,
+      }
     })
+    const { error } = await supabase.from('cours').insert(lignes)
     setEnvoi(false)
 
     if (error) setErreur(traduireErreur(error.message))
@@ -468,6 +493,35 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
             <input type="time" value={heure} onChange={(e) => setHeure(e.target.value)} required />
           </Champ>
         </div>
+
+        <div className="champ">
+          <label className="interrupteur">
+            <input
+              type="checkbox"
+              checked={recurrent}
+              onChange={(e) => setRecurrent(e.target.checked)}
+            />
+            <span>Se répète chaque semaine, même jour, même heure</span>
+          </label>
+        </div>
+
+        {recurrent && (
+          <Champ
+            label="Jusqu'au"
+            aide={
+              finRecurrence > date
+                ? `${occurrences.length} cours seront créés${occurrences.length === MAX_OCCURRENCES ? ` (limite : ${MAX_OCCURRENCES})` : ''}.`
+                : 'Choisissez une date après celle du premier cours.'
+            }
+          >
+            <input
+              type="date"
+              value={finRecurrence}
+              min={date}
+              onChange={(e) => setFinRecurrence(e.target.value)}
+            />
+          </Champ>
+        )}
 
         <div className="ligne-champs">
           <Champ label="Durée">
@@ -511,7 +565,11 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
         </Champ>
 
         <button className="bouton pleine-largeur" disabled={envoi}>
-          {envoi ? 'Création…' : 'Créer le cours'}
+          {envoi
+            ? 'Création…'
+            : occurrences.length > 1
+              ? `Créer les ${occurrences.length} cours`
+              : 'Créer le cours'}
         </button>
       </form>
     </Feuille>

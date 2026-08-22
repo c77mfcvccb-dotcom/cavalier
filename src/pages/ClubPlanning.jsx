@@ -43,7 +43,8 @@ export default function ClubPlanning() {
   // « Liste » déroule les journées ; « Tableau » affiche la semaine comme
   // le tableau blanc de la sellerie : les chevaux en lignes, les jours en
   // colonnes, les soins au bout — toute la cavalerie d'un coup d'œil.
-  const [vue, setVue] = useState('liste')
+  // C'est la vue d'office : c'est elle qui remplace le tableau physique.
+  const [vue, setVue] = useState('tableau')
   const [ancre, setAncre] = useState(() => new Date())
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
