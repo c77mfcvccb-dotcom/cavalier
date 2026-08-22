@@ -1129,6 +1129,15 @@ button {
   pointer-events: none;
 }
 .paiement-express .separateur { margin: 14px 0 0; }
+/* Le SDK RevenueCat pose le bouton Apple Pay / Google Pay DIRECTEMENT dans
+   cette zone, sans isolation (pas de Shadow DOM) : notre reset global
+   `button { border: none; background: none; … }` s'appliquait donc aussi
+   à lui, effaçant le fond noir et le contour propres à Apple Pay — le
+   bouton restait cliquable mais devenait invisible ou déformé, un bug qui
+   ne se voit que là où Apple Pay se dessine, c'est-à-dire Safari sur un
+   appareil Apple. On annule notre reset pour tout bouton posé ici, afin
+   que le SDK garde la main sur son propre rendu. */
+.paiement-express button { all: revert; }
 
 .code-promo { margin-top: 16px; text-align: center; }
 
