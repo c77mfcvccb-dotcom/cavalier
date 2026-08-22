@@ -221,9 +221,11 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       geste) ; création par le
                       bouton + (capacité 1-30, discipline, niveau, coach),
                       RÉCURRENCE hebdomadaire optionnelle (« Se répète
-                      chaque semaine » + date de fin → une ligne par
-                      semaine, 52 occurrences maximum, même serie_id,
-                      migration 0026), cartes par jour avec inscrits/attente
+                      chaque semaine » + date de fin OBLIGATOIRE → une ligne
+                      par semaine, 52 occurrences maximum, même serie_id,
+                      migration 0026 ; la création est bloquée sans date de
+                      fin — sinon un seul cours se crée en silence, sans
+                      lien de série), cartes par jour avec inscrits/attente
                       et alerte « N sans cheval ». Un appui ouvre la
                       feuille : inscrits et liste d'attente, inscription
                       d'office, pointage présent/absent, l'ATTRIBUTION des

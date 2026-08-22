@@ -545,6 +545,14 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
   async function enregistrer(evenement) {
     evenement.preventDefault()
     setErreur('')
+
+    // « Se répète » coché sans date de fin valide ne créait qu'UN cours,
+    // sans le dire — l'appui sur « Se répète » avait alors l'air d'avoir
+    // été ignoré. On bloque plutôt que de laisser croire à une série.
+    if (recurrent && !(finRecurrence > date)) {
+      setErreur('Choisissez la date de fin de la répétition avant de créer le cours.')
+      return
+    }
     setEnvoi(true)
 
     // Toutes les occurrences d'une même récurrence partagent un serie_id :
