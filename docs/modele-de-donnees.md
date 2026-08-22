@@ -1,8 +1,8 @@
 # Modèle de données — Licol V1
 
 Base Postgres hébergée par Supabase, Row Level Security activée sur **toutes**
-les tables. L'authentification s'appuie sur `auth.users` (email + mot de passe,
-Google en option).
+les tables. L'authentification s'appuie sur `auth.users` (email + mot de passe, lien de
+connexion magique, Google en option).
 
 ## Vue d'ensemble
 

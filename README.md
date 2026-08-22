@@ -112,9 +112,11 @@ la seule ouverture de l'écran d'abonnement.
    > cheval échoue avec « new row violates row-level security policy for table
    > "chevaux" ». Exécuter `0002_correctif_rls_chevaux.sql` suffit à la
    > réparer, sans toucher aux données existantes.
-3. Dans **Authentication → Providers**, laissez « Email » activé. Pour la
-   connexion Google (optionnelle), activez le provider Google et renseignez
-   vos identifiants OAuth.
+3. Dans **Authentication → Providers**, laissez « Email » activé — il sert
+   aussi bien au mot de passe qu'au lien de connexion magique (« Recevoir un
+   lien de connexion par email » sur l'écran de connexion), sans réglage
+   supplémentaire. Pour la connexion Google (optionnelle), activez le
+   provider Google et renseignez vos identifiants OAuth.
 4. Pendant le développement, vous pouvez désactiver « Confirm email » dans
    **Authentication → Sign In / Providers** pour vous connecter immédiatement
    après l'inscription.
@@ -138,10 +140,10 @@ L'application est servie sur http://localhost:5173.
    côté client.
 4. Dans Supabase → **Authentication → URL Configuration**, ajoutez l'URL de
    production dans « Site URL » et un motif large dans « Redirect URLs »
-   (`https://licol.app/**`). Sans cela, ni le retour de la connexion Google
-   ni le lien de réinitialisation de mot de passe
-   (`https://licol.app/reinitialisation`) n'aboutissent : Supabase renvoie
-   alors sur la Site URL.
+   (`https://licol.app/**`). Sans cela, ni le retour de la connexion Google,
+   ni le lien de connexion magique, ni le lien de réinitialisation de mot de
+   passe (`https://licol.app/reinitialisation`) n'aboutissent : Supabase
+   renvoie alors sur la Site URL.
 5. Pour l'abonnement, ajoutez `VITE_REVENUECAT_CLE_PUBLIQUE`. Sans cette
    variable, le paywall tourne en bac à sable et l'annonce à l'écran :
    voir [`docs/abonnement.md`](docs/abonnement.md).

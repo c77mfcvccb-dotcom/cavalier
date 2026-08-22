@@ -9,19 +9,23 @@ différente selon le type de compte. Tout est en français.
 /                     VITRINE — la page publique qui présente le produit :
                       cavaliers, écuries, prix (gratuit / premium / écurie),
                       appels à l'inscription. C'est l'adresse à partager
-/connexion            Email + mot de passe, bouton « Continuer avec Google »
+/connexion            Email + mot de passe, bouton « Continuer avec Google »,
+                      et « Recevoir un lien de connexion par email » (magic
+                      link Supabase, sans mot de passe — réservé aux comptes
+                      déjà existants : `shouldCreateUser: false`)
                       └─ lien « Mot de passe oublié ? »
 /inscription          Étape 1 : je suis CAVALIER ou CLUB
                       Étape 2 : nom, email, mot de passe
-                      Étape 3 (cavalier, une fois connecté) : « Rejoindre
-                      une écurie » — le code d'adhésion proposé d'emblée,
-                      ou « Je n'ai pas de code » pour passer. L'écran vit
-                      sur /bienvenue dans l'arbre CONNECTÉ (l'inscription
-                      ouvre une session qui fait basculer le routeur) :
-                      l'inscription pose un drapeau sessionStorage, le
-                      premier passage sur l'accueil y redirige une seule
-                      fois — voie Google comprise, le drapeau survit à
-                      l'aller-retour OAuth
+                      Étape 3 (cavalier, une fois connecté) : deux portes
+                      d'entrée à égalité — « Créer mon premier cheval »
+                      (→ /chevaux/nouveau) ou « J'ai un code d'invitation »
+                      (le code d'adhésion club), ou « Plus tard » pour
+                      passer. L'écran vit sur /bienvenue dans l'arbre
+                      CONNECTÉ (l'inscription ouvre une session qui fait
+                      basculer le routeur) : l'inscription pose un drapeau
+                      sessionStorage, le premier passage sur l'accueil y
+                      redirige une seule fois — voie Google comprise, le
+                      drapeau survit à l'aller-retour OAuth
 /mot-de-passe-oublie  Saisie de l'email → même message de confirmation que
                       l'adresse existe ou non, et rappel que la connexion
                       Google ne demande aucun mot de passe

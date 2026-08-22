@@ -436,8 +436,9 @@ export async function verifier(base) {
       await page.close()
     }
 
-    // ── Bienvenue : le compte cavalier tout neuf se voit proposer le
-    //    code d'écurie avant tout — et peut passer sans en avoir ─────────
+    // ── Bienvenue : le compte cavalier tout neuf se voit proposer deux
+    //    portes d'entrée — créer un cheval ou saisir un code — et peut
+    //    passer sans choisir ────────────────────────────────────────────
     {
       const { page } = await ouvrirPage(navigateur, base)
       await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
@@ -445,17 +446,22 @@ export async function verifier(base) {
       await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(900)
       const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
-      noter('Bienvenue — l\'accueil redirige vers la proposition de code',
-        page.url().includes('/bienvenue') && texte.includes('Rejoindre une écurie') &&
-        texte.includes('Code d\'adhésion'), texte.slice(0, 200))
-      noter('Bienvenue — la sortie sans code est offerte, sans culpabiliser',
-        texte.includes('Je n\'ai pas de code') && texte.includes('plus tard'), texte.slice(0, 300))
+      noter('Bienvenue — l\'accueil redirige vers le choix du premier pas',
+        page.url().includes('/bienvenue') && texte.includes('Créer mon premier cheval') &&
+        texte.includes('J\'ai un code d\'invitation'), texte.slice(0, 200))
       noter('Bienvenue — le drapeau tombe dès l\'affichage (une seule visite)',
         (await page.evaluate(() => sessionStorage.getItem('licol.bienvenue'))) === null)
-      await page.getByRole('button', { name: 'Je n\'ai pas de code' }).click()
+      await page.getByRole('button', { name: 'J\'ai un code d\'invitation' }).click()
+      await page.waitForTimeout(400)
+      const texteCode = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
+      noter('Bienvenue — le choix du code ouvre le formulaire d\'adhésion',
+        texteCode.includes('Code d\'adhésion'), texteCode.slice(0, 200))
+      await page.getByRole('button', { name: '‹ Retour' }).click()
+      await page.waitForTimeout(400)
+      await page.getByRole('button', { name: 'Plus tard' }).click()
       await page.waitForTimeout(800)
       const accueil = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
-      noter('Bienvenue — « Je n\'ai pas de code » mène à l\'accueil',
+      noter('Bienvenue — « Plus tard » mène à l\'accueil sans culpabiliser',
         !page.url().includes('/bienvenue') && accueil.length > 0, page.url())
       await page.close()
     }

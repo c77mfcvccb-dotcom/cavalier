@@ -208,6 +208,25 @@ export function FournisseurAuth({ children }) {
       },
 
       /**
+       * Connexion sans mot de passe, par lien reçu par email. `shouldCreateUser`
+       * à false : cet écran sert à se connecter à un compte existant, la
+       * création passe par /inscription, qui pose le type de compte
+       * (cavalier ou club) avant tout — un compte créé ici en serait dépourvu.
+       */
+      async connexionMagicLien(email) {
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            shouldCreateUser: false,
+            // Doit figurer dans Supabase → Authentication → URL Configuration
+            // → Redirect URLs, sinon le lien du mail retombe sur la Site URL.
+            emailRedirectTo: window.location.origin,
+          },
+        })
+        if (error) throw error
+      },
+
+      /**
        * Supabase répond 200 que l'adresse existe ou non : c'est voulu, et
        * l'écran appelant affiche le même message dans les deux cas. Une
        * erreur remontée ici est donc une panne réelle, jamais un « compte
