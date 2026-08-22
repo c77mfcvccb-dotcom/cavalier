@@ -59,6 +59,12 @@ export default function ClubCours() {
   const [coachFiltre, setCoachFiltre] = useState('')
   const [creationOuverte, setCreationOuverte] = useState(false)
   const [coursOuvertId, setCoursOuvertId] = useState(null)
+  // Le ménage de fin de saison : choisir plusieurs cours (pas forcément
+  // une récurrence détectée) et les supprimer d'un coup — les cours posés
+  // un par un, avant que la récurrence existe, n'ont pas de serie_id.
+  const [selectionActive, setSelectionActive] = useState(false)
+  const [selectionnes, setSelectionnes] = useState(() => new Set())
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false)
 
   const recharger = useCallback(async () => {
     const { debut, fin } = fenetrePeriode(vue === 'tableau' ? 'jour' : periode, ancre)
@@ -155,6 +161,49 @@ export default function ClubCours() {
 
   const coursOuvert = cours.find((c) => c.id === coursOuvertId) || null
 
+  // Tous les cours actuellement affichés (jour, semaine ou mois selon le
+  // réglage) — « Tout sélectionner » porte sur ce qui est à l'écran, pas
+  // sur tout l'historique du club.
+  const idsVisibles = joursRemplis.flatMap(({ cours: c }) => c.map((x) => x.id))
+
+  function basculerSelection(id) {
+    setSelectionnes((s) => {
+      const suivant = new Set(s)
+      if (suivant.has(id)) suivant.delete(id)
+      else suivant.add(id)
+      return suivant
+    })
+  }
+
+  function toutSelectionner() {
+    setSelectionnes((s) =>
+      idsVisibles.every((id) => s.has(id)) ? new Set() : new Set(idsVisibles)
+    )
+  }
+
+  function annulerSelection() {
+    setSelectionActive(false)
+    setSelectionnes(new Set())
+  }
+
+  async function supprimerSelection() {
+    if (selectionnes.size === 0) return
+    if (
+      !window.confirm(
+        `Supprimer ${selectionnes.size} cours et toutes leurs inscriptions ? Cette action est irréversible.`
+      )
+    )
+      return
+    setSuppressionEnCours(true)
+    const { error } = await supabase.from('cours').delete().in('id', [...selectionnes])
+    setSuppressionEnCours(false)
+    if (error) setErreur(traduireErreur(error.message))
+    else {
+      annulerSelection()
+      recharger()
+    }
+  }
+
   return (
     <>
       <Entete titre="Cours" sousTitre="Créer, inscrire, attribuer" />
@@ -178,7 +227,10 @@ export default function ClubCours() {
           <button
             type="button"
             className={vue === 'tableau' ? 'actif' : undefined}
-            onClick={() => setVue('tableau')}
+            onClick={() => {
+              setVue('tableau')
+              annulerSelection()
+            }}
           >
             Tableau
           </button>
@@ -221,6 +273,17 @@ export default function ClubCours() {
                 <option key={nom} value={nom}>Coach : {nom}</option>
               ))}
             </select>
+          </div>
+        )}
+
+        {vue === 'liste' && (
+          <div style={{ textAlign: 'right', marginBottom: 10 }}>
+            <button
+              className="lien"
+              onClick={() => (selectionActive ? annulerSelection() : setSelectionActive(true))}
+            >
+              {selectionActive ? 'Annuler la sélection' : 'Sélectionner plusieurs cours'}
+            </button>
           </div>
         )}
 
@@ -320,14 +383,28 @@ export default function ClubCours() {
                   const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
                   const attente = c.inscriptions.length - inscrits.length
                   const sansCheval = inscrits.filter((i) => !i.cheval_id).length
+                  const coche = selectionnes.has(c.id)
                   return (
                     <button
                       key={c.id}
                       className="element"
                       style={{ textAlign: 'left', width: '100%' }}
-                      onClick={() => setCoursOuvertId(c.id)}
+                      onClick={() =>
+                        selectionActive ? basculerSelection(c.id) : setCoursOuvertId(c.id)
+                      }
                     >
-                      <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
+                      <span
+                        className="bordure-couleur"
+                        style={{ background: coche ? 'var(--vert)' : 'var(--bleu)' }}
+                      />
+                      {selectionActive && (
+                        <span
+                          className={coche ? 'case-choix cochee' : 'case-choix'}
+                          aria-hidden="true"
+                        >
+                          {coche ? '✓' : ''}
+                        </span>
+                      )}
                       <div className="corps">
                         <div className="titre">
                           {formatHeure(c.debut)} · {DISCIPLINES_COURS[c.discipline]?.libelle}
@@ -339,12 +416,12 @@ export default function ClubCours() {
                           {c.moniteur ? ` · Coach : ${c.moniteur}` : ''}
                         </div>
                       </div>
-                      {sansCheval > 0 && (
+                      {!selectionActive && sansCheval > 0 && (
                         <span className="badge urgent">
                           {sansCheval} sans cheval
                         </span>
                       )}
-                      <span className="fleche">›</span>
+                      {!selectionActive && <span className="fleche">›</span>}
                     </button>
                   )
                 })}
@@ -354,13 +431,39 @@ export default function ClubCours() {
         )}
       </main>
 
-      <button
-        className="bouton-flottant"
-        aria-label="Créer un cours"
-        onClick={() => setCreationOuverte(true)}
-      >
-        +
-      </button>
+      {selectionActive ? (
+        <div className="barre-selection">
+          <span className="compte">
+            {selectionnes.size} sélectionné{selectionnes.size > 1 ? 's' : ''}
+          </span>
+          <button
+            type="button"
+            className="bouton fantome petit"
+            onClick={toutSelectionner}
+            disabled={idsVisibles.length === 0}
+          >
+            {idsVisibles.length > 0 && idsVisibles.every((id) => selectionnes.has(id))
+              ? 'Tout désélectionner'
+              : `Tout sélectionner (${idsVisibles.length})`}
+          </button>
+          <button
+            type="button"
+            className="bouton danger petit"
+            onClick={supprimerSelection}
+            disabled={selectionnes.size === 0 || suppressionEnCours}
+          >
+            {suppressionEnCours ? 'Suppression…' : `Supprimer (${selectionnes.size})`}
+          </button>
+        </div>
+      ) : (
+        <button
+          className="bouton-flottant"
+          aria-label="Créer un cours"
+          onClick={() => setCreationOuverte(true)}
+        >
+          +
+        </button>
+      )}
 
       <FeuilleNouveauCours
         clubId={profil.id}

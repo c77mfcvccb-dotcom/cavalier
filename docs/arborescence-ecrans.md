@@ -233,7 +233,13 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       la SUPPRESSION : un cours issu d'une récurrence
                       propose « cette date seulement » (par id) OU « toute
                       la série » (par serie_id, N cours à la fois) ; un
-                      cours seul n'a que « Supprimer ce cours ».
+                      cours seul n'a que « Supprimer ce cours ». Vue Liste
+                      uniquement : « Sélectionner plusieurs cours » fait
+                      apparaître une case à cocher sur chaque carte, une
+                      barre en bas annonce le compte et propose « Tout
+                      sélectionner » et « Supprimer (N) » — le ménage d'une
+                      saison entière, cours posés un par un sans lien de
+                      série compris.
                       Bascule LISTE / TABLEAU : le tableau recrée celui de
                       la sellerie — les créneaux du jour affiché en
                       colonnes (une par cours, triées par heure), la liste

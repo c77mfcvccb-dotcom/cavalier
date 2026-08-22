@@ -576,6 +576,48 @@ button {
 .element .corps { flex: 1; min-width: 0; }
 .element .titre { font-weight: 600; font-size: 0.94rem; }
 .element .meta { font-size: 0.8rem; color: var(--texte-doux); }
+
+/* La case à cocher du ménage groupé (Cours) : vide elle attend un appui,
+   pleine elle marque la sélection. */
+.case-choix {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bordure);
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+}
+.case-choix.cochee { background: var(--vert); border-color: var(--vert); }
+
+/* La barre d'action du ménage groupé, au-dessus de la barre du bas. */
+.barre-selection {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-hauteur) + var(--safe-bas));
+  z-index: 25;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 10px calc(16px + var(--safe-droite)) 10px calc(16px + var(--safe-gauche));
+  background: var(--carte);
+  border-top: 1px solid var(--bordure);
+  box-shadow: 0 -4px 14px rgba(27, 26, 23, 0.08);
+}
+.barre-selection .compte {
+  font-size: 0.85rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: fit-content;
+  white-space: nowrap;
+}
 .element .bordure-couleur { width: 4px; align-self: stretch; border-radius: 999px; flex-shrink: 0; }
 
 /* Le corps d'une ligne de document est un bouton (il ouvre le fichier) :
