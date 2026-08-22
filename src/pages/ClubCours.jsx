@@ -702,6 +702,7 @@ function FeuilleCours({ cours, cavalerie, indisponibilites, chargeJour, onFermer
   const [erreur, setErreur] = useState('')
   const [ajoutOuvert, setAjoutOuvert] = useState(false)
   const [cavaliersClub, setCavaliersClub] = useState([])
+  const [similaires, setSimilaires] = useState([])
 
   // La liste des cavaliers du club — quiconque est lié à un de ses chevaux —
   // ne sert qu'à la feuille d'ajout : chargée à la première ouverture.
@@ -719,6 +720,36 @@ function FeuilleCours({ cours, cavalerie, indisponibilites, chargeJour, onFermer
         setCavaliersClub([...uniques.values()].sort((a, b) => a.nom.localeCompare(b.nom)))
       })
   }, [ajoutOuvert, cavaliersClub.length, cavalerie])
+
+  // Un cours sans serie_id peut quand même être un « faux répétitif » —
+  // posé une semaine après l'autre, à la main, avant que la case
+  // « Se répète » existe (ou sans avoir choisi de date de fin). On le
+  // repère à l'œil : même discipline, même coach, même jour de semaine,
+  // même heure — et on propose de les supprimer ensemble quand même.
+  useEffect(() => {
+    setSimilaires([])
+    if (!cours || cours.serie_id) return
+    const ref = new Date(cours.debut)
+    supabase
+      .from('cours')
+      .select('id, debut, discipline, moniteur, serie_id')
+      .eq('club_id', cours.club_id)
+      .gte('debut', new Date().toISOString())
+      .then(({ data }) => {
+        const memes = (data || []).filter((c) => {
+          if (c.id === cours.id || c.serie_id) return false
+          if (c.discipline !== cours.discipline) return false
+          if ((c.moniteur || '') !== (cours.moniteur || '')) return false
+          const d = new Date(c.debut)
+          return (
+            d.getDay() === ref.getDay() &&
+            d.getHours() === ref.getHours() &&
+            d.getMinutes() === ref.getMinutes()
+          )
+        })
+        setSimilaires(memes)
+      })
+  }, [cours?.id, cours?.serie_id, cours?.club_id, cours?.debut, cours?.discipline, cours?.moniteur])
 
   if (!cours) return null
 
@@ -789,6 +820,25 @@ function FeuilleCours({ cours, cavalerie, indisponibilites, chargeJour, onFermer
     )
       return
     const { error } = await supabase.from('cours').delete().eq('serie_id', cours.serie_id)
+    if (error) setErreur(traduireErreur(error.message))
+    else {
+      onFermer()
+      onChangement()
+    }
+  }
+
+  // Le cas repéré à l'œil : mêmes cours posés à la main, semaine après
+  // semaine, sans case « Se répète » — on les supprime ensemble par id,
+  // faute de serie_id pour les lier.
+  async function supprimerSimilaires() {
+    const ids = [cours.id, ...similaires.map((c) => c.id)]
+    if (
+      !window.confirm(
+        `Supprimer ces ${ids.length} cours (même jour, même heure, chaque semaine) et leurs inscriptions ? Cette action est irréversible.`
+      )
+    )
+      return
+    const { error } = await supabase.from('cours').delete().in('id', ids)
     if (error) setErreur(traduireErreur(error.message))
     else {
       onFermer()
@@ -979,6 +1029,30 @@ function FeuilleCours({ cours, cavalerie, indisponibilites, chargeJour, onFermer
             onClick={supprimerSerie}
           >
             Supprimer toute la série
+          </button>
+        </>
+      ) : similaires.length > 0 ? (
+        <>
+          <p className="aide" style={{ marginTop: 16 }}>
+            {similaires.length} autre{similaires.length > 1 ? 's' : ''} cours identique
+            {similaires.length > 1 ? 's' : ''} trouvé{similaires.length > 1 ? 's' : ''} (même
+            jour de la semaine, même heure) — posés sans « Se répète ».
+          </p>
+          <button
+            className="bouton fantome pleine-largeur"
+            style={{ marginTop: 4 }}
+            onClick={supprimerCours}
+          >
+            Supprimer cette date seulement
+          </button>
+          <button
+            className="bouton danger pleine-largeur"
+            style={{ marginTop: 8 }}
+            onClick={supprimerSimilaires}
+          >
+            {similaires.length > 1
+              ? `Supprimer aussi les ${similaires.length} cours identiques`
+              : 'Supprimer aussi l\'autre cours identique'}
           </button>
         </>
       ) : (
