@@ -55,7 +55,7 @@ export function NavBas() {
   )
 }
 
-export function Entete({ titre, sousTitre, retour = false, action }) {
+export function Entete({ titre, sousTitre, retour = false, action, visuel }) {
   const navigate = useNavigate()
 
   return (
@@ -65,6 +65,7 @@ export function Entete({ titre, sousTitre, retour = false, action }) {
           ‹
         </button>
       )}
+      {visuel}
       <div style={{ flex: 1, minWidth: 0 }}>
         <h1>{titre}</h1>
         {sousTitre && <div className="sous-titre">{sousTitre}</div>}

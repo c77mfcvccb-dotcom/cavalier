@@ -4,7 +4,7 @@ import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
 import { chargerChevauxClub, chargerCours } from '../lib/requetes'
 import { useAgendaVivant } from '../lib/temps-reel'
-import { Chargement, Erreur } from '../composants/Ui'
+import { Avatar, Chargement, Erreur } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import { DISCIPLINES_COURS, TYPES_SOIN } from '../lib/constantes'
 import { ajouterJours, cleJour, formatDate, formatHeure, joursRelatifs } from '../lib/format'
@@ -282,7 +282,11 @@ export default function ClubAccueil() {
 
   return (
     <>
-      <Entete titre={`Bonjour ${profil.nom}`} sousTitre={formatDate(new Date(), { avecJour: true })} />
+      <Entete
+        titre={`Bonjour ${profil.nom}`}
+        sousTitre={formatDate(new Date(), { avecJour: true })}
+        visuel={<Avatar profil={profil} />}
+      />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
