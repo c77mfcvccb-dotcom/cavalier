@@ -225,12 +225,6 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       repos ; la base refuse de toute façon un cheval
                       indisponible ou hors club (triggers 0017)
 
-/journal              JOURNAL DE CAVALERIE — le tableau de suivi : ce que
-                      les cavaliers notent après leurs séances, tous chevaux
-                      confondus, filtrable par cheval. Les ressentis
-                      inquiétants (boiterie suspectée, blessure) remontent
-                      en tête dans « À surveiller ». Accès depuis le Planning
-
 /club                 MES CAVALIERS (gérant, onglet « Cavaliers ») — par
                       membre : ses montures attribuées avec leur rôle
                       (demi-pension ou cheval de club) et leur retrait,

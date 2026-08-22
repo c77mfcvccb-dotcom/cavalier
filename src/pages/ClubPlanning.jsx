@@ -231,15 +231,7 @@ export default function ClubPlanning() {
 
   return (
     <>
-      <Entete
-        titre="Planning"
-        sousTitre="Qui monte quel cheval"
-        action={
-          <Link to="/journal" className="bouton fantome petit">
-            Journal
-          </Link>
-        }
-      />
+      <Entete titre="Planning" sousTitre="Qui monte quel cheval" />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>

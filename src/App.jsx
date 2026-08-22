@@ -44,7 +44,6 @@ const Confidentialite = ecranDiffere(() => import('./pages/legales/Confidentiali
 const ClubAccueil = ecranDiffere(() => import('./pages/ClubAccueil'))
 const ClubCavalerie = ecranDiffere(() => import('./pages/ClubCavalerie'))
 const ClubPlanning = ecranDiffere(() => import('./pages/ClubPlanning'))
-const ClubJournal = ecranDiffere(() => import('./pages/ClubJournal'))
 const ClubCours = ecranDiffere(() => import('./pages/ClubCours'))
 const Depenses = ecranDiffere(() => import('./pages/Depenses'))
 const NouveauCheval = ecranDiffere(() => import('./pages/NouveauCheval'))
@@ -141,7 +140,6 @@ export default function App() {
                     elles, n'ont pas bougé — mêmes tables, mêmes fiches. */}
                 <Route path="/sante" element={<Navigate to="/" replace />} />
                 <Route path="/planning" element={<ClubPlanning />} />
-                <Route path="/journal" element={<ClubJournal />} />
                 <Route path="/cours" element={<ClubCours />} />
               </>
             ) : (

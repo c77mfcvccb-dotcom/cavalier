@@ -302,26 +302,6 @@ export async function chargerSoins(chevalId) {
 }
 
 /**
- * Le journal de la cavalerie : les dernières séances de tous les chevaux
- * donnés, cavalier et cheval compris — ce que les demi-pensionnaires
- * notent, vu depuis le bureau du club.
- */
-export async function chargerJournalSeances(chevauxIds, { limite = 100 } = {}) {
-  if (!chevauxIds?.length) return []
-
-  const { data, error } = await supabase
-    .from('seances')
-    .select('*, cavalier:profils(id, nom, photo_url), cheval:chevaux(id, nom)')
-    .in('cheval_id', chevauxIds)
-    .order('date', { ascending: false })
-    .order('cree_le', { ascending: false })
-    .limit(limite)
-
-  if (error) throw error
-  return data || []
-}
-
-/**
  * Indisponibilités encore actives ou à venir des chevaux donnés.
  * `fin` nulle = jusqu'à nouvel ordre ; les indisponibilités déjà levées
  * n'intéressent personne à l'écran, elles restent en base comme historique.
