@@ -8,6 +8,7 @@ import { ecranDiffere } from './lib/ecrans'
 import { NavBas } from './composants/Mise'
 
 import Rappels from './composants/Rappels'
+import InstallationPWA from './composants/InstallationPWA'
 import Connexion from './pages/Connexion'
 import TableauBord from './pages/TableauBord'
 import MesChevaux from './pages/MesChevaux'
@@ -126,6 +127,7 @@ export default function App() {
   return (
     <div className="app">
       <Rappels />
+      <InstallationPWA />
 
       {/* Remonté à chaque changement d'écran : sans cette clé, une erreur
           survenue sur un onglet condamnerait tous les suivants. */}

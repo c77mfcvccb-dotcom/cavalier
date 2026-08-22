@@ -300,3 +300,10 @@ auquel un cavalier est lié apparaît dans les deux.
   resynchronise également, ce qui couvre le téléphone verrouillé, la coupure
   de réseau, et la migration pas encore exécutée.
 - Aucun écran ne dépasse deux niveaux de profondeur depuis un onglet.
+- **Bandeau d'installation PWA** (`src/composants/InstallationPWA.jsx`),
+  affiché au-dessus de tous les écrans connectés, sous celui des rappels de
+  soins : intercepte `beforeinstallprompt` sur Android/Chrome (bouton
+  « Installer » qui rejoue l'invite native) et guide manuellement sur iOS
+  Safari, qui n'a pas cet événement (« bouton Partager, puis Sur l'écran
+  d'accueil »). Masqué si déjà installée (`display-mode: standalone`) ou
+  fermée récemment (30 jours).

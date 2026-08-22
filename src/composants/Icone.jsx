@@ -66,6 +66,13 @@ const TRACES = {
       <path d="M12 17.2v.4" />
     </>
   ),
+  telecharger: (
+    <>
+      <path d="M12 4v11" />
+      <path d="M7.5 11.5 12 16l4.5-4.5" />
+      <path d="M4.5 17v2.5a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1V17" />
+    </>
+  ),
 }
 
 export default function Icone({ nom, taille = 22, epaisseur = 1.7 }) {

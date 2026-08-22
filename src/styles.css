@@ -422,6 +422,7 @@ button {
 
 .bandeau-rappel.retard { border-color: #f0c8c2; background: #fdf3f1; }
 .bandeau-rappel.urgent { border-color: #f0dcc0; background: #fdf7ee; }
+.bandeau-rappel.pwa { background: var(--sable); }
 
 /* ---------- Onglets internes ---------- */
 /* Cinq onglets et plus ne tiennent plus à largeur égale sur un écran de
