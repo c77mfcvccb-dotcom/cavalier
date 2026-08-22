@@ -14,7 +14,7 @@ import { Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import LigneEvenement from '../composants/LigneEvenement'
 import SelecteurPeriode, { decalerAncre, fenetrePeriode } from '../composants/SelecteurPeriode'
-import { DISCIPLINES_COURS, TYPES_SOIN } from '../lib/constantes'
+import { DISCIPLINES_COURS, MOTIFS_INDISPO, TYPES_SOIN } from '../lib/constantes'
 import { cleJour, debutSemaine, formatDate, formatHeure } from '../lib/format'
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
@@ -352,7 +352,9 @@ export default function ClubPlanning() {
                           return (
                             <td key={cle} className={classes || undefined}>
                               {repos && entrees.length === 0 && (
-                                <span className="entree repos-texte">Repos</span>
+                                <span className="entree repos-texte">
+                                  {MOTIFS_INDISPO[repos.motif]?.libelle || 'Repos'}
+                                </span>
                               )}
                               {entrees.map((e) => (
                                 <span key={e.id} className="entree">

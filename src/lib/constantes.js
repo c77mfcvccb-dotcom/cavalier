@@ -195,6 +195,7 @@ export const MOTIFS_INDISPO = {
   boiterie: { libelle: 'Boiterie' },
   osteo: { libelle: 'Ostéopathie' },
   veterinaire: { libelle: 'Vétérinaire' },
+  vacances: { libelle: 'Vacances' },
   autre: { libelle: 'Autre' },
 }
 

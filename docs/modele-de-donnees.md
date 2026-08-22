@@ -335,7 +335,7 @@ sans rien exposer d'autre.
 | colonne     | type | notes                                                       |
 |-------------|------|-------------------------------------------------------------|
 | `cheval_id` | uuid |                                                             |
-| `motif`     | text | `boiterie` \| `repos` \| `osteo` \| `veterinaire` \| `autre` |
+| `motif`     | text | `boiterie` \| `repos` \| `osteo` \| `veterinaire` \| `vacances` \| `autre` (0025) |
 | `debut`     | date | aujourd'hui par défaut                                      |
 | `fin`       | date | **nullable** — vide = jusqu'à nouvel ordre                  |
 | `note`, `cree_par` | |                                                       |

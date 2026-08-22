@@ -223,7 +223,12 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       présent/absent, et l'ATTRIBUTION des chevaux — le
                       sélecteur annonce la charge du jour et grise ceux au
                       repos ; la base refuse de toute façon un cheval
-                      indisponible ou hors club (triggers 0017)
+                      indisponible ou hors club (triggers 0017).
+                      Bascule LISTE / TABLEAU : le tableau recrée celui de
+                      la sellerie — les créneaux du jour affiché en
+                      colonnes (une par cours, triées par heure), la liste
+                      cavalier : cheval dedans, colonne Balade distinguée
+                      (fond sable) ; un appui sur l'en-tête ouvre le cours
 
 /club                 MES CAVALIERS (gérant, onglet « Cavaliers ») — par
                       membre : ses montures attribuées avec leur rôle

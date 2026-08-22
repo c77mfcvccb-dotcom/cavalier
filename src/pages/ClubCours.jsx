@@ -11,7 +11,8 @@ import {
 import { useAgendaVivant } from '../lib/temps-reel'
 import { Avatar, Champ, Chargement, Erreur, EtatVide, Feuille } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
-import SelecteurPeriode, { fenetrePeriode } from '../composants/SelecteurPeriode'
+import SelecteurPeriode, { decalerAncre, fenetrePeriode } from '../composants/SelecteurPeriode'
+import { prenom } from '../lib/couleurs'
 import { DISCIPLINES_COURS, MOTIFS_INDISPO } from '../lib/constantes'
 import { cleJour, formatDate, formatHeure } from '../lib/format'
 
@@ -45,6 +46,11 @@ export default function ClubCours() {
   // Le JOUR d'office : les cours de la journée d'abord, la semaine et le
   // mois à portée d'appui — même sélecteur que le Planning.
   const [periode, setPeriode] = useState('jour')
+  // « Liste » déroule les journées ; « Tableau » recrée le tableau blanc
+  // de la sellerie — les créneaux horaires du jour en colonnes, la liste
+  // cavalier : cheval de chaque cours dedans. Toujours un seul jour à la
+  // fois, comme sur le vrai tableau (un par journée).
+  const [vue, setVue] = useState('liste')
   const [ancre, setAncre] = useState(() => new Date())
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
@@ -55,7 +61,7 @@ export default function ClubCours() {
   const [coursOuvertId, setCoursOuvertId] = useState(null)
 
   const recharger = useCallback(async () => {
-    const { debut, fin } = fenetrePeriode(periode, ancre)
+    const { debut, fin } = fenetrePeriode(vue === 'tableau' ? 'jour' : periode, ancre)
 
     const chevaux = await chargerChevauxClub(profil.id)
     setCavalerie(chevaux)
@@ -68,7 +74,7 @@ export default function ClubCours() {
     setCours(lesCours)
     setCreneaux(lignes)
     setIndisponibilites(indispos)
-  }, [profil.id, periode, ancre])
+  }, [profil.id, periode, ancre, vue])
 
   useEffect(() => {
     let annule = false
@@ -100,6 +106,15 @@ export default function ClubCours() {
     const noms = new Set(cours.map((c) => (c.moniteur || '').trim()).filter(Boolean))
     if (coachFiltre) noms.add(coachFiltre)
     return [...noms].sort((a, b) => a.localeCompare(b, 'fr'))
+  }, [cours, coachFiltre])
+
+  // La vue Tableau : les cours du jour affiché, triés par heure — les
+  // colonnes du tableau blanc.
+  const coursTableau = useMemo(() => {
+    const filtres = coachFiltre
+      ? cours.filter((c) => (c.moniteur || '').trim() === coachFiltre)
+      : cours
+    return [...filtres].sort((a, b) => new Date(a.debut) - new Date(b.debut))
   }, [cours, coachFiltre])
 
   const joursRemplis = useMemo(() => {
@@ -147,12 +162,52 @@ export default function ClubCours() {
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
 
-        <SelecteurPeriode
-          periode={periode}
-          ancre={ancre}
-          onPeriode={setPeriode}
-          onAncre={setAncre}
-        />
+        <div
+          className="choix-puces"
+          role="group"
+          aria-label="Présentation des cours"
+          style={{ justifyContent: 'center', marginBottom: 8 }}
+        >
+          <button
+            type="button"
+            className={vue === 'liste' ? 'actif' : undefined}
+            onClick={() => setVue('liste')}
+          >
+            Liste
+          </button>
+          <button
+            type="button"
+            className={vue === 'tableau' ? 'actif' : undefined}
+            onClick={() => setVue('tableau')}
+          >
+            Tableau
+          </button>
+        </div>
+
+        {vue === 'liste' ? (
+          <SelecteurPeriode
+            periode={periode}
+            ancre={ancre}
+            onPeriode={setPeriode}
+            onAncre={setAncre}
+          />
+        ) : (
+          <div className="calendrier-entete">
+            <button
+              onClick={() => setAncre(decalerAncre('jour', ancre, -1))}
+              aria-label="Jour précédent"
+            >
+              ‹
+            </button>
+            <span className="mois">{formatDate(ancre, { avecJour: true, court: true })}</span>
+            <button
+              onClick={() => setAncre(decalerAncre('jour', ancre, 1))}
+              aria-label="Jour suivant"
+            >
+              ›
+            </button>
+          </div>
+        )}
 
         {coachs.length > 0 && (
           <div className="champ" style={{ marginBottom: 12 }}>
@@ -171,6 +226,67 @@ export default function ClubCours() {
 
         {chargement ? (
           <Chargement />
+        ) : vue === 'tableau' ? (
+          coursTableau.length === 0 ? (
+            <EtatVide
+              emoji="🎠"
+              titre={coachFiltre ? `Aucun cours de ${coachFiltre} ce jour-là` : 'Journée vide'}
+              texte={
+                coachFiltre
+                  ? 'Changez de jour avec les flèches, ou repassez sur « Tous les coachs ».'
+                  : "Créez un cours avec le bouton + : il prendra sa place dans le tableau du jour."
+              }
+            />
+          ) : (
+            <>
+              <div className="tableau-cours">
+                <table>
+                  <thead>
+                    <tr>
+                      {coursTableau.map((c) => (
+                        <th key={c.id} className={c.discipline === 'balade' ? 'balade' : undefined}>
+                          <button type="button" onClick={() => setCoursOuvertId(c.id)}>
+                            <span className="heure">{formatHeure(c.debut)}</span>
+                            <span className="coach">
+                              {DISCIPLINES_COURS[c.discipline]?.libelle}
+                              {c.moniteur ? ` · ${c.moniteur}` : ''}
+                            </span>
+                          </button>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      {coursTableau.map((c) => {
+                        const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
+                        return (
+                          <td key={c.id}>
+                            {inscrits.length === 0 && <span className="vide">Personne d'inscrit</span>}
+                            {inscrits.map((i) => (
+                              <span
+                                key={i.id}
+                                className={i.cheval_id ? 'ligne' : 'ligne sans-cheval'}
+                              >
+                                {prenom(i.cavalier?.nom)}
+                                {i.cheval ? ` : ${i.cheval.nom}` : ''}
+                              </span>
+                            ))}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="aide" style={{ marginTop: 10 }}>
+                Comme le tableau du jour à la sellerie : chaque créneau sa
+                colonne, cavalier : cheval en dessous. Un appui sur
+                l'en-tête ouvre le cours. La grille se fait glisser du
+                doigt vers la droite.
+              </p>
+            </>
+          )
         ) : joursRemplis.length === 0 ? (
           <EtatVide
             emoji="🎠"
