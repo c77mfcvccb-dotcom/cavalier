@@ -444,6 +444,10 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
     setErreur('')
     setEnvoi(true)
 
+    // Toutes les occurrences d'une même récurrence partagent un serie_id :
+    // c'est lui qui permet de les supprimer d'un coup plus tard, plutôt
+    // qu'une par une. Un cours seul n'appartient à aucune série.
+    const serieId = occurrences.length > 1 ? crypto.randomUUID() : null
     const lignes = occurrences.map((jour) => {
       const debut = new Date(`${jour}T${heure}`)
       const fin = new Date(debut.getTime() + duree * 60000)
@@ -456,6 +460,7 @@ function FeuilleNouveauCours({ clubId, ouverte, onFermer, onEnregistre }) {
         places,
         moniteur: moniteur.trim() || null,
         notes: notes.trim() || null,
+        serie_id: serieId,
       }
     })
     const { error } = await supabase.from('cours').insert(lignes)
@@ -662,6 +667,24 @@ function FeuilleCours({ cours, cavalerie, indisponibilites, chargeJour, onFermer
     }
   }
 
+  // Un cours issu d'une répétition hebdomadaire partage son serie_id avec
+  // les autres occurrences : les supprimer toutes d'un coup évite de
+  // rouvrir chaque semaine une à une pour annuler l'année.
+  async function supprimerSerie() {
+    if (
+      !window.confirm(
+        'Supprimer TOUS les cours de cette série (répétés chaque semaine) et leurs inscriptions ? Cette action est irréversible.'
+      )
+    )
+      return
+    const { error } = await supabase.from('cours').delete().eq('serie_id', cours.serie_id)
+    if (error) setErreur(traduireErreur(error.message))
+    else {
+      onFermer()
+      onChangement()
+    }
+  }
+
   function LigneInscription({ inscription, enAttente = false }) {
     const indispo = inscription.cheval_id
       ? indisponibiliteActive(indisponibilites, inscription.cheval_id, cours.debut)
@@ -827,13 +850,35 @@ function FeuilleCours({ cours, cavalerie, indisponibilites, chargeJour, onFermer
         </div>
       )}
 
-      <button
-        className="bouton danger pleine-largeur"
-        style={{ marginTop: 16 }}
-        onClick={supprimerCours}
-      >
-        Supprimer ce cours
-      </button>
+      {cours.serie_id ? (
+        <>
+          <p className="aide" style={{ marginTop: 16 }}>
+            Ce cours se répète chaque semaine.
+          </p>
+          <button
+            className="bouton fantome pleine-largeur"
+            style={{ marginTop: 4 }}
+            onClick={supprimerCours}
+          >
+            Supprimer cette date seulement
+          </button>
+          <button
+            className="bouton danger pleine-largeur"
+            style={{ marginTop: 8 }}
+            onClick={supprimerSerie}
+          >
+            Supprimer toute la série
+          </button>
+        </>
+      ) : (
+        <button
+          className="bouton danger pleine-largeur"
+          style={{ marginTop: 16 }}
+          onClick={supprimerCours}
+        >
+          Supprimer ce cours
+        </button>
+      )}
     </Feuille>
   )
 }

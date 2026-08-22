@@ -417,6 +417,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           setEditionOuverte(false)
           recharger()
         }}
+        onPhotoEnregistree={recharger}
       />
 
       <FeuilleIndispo
@@ -642,7 +643,7 @@ function FeuilleIndispo({ cheval, ouverte, onFermer, onEnregistre }) {
   )
 }
 
-function FeuilleEdition({ cheval, ouverte, onFermer, onEnregistre }) {
+function FeuilleEdition({ cheval, ouverte, onFermer, onEnregistre, onPhotoEnregistree }) {
   const [valeurs, setValeurs] = useState(cheval)
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
@@ -655,6 +656,21 @@ function FeuilleEdition({ cheval, ouverte, onFermer, onEnregistre }) {
   }
 
   const modifier = (champ) => (e) => setValeurs((v) => ({ ...v, [champ]: e.target.value }))
+
+  /**
+   * La photo s'enregistre à part, dès l'envoi — pas au submit du reste de
+   * la feuille. Sans ça, choisir une photo puis fermer la feuille (ou
+   * changer de page) sans passer par « Enregistrer » l'envoyait dans le
+   * vide : elle disparaissait au retour, alors que l'aperçu la montrait
+   * pourtant posée. La feuille reste ouverte — l'édition continue.
+   */
+  async function enregistrerPhoto(url) {
+    setErreur('')
+    setValeurs((v) => ({ ...v, photo_url: url }))
+    const { error } = await supabase.from('chevaux').update({ photo_url: url }).eq('id', cheval.id)
+    if (error) setErreur(error.message)
+    else onPhotoEnregistree()
+  }
 
   async function enregistrer(evenement) {
     evenement.preventDefault()
@@ -687,7 +703,7 @@ function FeuilleEdition({ cheval, ouverte, onFermer, onEnregistre }) {
 
         <ChargeurPhoto
           valeur={valeurs.photo_url}
-          onChange={(url) => setValeurs((v) => ({ ...v, photo_url: url }))}
+          onChange={enregistrerPhoto}
           label="Photo du cheval"
         />
 

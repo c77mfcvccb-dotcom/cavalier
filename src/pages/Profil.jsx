@@ -28,6 +28,20 @@ export default function Profil() {
 
   const modifier = (champ) => (e) => setValeurs((v) => ({ ...v, [champ]: e.target.value }))
 
+  /**
+   * La photo s'enregistre à part, dès l'envoi — pas au submit du
+   * formulaire. Sans ça, choisir une photo puis changer de page sans
+   * passer par « Enregistrer » l'envoyait dans le vide : elle disparaissait
+   * au retour, alors que l'aperçu la montrait pourtant posée.
+   */
+  async function enregistrerPhoto(url) {
+    setErreur('')
+    setValeurs((v) => ({ ...v, photo_url: url }))
+    const { error } = await supabase.from('profils').update({ photo_url: url }).eq('id', profil.id)
+    if (error) setErreur(error.message)
+    else rafraichirProfil()
+  }
+
   async function enregistrer(evenement) {
     evenement.preventDefault()
     setErreur('')
@@ -101,7 +115,7 @@ export default function Profil() {
 
           <ChargeurPhoto
             valeur={valeurs.photo_url}
-            onChange={(url) => setValeurs((v) => ({ ...v, photo_url: url }))}
+            onChange={enregistrerPhoto}
             forme="rond"
             label={estClub ? 'Logo du club' : 'Photo de profil'}
           />

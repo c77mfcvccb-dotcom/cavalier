@@ -357,6 +357,7 @@ cheval n'a pas tourné cette semaine-là.
 | `places`     | int         | 1 à 30, 6 par défaut                         |
 | `moniteur`   | text        | simple texte : en faire un compte serait un troisième rôle, prématuré |
 | `notes`      | text        |                                              |
+| `serie_id`   | uuid        | nullable — partagé par toutes les occurrences d'une récurrence hebdomadaire posée en une fois (0026), permet de les supprimer ensemble ; nul pour un cours seul |
 
 Un cours n'est **pas** un créneau : le créneau lie un cavalier à un cheval,
 le cours est une **capacité** sur laquelle des cavaliers s'inscrivent et

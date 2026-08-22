@@ -198,32 +198,42 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       inviter un cavalier au cheval, retirer une liaison
 
 /planning             LE PLANNING DES CHEVAUX — la raison d'être de l'écran :
-                      qui monte quel cheval quand, en vue JOUR par défaut,
-                      commutable Semaine ou Mois (sélecteur commun aux deux
-                      écrans), filtrable par cheval (avec bannière « au
-                      repos » sur le cheval filtré). Deux natures de ligne
-                      seulement : créneaux de monte, et passages en cours
-                      (cheval attribué). Les échéances de soins vivent sur
-                      l'Accueil et les fiches, les cours dans leur onglet.
-                      Bascule LISTE / TABLEAU : le tableau affiche la
-                      semaine comme le tableau blanc de la sellerie —
-                      chevaux de CLUB en lignes (pas les pensions), jours
-                      en colonnes, colonne Soins au bout (échéances de la
-                      semaine, retards compris), cases Repos teintées,
-                      défilement horizontal avec colonne des noms collante
+                      qui monte quel cheval quand. Bascule LISTE / TABLEAU,
+                      TABLEAU par défaut — c'est lui qui remplace le
+                      tableau blanc de la sellerie : chevaux de CLUB en
+                      lignes (pas les pensions), jours de la semaine en
+                      colonnes, colonne Soins au bout (échéances de la
+                      semaine, retards compris), cases Repos teintées avec
+                      leur vrai motif (Ostéopathie, Vétérinaire, Vacances…),
+                      défilement horizontal avec colonne des noms collante,
+                      flèches pour feuilleter de semaine en semaine.
+                      La vue Liste garde le sélecteur Jour/Semaine/Mois
+                      (commun avec l'onglet Cours), filtrable par cheval
+                      (avec bannière « au repos » sur le cheval filtré).
+                      Deux natures de ligne : créneaux de monte, et
+                      passages en cours (cheval attribué). Les échéances de
+                      soins vivent sur l'Accueil et les fiches, les cours
+                      dans leur onglet
 
 /cours                COURS (onglet dédié) — les cours de la JOURNÉE par
                       défaut, commutables Semaine ou Mois, filtrables par
                       COACH (chaque monitrice isole son planning d'un
                       geste) ; création par le
                       bouton + (capacité 1-30, discipline, niveau, coach),
-                      cartes par jour avec inscrits/attente et alerte « N
-                      sans cheval ». Un appui ouvre la feuille : inscrits et
-                      liste d'attente, inscription d'office, pointage
-                      présent/absent, et l'ATTRIBUTION des chevaux — le
-                      sélecteur annonce la charge du jour et grise ceux au
-                      repos ; la base refuse de toute façon un cheval
-                      indisponible ou hors club (triggers 0017).
+                      RÉCURRENCE hebdomadaire optionnelle (« Se répète
+                      chaque semaine » + date de fin → une ligne par
+                      semaine, 52 occurrences maximum, même serie_id,
+                      migration 0026), cartes par jour avec inscrits/attente
+                      et alerte « N sans cheval ». Un appui ouvre la
+                      feuille : inscrits et liste d'attente, inscription
+                      d'office, pointage présent/absent, l'ATTRIBUTION des
+                      chevaux — le sélecteur annonce la charge du jour et
+                      grise ceux au repos ; la base refuse de toute façon un
+                      cheval indisponible ou hors club (triggers 0017) — et
+                      la SUPPRESSION : un cours issu d'une récurrence
+                      propose « cette date seulement » (par id) OU « toute
+                      la série » (par serie_id, N cours à la fois) ; un
+                      cours seul n'a que « Supprimer ce cours ».
                       Bascule LISTE / TABLEAU : le tableau recrée celui de
                       la sellerie — les créneaux du jour affiché en
                       colonnes (une par cours, triées par heure), la liste

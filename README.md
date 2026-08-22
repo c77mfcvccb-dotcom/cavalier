@@ -89,6 +89,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0023_roles_pension.sql` | Les formules de pension à l'attribution : demi-pension, tiers de pension, pension complète ou cheval de club — contrainte de table et fonction d'attribution élargies (la 0022 vit dans la PR des soins privés) |
 | `0024_acces_pension.sql` | `a_acces_cheval()` s'ouvre à l'écurie d'une pension CONFIRMÉE : soins, carnet, créneaux, séances et documents du cheval hébergé — sans en faire la gestionnaire (fiche, suppression, indisponibilités et coûts restent au propriétaire) |
 | `0025_motif_vacances.sql` | « Vacances » rejoint les motifs d'indisponibilité autorisés — un bloc de plusieurs jours annoncé à l'avance, distinct du repos du quotidien |
+| `0026_serie_cours.sql` | `cours` gagne `serie_id` : les occurrences d'une récurrence hebdomadaire le partagent, pour les supprimer toutes d'un coup plutôt qu'une par une |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
