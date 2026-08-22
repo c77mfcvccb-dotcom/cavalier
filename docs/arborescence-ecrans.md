@@ -254,10 +254,11 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       saison entière, cours posés un par un sans lien de
                       série compris.
                       Bascule LISTE / TABLEAU : le tableau recrée celui de
-                      la sellerie — les créneaux du jour affiché en
-                      colonnes (une par cours, triées par heure), la liste
-                      cavalier : cheval dedans, colonne Balade distinguée
-                      (fond sable) ; un appui sur l'en-tête ouvre le cours
+                      la sellerie — les créneaux du jour affiché en LIGNES
+                      empilées de haut en bas (une par cours, triées par
+                      heure), la liste cavalier : cheval dessous, ligne
+                      Balade distinguée (fond sable) ; un appui sur
+                      l'en-tête ouvre le cours
 
 /club                 MES CAVALIERS (gérant, onglet « Cavaliers ») — par
                       membre : ses montures attribuées avec leur rôle

@@ -1566,52 +1566,41 @@ button {
 /* ── Cours en tableau : le tableau du jour à la sellerie ──
    Une colonne par créneau horaire, la liste cavalier : cheval dedans —
    pas de première colonne collante ici, il n'y a qu'un seul axe. */
+/* Une ligne par cours, empilées de haut en bas — comme on lit une journée
+   sur le tableau blanc de la sellerie, plutôt qu'en colonnes qu'il fallait
+   faire défiler du doigt pour voir les créneaux suivants. */
 .tableau-cours {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ligne-tableau {
   border: 1px solid var(--bordure);
   border-radius: 14px;
   background: var(--carte);
+  overflow: hidden;
 }
-.tableau-cours table {
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-  font-size: 0.8rem;
-}
-.tableau-cours th,
-.tableau-cours td {
-  border-right: 1px solid var(--bordure);
-  padding: 8px 10px;
-  vertical-align: top;
-  text-align: left;
-  min-width: 128px;
-}
-.tableau-cours th:last-child,
-.tableau-cours td:last-child { border-right: none; }
-.tableau-cours thead th {
-  background: var(--vert);
-  padding: 0;
-}
-.tableau-cours thead th button {
+.ligne-tableau .entete {
   all: unset;
   box-sizing: border-box;
   cursor: pointer;
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 8px 12px;
+  background: var(--vert);
   color: #fff;
 }
-.tableau-cours thead th.balade { background: var(--sable); }
-.tableau-cours thead th.balade button { color: var(--texte); }
-.tableau-cours .heure { display: block; font-weight: 700; white-space: nowrap; }
-.tableau-cours .coach { display: block; font-size: 0.72rem; opacity: 0.9; white-space: nowrap; }
-.tableau-cours tbody .ligne {
+.ligne-tableau .entete.balade { background: var(--sable); color: var(--texte); }
+.ligne-tableau .heure { font-weight: 700; white-space: nowrap; }
+.ligne-tableau .coach { font-size: 0.78rem; opacity: 0.9; }
+.ligne-tableau .corps { padding: 8px 12px; font-size: 0.85rem; }
+.ligne-tableau .corps .ligne {
   display: block;
-  white-space: nowrap;
   margin-bottom: 4px;
   line-height: 1.35;
 }
-.tableau-cours tbody .ligne:last-child { margin-bottom: 0; }
-.tableau-cours tbody .ligne.sans-cheval { color: var(--texte-doux); font-style: italic; }
-.tableau-cours tbody .vide { color: var(--texte-doux); font-style: italic; }
+.ligne-tableau .corps .ligne:last-child { margin-bottom: 0; }
+.ligne-tableau .corps .ligne.sans-cheval { color: var(--texte-doux); font-style: italic; }
+.ligne-tableau .corps .vide { color: var(--texte-doux); font-style: italic; }

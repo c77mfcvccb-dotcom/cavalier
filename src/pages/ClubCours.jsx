@@ -303,50 +303,41 @@ export default function ClubCours() {
           ) : (
             <>
               <div className="tableau-cours">
-                <table>
-                  <thead>
-                    <tr>
-                      {coursTableau.map((c) => (
-                        <th key={c.id} className={c.discipline === 'balade' ? 'balade' : undefined}>
-                          <button type="button" onClick={() => setCoursOuvertId(c.id)}>
-                            <span className="heure">{formatHeure(c.debut)}</span>
-                            <span className="coach">
-                              {DISCIPLINES_COURS[c.discipline]?.libelle}
-                              {c.moniteur ? ` · ${c.moniteur}` : ''}
-                            </span>
-                          </button>
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      {coursTableau.map((c) => {
-                        const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
-                        return (
-                          <td key={c.id}>
-                            {inscrits.length === 0 && <span className="vide">Personne d'inscrit</span>}
-                            {inscrits.map((i) => (
-                              <span
-                                key={i.id}
-                                className={i.cheval_id ? 'ligne' : 'ligne sans-cheval'}
-                              >
-                                {prenom(i.cavalier?.nom)}
-                                {i.cheval ? ` : ${i.cheval.nom}` : ''}
-                              </span>
-                            ))}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  </tbody>
-                </table>
+                {coursTableau.map((c) => {
+                  const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
+                  return (
+                    <div key={c.id} className="ligne-tableau">
+                      <button
+                        type="button"
+                        className={c.discipline === 'balade' ? 'entete balade' : 'entete'}
+                        onClick={() => setCoursOuvertId(c.id)}
+                      >
+                        <span className="heure">{formatHeure(c.debut)}</span>
+                        <span className="coach">
+                          {DISCIPLINES_COURS[c.discipline]?.libelle}
+                          {c.moniteur ? ` · ${c.moniteur}` : ''}
+                        </span>
+                      </button>
+                      <div className="corps">
+                        {inscrits.length === 0 && <span className="vide">Personne d'inscrit</span>}
+                        {inscrits.map((i) => (
+                          <span
+                            key={i.id}
+                            className={i.cheval_id ? 'ligne' : 'ligne sans-cheval'}
+                          >
+                            {prenom(i.cavalier?.nom)}
+                            {i.cheval ? ` : ${i.cheval.nom}` : ''}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
               <p className="aide" style={{ marginTop: 10 }}>
-                Comme le tableau du jour à la sellerie : chaque créneau sa
-                colonne, cavalier : cheval en dessous. Un appui sur
-                l'en-tête ouvre le cours. La grille se fait glisser du
-                doigt vers la droite.
+                Comme le tableau du jour à la sellerie : chaque cours sa
+                ligne, cavalier : cheval en dessous. Un appui sur l'en-tête
+                ouvre le cours.
               </p>
             </>
           )
