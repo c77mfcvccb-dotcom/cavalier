@@ -688,13 +688,29 @@ function FeuilleAttribution({ membre, cavalerie, liaisons, onFermer, onAttribue 
     evenement.preventDefault()
     setErreur('')
     setEnvoi(true)
-    const { error } = await supabase.rpc('lier_membre_au_cheval', {
+    // « propriétaire » ne se pose pas par lier_membre_au_cheval (elle
+    // refuse ce rôle) : on lie normalement, puis on désigne aussitôt.
+    const { error: erreurLiaison } = await supabase.rpc('lier_membre_au_cheval', {
       p_cheval: chevalId,
       p_cavalier: membre.cavalier.id,
-      p_role: role,
+      p_role: role === 'proprietaire' ? 'cavalier_club' : role,
+    })
+    if (erreurLiaison) {
+      setEnvoi(false)
+      setErreur(traduireErreurClub(erreurLiaison.message))
+      return
+    }
+    if (role !== 'proprietaire') {
+      setEnvoi(false)
+      onAttribue()
+      return
+    }
+    const { error: erreurProprietaire } = await supabase.rpc('designer_proprietaire', {
+      p_cheval: chevalId,
+      p_cavalier: membre.cavalier.id,
     })
     setEnvoi(false)
-    if (error) setErreur(traduireErreurClub(error.message))
+    if (erreurProprietaire) setErreur(traduireErreurClub(erreurProprietaire.message))
     else onAttribue()
   }
 
@@ -718,7 +734,11 @@ function FeuilleAttribution({ membre, cavalerie, liaisons, onFermer, onAttribue 
 
         <Champ
           label="Rôle"
-          aide="Le rôle s'affiche partout où la liaison apparaît — sur la fiche, le calendrier, le planning."
+          aide={
+            role === 'proprietaire'
+              ? 'Elle obtient aussitôt les pleins droits sur la fiche : modifier, gérer les accès, supprimer, retirer le club. Vous gardez le planning (cours, créneaux, indisponibilités).'
+              : 'Le rôle s\'affiche partout où la liaison apparaît — sur la fiche, le calendrier, le planning.'
+          }
         >
           <div className="choix-puces">
             {ROLES_ATTRIBUTION.map((cle) => (
@@ -735,7 +755,11 @@ function FeuilleAttribution({ membre, cavalerie, liaisons, onFermer, onAttribue 
         </Champ>
 
         <button className="bouton pleine-largeur" disabled={envoi || !chevalId}>
-          {envoi ? 'Attribution…' : 'Attribuer'}
+          {envoi
+            ? 'Attribution…'
+            : role === 'proprietaire'
+              ? 'Attribuer et désigner comme propriétaire'
+              : 'Attribuer'}
         </button>
       </form>
     </Feuille>

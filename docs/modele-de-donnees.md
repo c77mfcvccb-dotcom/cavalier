@@ -477,6 +477,13 @@ La propriétaire désignée peut à son tour détacher le cheval de son club via
 possède réellement une ligne `role = 'proprietaire'` pour ce cheval, jamais
 au repli « le club garde tout » quand personne n'est désignée.
 
+Côté écran, `lier_membre_au_cheval()` refuse toujours `p_role = 'proprietaire'`
+(c'est le rôle qui « ne s'attribue pas » par cette voie). Le raccourci
+« Attribuer et désigner comme propriétaire » (Cavaliers → + Attribuer, ou
+Mes cavaliers → Attribuer un cheval) est donc un enchaînement de deux appels
+côté client : `lier_membre_au_cheval(..., p_role: 'cavalier_club')` puis
+`designer_proprietaire(...)` — pas une troisième RPC.
+
 ### Le cas particulier de la politique SELECT sur `chevaux`
 
 ```sql

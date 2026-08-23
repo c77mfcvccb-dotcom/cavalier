@@ -145,14 +145,18 @@ sur la fiche de chaque cheval.
    │                  (demi-pension) — réservé à la propriétaire effective.
    │                  Côté club, « + Attribuer » lie un membre sans code en
    │                  posant la FORMULE : demi-pension, tiers de pension,
-   │                  pension complète ou cheval de club (migration 0023) —
-   │                  réattribuer ajuste le rôle sans rien refaire ; réservé
-   │                  lui aussi à la propriétaire effective. « Retirer » une
-   │                  liaison au même endroit, même garde.
-   │                  Côté club uniquement, sur chaque cavalier déjà lié
+   │                  pension complète, cheval de club, ou directement
+   │                  PROPRIÉTAIRE (migration 0029, choix ajouté à la 0023) —
+   │                  ce dernier lie ET désigne en un seul geste, avec l'aide
+   │                  qui rappelle les droits transférés. Réattribuer un rôle
+   │                  existant l'ajuste sans rien refaire ; réservé lui aussi
+   │                  à la propriétaire effective. « Retirer » une liaison au
+   │                  même endroit, même garde.
+   │                  Côté club uniquement, sur chaque cavalier DÉJÀ lié
    │                  (hors la propriétaire en place) : « Rendre
-   │                  propriétaire » (migration 0029) — reste disponible même
-   │                  après une première désignation, pour la réattribuer
+   │                  propriétaire » — le même geste que ci-dessus mais pour
+   │                  un cavalier déjà attribué ; reste disponible même après
+   │                  une première désignation, pour la réattribuer
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau

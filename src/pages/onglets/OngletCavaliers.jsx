@@ -261,13 +261,30 @@ function FeuilleLierMembre({ cheval, cavaliers, ouverte, onFermer, onLie }) {
     evenement.preventDefault()
     setErreur('')
     setEnvoi(true)
-    const { error } = await supabase.rpc('lier_membre_au_cheval', {
+    // « propriétaire » ne se pose pas par lier_membre_au_cheval (elle
+    // refuse ce rôle) : on lie normalement, puis on désigne aussitôt —
+    // deux appels pour la cavalière, un seul geste pour l'écurie.
+    const { error: erreurLiaison } = await supabase.rpc('lier_membre_au_cheval', {
       p_cheval: cheval.id,
       p_cavalier: membreChoisi.id,
-      p_role: role,
+      p_role: role === 'proprietaire' ? 'cavalier_club' : role,
+    })
+    if (erreurLiaison) {
+      setEnvoi(false)
+      setErreur(erreurLiaison.message.replace(/^.*?:\s*/, ''))
+      return
+    }
+    if (role !== 'proprietaire') {
+      setEnvoi(false)
+      onLie()
+      return
+    }
+    const { error: erreurProprietaire } = await supabase.rpc('designer_proprietaire', {
+      p_cheval: cheval.id,
+      p_cavalier: membreChoisi.id,
     })
     setEnvoi(false)
-    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
+    if (erreurProprietaire) setErreur(erreurProprietaire.message.replace(/^.*?:\s*/, ''))
     else onLie()
   }
 
@@ -323,7 +340,11 @@ function FeuilleLierMembre({ cheval, cavaliers, ouverte, onFermer, onLie }) {
 
           <Champ
             label="Rôle"
-            aide="La formule s'affiche partout où la liaison apparaît — fiche, calendrier, Mes cavaliers."
+            aide={
+              role === 'proprietaire'
+                ? 'Elle obtient aussitôt les pleins droits sur la fiche : modifier, gérer les accès, supprimer, retirer le club. Vous gardez le planning (cours, créneaux, indisponibilités).'
+                : 'La formule s\'affiche partout où la liaison apparaît — fiche, calendrier, Mes cavaliers.'
+            }
           >
             <div className="choix-puces">
               {ROLES_ATTRIBUTION.map((cle) => (
@@ -340,7 +361,11 @@ function FeuilleLierMembre({ cheval, cavaliers, ouverte, onFermer, onLie }) {
           </Champ>
 
           <button className="bouton pleine-largeur" disabled={envoi}>
-            {envoi ? 'Attribution…' : `Attribuer en ${ROLES[role].libelle.toLowerCase()}`}
+            {envoi
+              ? 'Attribution…'
+              : role === 'proprietaire'
+                ? 'Attribuer et désigner comme propriétaire'
+                : `Attribuer en ${ROLES[role].libelle.toLowerCase()}`}
           </button>
         </form>
       )}

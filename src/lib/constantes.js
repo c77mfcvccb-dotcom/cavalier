@@ -9,11 +9,13 @@ export const ROLES = {
 }
 
 /**
- * Les rôles qu'une écurie peut poser à l'attribution (migration 0023).
- * « propriétaire » n'en fait pas partie : il se constate à la création
- * du cheval, rien d'autre ne le confère.
+ * Les rôles qu'une écurie peut poser à l'attribution (migration 0023),
+ * complétés par « propriétaire » (migration 0029) : l'attribuer ici lie
+ * d'abord le cavalier normalement, puis le désigne aussitôt propriétaire
+ * (deux appels RPC enchaînés côté écran — voir attribuer() dans
+ * OngletCavaliers.jsx et MonClub.jsx).
  */
-export const ROLES_ATTRIBUTION = ['demi_pension', 'tiers_pension', 'pension_complete', 'cavalier_club']
+export const ROLES_ATTRIBUTION = ['demi_pension', 'tiers_pension', 'pension_complete', 'cavalier_club', 'proprietaire']
 
 /**
  * Les rôles où un cheval est vraiment « le sien » — à l'inverse de
