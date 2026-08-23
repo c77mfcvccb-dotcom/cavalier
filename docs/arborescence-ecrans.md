@@ -170,7 +170,12 @@ sur la fiche de chaque cheval.
    │                  une première désignation, pour la réattribuer
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
-   │                  jour ouvre la création d'un créneau
+   │                  jour ouvre la création d'un créneau. Toggle
+   │                  « Partage » (migration 0031) sur chaque créneau,
+   │                  même règle que les soins — un créneau privé n'est
+   │                  ni vu ni géré par personne d'autre que son cavalier,
+   │                  club compris. Sans effet sur les cours attribués par
+   │                  le club (badge « Attribué », table `cours` à part).
    ├─ Soins           historique par type + prochaines échéances,
    │                  ajout d'un soin (échéance pré-remplie). Toggle
    │                  « Partage » (migration 0028) : Partagé par défaut ;
@@ -182,7 +187,10 @@ sur la fiche de chaque cheval.
                       signée, visible par tous les cavaliers liés au cheval.
                       À l'ajout, la catégorie se choisit AVANT le fichier :
                       rien ne part sans être classé. « Autre » exige un nom
-                      libre, qui devient le titre dans la liste
+                      libre, qui devient le titre dans la liste. Même toggle
+                      « Partage » (migration 0031) qu'ailleurs — un document
+                      privé reste caché même du fichier brut dans le bucket
+                      (pas seulement de la liste).
 
 /calendrier           CALENDRIER GLOBAL — tous mes chevaux fusionnés,
                       vue mois puis détail du jour. Deux natures d'événement :

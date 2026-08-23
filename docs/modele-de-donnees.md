@@ -138,6 +138,7 @@ pointaient vers le cheval revenu.
 | `taille_octets` | int     |                                                       |
 | `type_mime`     | text    |                                                       |
 | `ajoute_par`    | uuid FK | profil de l'auteur                                    |
+| `prive`         | bool    | `false` par défaut (0031)                             |
 
 Module **freemium** (migrations 0015 puis 0016) : accessible à tous les
 cavaliers liés au cheval, borné par un quota — **10 documents par cheval en
@@ -174,14 +175,24 @@ connaît ni cheval, ni relation, seulement un chemin :
 ```sql
 using (
   bucket_id = 'documents'
-  and est_premium(auth.uid())
   and a_acces_cheval((storage.foldername(name))[1]::uuid, auth.uid())
+  and not exists (
+    select 1 from public.documents d
+    where d.chemin = name and d.prive and d.ajoute_par is distinct from auth.uid()
+  )
 )
 ```
 
 Pas de politique `update` : un document se remplace (suppression puis
 nouvel envoi), il ne se corrige pas — ça évite qu'un fichier et sa ligne de
 métadonnées divergent silencieusement.
+
+**`prive`** (migration 0031) : même règle que `soins.prive` (0028), posée
+au toggle « Partage » de la feuille d'ajout — masqué de tout le monde sauf
+`ajoute_par`. La politique de stockage rejoint la table sur `chemin` pour
+que ce soit aussi vrai du **fichier brut** : sans ce join, la ligne
+`documents` serait masquée mais l'URL signée resterait délivrable à
+quiconque a accès au cheval.
 
 ### `invitations`
 | colonne          | type   | notes                                     |
@@ -205,6 +216,15 @@ l'expiration, le quota, l'absence de doublon, puis crée la liaison.
 | `debut` / `fin` | timestamptz |                                                    |
 | `type`        | text        | `monte` \| `seance` \| `balade` \| `cours` \| `soin` \| `autre` |
 | `titre`, `notes` | text     |                                                      |
+| `prive`       | bool        | `false` par défaut (0031)                            |
+
+**`prive`** (migration 0031) : masqué de tout le monde sauf `cavalier_id` —
+y compris du club/gestionnaire, qui perd alors aussi le droit de le
+modifier ou le supprimer. Sans effet sur l'accès obligatoire du club aux
+cours qu'il attribue : ceux-ci vivent dans `cours`/`inscriptions_cours`
+(0017+), une table à part que cette colonne ne touche pas — un créneau
+`type = 'cours'` privé n'est qu'une entrée personnelle du calendrier,
+jamais l'attribution officielle du club.
 
 Tous les cavaliers liés au cheval (et le club propriétaire) voient les mêmes
 créneaux. Chacun ne modifie que les siens ; le propriétaire et le club peuvent
