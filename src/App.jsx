@@ -52,6 +52,7 @@ const RejoindreCheval = ecranDiffere(() => import('./pages/RejoindreCheval'))
 const CalendrierGlobal = ecranDiffere(() => import('./pages/CalendrierGlobal'))
 const MesCours = ecranDiffere(() => import('./pages/MesCours'))
 const MonClub = ecranDiffere(() => import('./pages/MonClub'))
+const RecapMensuel = ecranDiffere(() => import('./pages/RecapMensuel'))
 const Bienvenue = ecranDiffere(() => import('./pages/Bienvenue'))
 const Decouverte = ecranDiffere(() => import('./pages/Decouverte'))
 
@@ -143,6 +144,7 @@ export default function App() {
                 <Route path="/sante" element={<Navigate to="/" replace />} />
                 <Route path="/planning" element={<ClubPlanning />} />
                 <Route path="/cours" element={<ClubCours />} />
+                <Route path="/club/recap" element={<RecapMensuel />} />
               </>
             ) : (
               <>

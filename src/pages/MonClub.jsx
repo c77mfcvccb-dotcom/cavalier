@@ -416,6 +416,11 @@ function ClubGerant() {
       <Entete
         titre="Mes cavaliers"
         sousTitre={`${membres.length} membre${membres.length > 1 ? 's' : ''}`}
+        action={
+          <Link to="/club/recap" className="bouton secondaire petit" aria-label="Récapitulatif mensuel">
+            Récap
+          </Link>
+        }
       />
 
       <main className="contenu">
