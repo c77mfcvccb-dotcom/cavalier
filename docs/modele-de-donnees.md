@@ -319,6 +319,14 @@ n'ouvre **rien** : `couverture_club()` l'ignore, le cheval ne compte pas
 dans le périmètre premium. Le gérant voit la demande sur « Mes
 cavaliers » et l'accepte ou la refuse (le refus = détacher).
 
+Deux points d'entrée pour la demande, même geste (`update ecurie_id`, même
+trigger, même RLS `chevaux_update` — exclusive à la propriétaire depuis la
+0029) : le sélecteur historique de « Mon club », et depuis la fiche elle-
+même (section « Écurie » de l'onglet Fiche, cheval personnel sans écurie)
+— utile en particulier pour partager la fiche d'un cheval déjà suivi avec
+une nouvelle écurie sans rien recréer, tout l'historique (soins,
+documents, créneaux) suit.
+
 > **Deux clés de `cheval_cavaliers` vers `chevaux`** depuis la 0019
 > (`cheval_id` et `remplacement_de`) : toute jointure PostgREST entre ces
 > deux tables doit nommer sa colonne — `cheval:cheval_id(...)`,

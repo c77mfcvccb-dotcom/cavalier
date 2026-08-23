@@ -144,6 +144,15 @@ sur la fiche de chaque cheval.
    │                  le droit d'y modifier ou d'y supprimer quoi que ce
    │                  soit) ; entre cavaliers liés au cheval, tout reste
    │                  toujours visible en entier, quel que soit ce réglage.
+   │                  Section « Écurie » (cheval personnel, propriétaire
+   │                  effective, au moins une écurie déjà rejointe par code
+   │                  d'adhésion) : sélectionner une écurie et « Partager »
+   │                  demande sa pension pour ce cheval (met `ecurie_id`) —
+   │                  rien ne se recrée, l'historique reste entier ; c'est
+   │                  une demande, l'écurie doit encore la confirmer (déjà
+   │                  vrai depuis 0021, ce n'est qu'un raccourci sur la
+   │                  fiche du même geste que « Mon club → Demander la
+   │                  pension »).
    │                  Section Disponibilité : le gestionnaire (club ou
    │                  propriétaire, toujours) met le cheval au repos (motif,
    │                  dates, « jusqu'à nouvel ordre ») et le remet au

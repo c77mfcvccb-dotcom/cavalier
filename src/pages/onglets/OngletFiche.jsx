@@ -9,7 +9,7 @@ import { chargerIndisponibilites, indisponibiliteActive } from '../../lib/requet
 import { ajouterJours, cleJour, formatDate, texteAge } from '../../lib/format'
 
 export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estProprietaire, recharger }) {
-  const { profil } = useAuth()
+  const { profil, adhesions } = useAuth()
   const navigate = useNavigate()
 
   const [editionOuverte, setEditionOuverte] = useState(false)
@@ -18,6 +18,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
   const [indisponibilites, setIndisponibilites] = useState([])
   const [reportOuvert, setReportOuvert] = useState(false)
   const [lienPublic, setLienPublic] = useState(null)
+  const [ecurieChoisie, setEcurieChoisie] = useState('')
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
 
@@ -133,6 +134,28 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
     const { error } = await supabase.from('chevaux').update({ [champ]: valeur }).eq('id', cheval.id)
     if (error) setErreur(error.message)
     else recharger()
+  }
+
+  // Partager la fiche avec une écurie déjà rejointe (code d'adhésion) —
+  // même geste que « Demander la pension » sur Mon club, mais depuis la
+  // fiche du cheval : rien ne se recrée, l'historique reste entier. C'est
+  // une demande : l'accès offert ne couvre le cheval qu'une fois l'écurie
+  // confirmée (RPC confirmer_pension, côté club).
+  async function rejoindreEcurie(evenement) {
+    evenement.preventDefault()
+    if (!ecurieChoisie) return
+    setErreur('')
+    setEnvoi(true)
+    const { error } = await supabase
+      .from('chevaux')
+      .update({ ecurie_id: ecurieChoisie })
+      .eq('id', cheval.id)
+    setEnvoi(false)
+    if (error) setErreur(error.message)
+    else {
+      setEcurieChoisie('')
+      recharger()
+    }
   }
 
   async function genererLienPublic() {
@@ -276,6 +299,35 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
           </button>
         )}
       </div>
+
+      {estProprietaire && !cheval.club_id && !cheval.ecurie_id && adhesions.length > 0 && (
+        <section>
+          <div className="titre-section">
+            <h2>Écurie</h2>
+          </div>
+          <p className="aide" style={{ marginTop: -4, marginBottom: 10 }}>
+            Changé d'écurie ? Partagez cette fiche avec celle que vous avez
+            rejointe — rien ne se recrée, l'historique reste entier. C'est
+            une demande : l'accès offert ne couvre le cheval qu'une fois
+            l'écurie confirmée.
+          </p>
+          <form onSubmit={rejoindreEcurie} className="rangee" style={{ gap: 10 }}>
+            <select
+              value={ecurieChoisie}
+              onChange={(e) => setEcurieChoisie(e.target.value)}
+              style={{ flex: 1 }}
+            >
+              <option value="">— Choisir une écurie —</option>
+              {adhesions.map((a) => (
+                <option key={a.club_id} value={a.club_id}>{a.club_nom}</option>
+              ))}
+            </select>
+            <button className="bouton secondaire" disabled={!ecurieChoisie || envoi}>
+              Partager
+            </button>
+          </form>
+        </section>
+      )}
 
       {(estGestionnaire || indisponibilites.length > 0) && (
         <section>
