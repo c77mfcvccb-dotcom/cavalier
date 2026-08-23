@@ -136,15 +136,6 @@ export default function OngletCalendrier({ cheval, cavaliers, estGestionnaire })
                   <div className="corps">
                     <div className="titre">
                       {creneau.titre || TYPES_CRENEAU[creneau.type] || 'Créneau'}
-                      {creneau.prive && (
-                        <span
-                          className="badge contour"
-                          style={{ marginLeft: 8, fontSize: '0.72rem' }}
-                          title="Visible de vous seul(e)"
-                        >
-                          Privé
-                        </span>
-                      )}
                     </div>
                     <div className="meta">
                       {formatHeure(creneau.debut)} – {formatHeure(creneau.fin)} ·{' '}
@@ -240,7 +231,6 @@ function FeuilleCreneau({
       titre: '',
       notes: '',
       cavalier_id: cavalierParDefaut,
-      partage: true,
     }
   }, [jour, profil.id, cavaliers])
 
@@ -284,7 +274,6 @@ function FeuilleCreneau({
       type: valeurs.type,
       titre: valeurs.titre || null,
       notes: valeurs.notes || null,
-      prive: !valeurs.partage,
     })
 
     setEnvoi(false)
@@ -358,24 +347,6 @@ function FeuilleCreneau({
 
         <Champ label="Notes">
           <textarea value={valeurs.notes} onChange={modifier('notes')} />
-        </Champ>
-
-        <Champ
-          label="Partage"
-          aide={
-            valeurs.partage
-              ? 'Visible du reste de la cavalerie, comme les autres créneaux.'
-              : 'Privé : visible de vous seul(e) — masqué du club et des autres cavaliers.'
-          }
-        >
-          <label className="interrupteur">
-            <input
-              type="checkbox"
-              checked={valeurs.partage}
-              onChange={(e) => setValeurs((v) => ({ ...v, partage: e.target.checked }))}
-            />
-            <span>{valeurs.partage ? 'Partagé' : 'Privé'}</span>
-          </label>
         </Champ>
 
         <button className="bouton pleine-largeur" disabled={envoi}>

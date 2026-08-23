@@ -186,18 +186,7 @@ export default function OngletDocuments({ cheval }) {
             return (
               <div key={document.id} className="element">
                 <button className="corps document-lien" onClick={() => ouvrir(document)}>
-                  <div className="titre">
-                    {document.nom}
-                    {document.prive && (
-                      <span
-                        className="badge contour"
-                        style={{ marginLeft: 8, fontSize: '0.72rem' }}
-                        title="Visible de vous seul(e)"
-                      >
-                        Privé
-                      </span>
-                    )}
-                  </div>
+                  <div className="titre">{document.nom}</div>
                   <div className="meta">
                     {config.libelle} · {formatDate(document.cree_le, { court: true })}
                     {taille ? ` · ${taille}` : ''}
@@ -233,7 +222,6 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
   const [categorie, setCategorie] = useState(null)
   const [nom, setNom] = useState('')
   const [fichier, setFichier] = useState(null)
-  const [partage, setPartage] = useState(true)
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
   const [preparation, setPreparation] = useState(false)
@@ -245,7 +233,6 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
       setCategorie(null)
       setNom('')
       setFichier(null)
-      setPartage(true)
       setErreur('')
       if (champRef.current) champRef.current.value = ''
     }
@@ -345,7 +332,6 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
         taille_octets: fichier.size,
         type_mime: fichier.type,
         ajoute_par: profilId,
-        prive: !partage,
       })
       if (error) {
         // La ligne a échoué après un envoi réussi : mieux vaut nettoyer le
@@ -439,24 +425,6 @@ function FeuilleDocument({ cheval, profilId, ouverte, onFermer, onAjoute }) {
               >
                 {preparation ? 'Préparation…' : fichier ? fichier.name : 'Choisir un fichier'}
               </button>
-            </Champ>
-
-            <Champ
-              label="Partage"
-              aide={
-                partage
-                  ? 'Visible du reste de la cavalerie, comme les autres documents.'
-                  : 'Privé : visible de vous seul(e) — masqué du club et des autres cavaliers.'
-              }
-            >
-              <label className="interrupteur">
-                <input
-                  type="checkbox"
-                  checked={partage}
-                  onChange={(e) => setPartage(e.target.checked)}
-                />
-                <span>{partage ? 'Partagé' : 'Privé'}</span>
-              </label>
             </Champ>
           </>
         )}

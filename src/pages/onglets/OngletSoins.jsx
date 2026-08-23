@@ -297,15 +297,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                           <div className="rangee espace">
                             <span className="gras" style={{ fontSize: '0.9rem' }}>
                               {formatDate(soin.date_realisee)}
-                              {soin.prive && (
-                                <span
-                                  className="badge contour"
-                                  style={{ marginLeft: 8, fontSize: '0.72rem' }}
-                                  title="Visible de vous seul(e)"
-                                >
-                                  Privé
-                                </span>
-                              )}
                             </span>
                             {!estClub && soin.cout ? (
                               <span className="doux">{euros(soin.cout)}</span>
@@ -384,7 +375,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
     produit: '',
     cout: '',
     notes: '',
-    partage: true,
   })
 
   const [valeurs, setValeurs] = useState(valeursParDefaut)
@@ -472,7 +462,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
             cout: null,
             notes: valeurs.notes ? `À faire — ${valeurs.notes}` : 'À faire',
             cree_par: profilId,
-            prive: !valeurs.partage,
           }
         : {
             cheval_id: cheval.id,
@@ -485,7 +474,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
             cout: valeurs.cout ? Number(valeurs.cout) : null,
             notes: valeurs.notes || null,
             cree_par: profilId,
-            prive: !valeurs.partage,
           }
     const { error } = await supabase.from('soins').insert(ligne)
 
@@ -622,24 +610,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
 
         <Champ label="Notes">
           <textarea value={valeurs.notes} onChange={modifier('notes')} />
-        </Champ>
-
-        <Champ
-          label="Partage"
-          aide={
-            valeurs.partage
-              ? 'Visible du reste de la cavalerie, comme les autres entrées du carnet.'
-              : 'Privé : visible de vous seul(e) — masqué du club et des autres cavaliers.'
-          }
-        >
-          <label className="interrupteur">
-            <input
-              type="checkbox"
-              checked={valeurs.partage}
-              onChange={(e) => setValeurs((v) => ({ ...v, partage: e.target.checked }))}
-            />
-            <span>{valeurs.partage ? 'Partagé' : 'Privé'}</span>
-          </label>
         </Champ>
 
         <button className="bouton pleine-largeur" disabled={envoi}>

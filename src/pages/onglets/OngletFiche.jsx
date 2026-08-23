@@ -122,6 +122,19 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
     if (enCours) await proposerFinRemplacements()
   }
 
+  // L'écurie : le club propriétaire, ou l'écurie d'une pension confirmée —
+  // les deux entités que les réglages de partage ci-dessous concernent.
+  // Sans l'une ou l'autre, rien à régler : tous les cavaliers liés voient
+  // déjà tout, entre eux le partage est toujours total.
+  const aUneEcurie = Boolean(cheval.club_id) || Boolean(cheval.ecurie_id && cheval.pension_confirmee)
+
+  async function basculerPartage(champ, valeur) {
+    setErreur('')
+    const { error } = await supabase.from('chevaux').update({ [champ]: valeur }).eq('id', cheval.id)
+    if (error) setErreur(error.message)
+    else recharger()
+  }
+
   async function genererLienPublic() {
     setErreur('')
     setEnvoi(true)
@@ -384,6 +397,37 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
             ))}
         </div>
       </section>
+
+      {estProprietaire && aUneEcurie && (
+        <section>
+          <div className="titre-section">
+            <h2>Partage avec l'écurie</h2>
+          </div>
+          <p className="aide" style={{ marginTop: -4, marginBottom: 10 }}>
+            Entre cavaliers liés au cheval, tout se voit toujours en entier.
+            Ces trois réglages ne concernent que ce que voit l'écurie.
+          </p>
+          <div className="pile" style={{ gap: 10 }}>
+            {[
+              { champ: 'partage_creneaux_club', libelle: 'Calendrier' },
+              { champ: 'partage_soins_club', libelle: 'Soins' },
+              { champ: 'partage_documents_club', libelle: 'Documents' },
+            ].map(({ champ, libelle }) => (
+              <label key={champ} className="rangee espace">
+                <span>{libelle}</span>
+                <span className="interrupteur">
+                  <input
+                    type="checkbox"
+                    checked={cheval[champ] ?? true}
+                    onChange={(e) => basculerPartage(champ, e.target.checked)}
+                  />
+                  <span>{(cheval[champ] ?? true) ? 'Partagé' : 'Masqué'}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="pile">
         {maLiaison && maLiaison.role !== 'proprietaire' && (
