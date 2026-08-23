@@ -65,7 +65,7 @@ export default function CalendrierGlobal() {
 
   return (
     <>
-      <Entete titre="Calendrier" sousTitre="Tous mes chevaux" />
+      <Entete titre="Mon calendrier" sousTitre="Tous mes chevaux" />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
