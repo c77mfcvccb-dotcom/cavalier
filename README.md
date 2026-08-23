@@ -93,6 +93,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0027_cheval_choisi_a_inscription.sql` | La cavalière choisit son cheval à l'inscription à un cours (ou laisse « Cheval choisi par le club ») plutôt que de le déclarer après coup |
 | `0028_soins_prives.sql` | `soins` gagne `prive` : un soin privé ne se lit, ne se modifie ni ne se supprime que par son auteur — l'écurie ne le voit plus. Schéma seul, porté de la PR des soins privés ; le bouton de bascule arrive avec elle |
 | `0029_role_proprietaire.sql` | Rôle « propriétaire » désignable par le club sur un cheval de club (`designer_proprietaire`) : elle obtient l'exclusivité de la gestion de la fiche, le club garde le planning sans condition et peut toujours créer des soins/documents partagés ; `retirer_du_club` lui permet de détacher le cheval |
+| `0030_retirer_de_la_cavalerie.sql` | Le club garde le droit symétrique de détacher un cheval de sa cavalerie une fois une propriétaire désignée (`retirer_de_la_cavalerie`), sans effacer aucune donnée ; refusé tant qu'aucune propriétaire n'existe, pour ne pas orpheliner la fiche |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

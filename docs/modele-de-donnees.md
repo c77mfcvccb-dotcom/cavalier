@@ -477,6 +477,15 @@ La propriétaire désignée peut à son tour détacher le cheval de son club via
 possède réellement une ligne `role = 'proprietaire'` pour ce cheval, jamais
 au repli « le club garde tout » quand personne n'est désignée.
 
+Le club garde symétriquement `retirer_de_la_cavalerie(p_cheval)` (0030) — même
+effet (`club_id` à `null`), appelable par le club lui-même
+(`chevaux.club_id = auth.uid()`), sans toucher aux droits de gestion de la
+fiche. Un garde-fou refuse l'appel tant qu'aucune propriétaire n'est
+désignée : détacher un cheval de club sans propriétaire l'orphelinerait
+(`a_acces_cheval` ne connaîtrait plus personne) — dans ce cas la suppression
+complète de la fiche (`chevaux_delete`, déjà ouverte au club sans
+propriétaire désignée) est le geste attendu.
+
 Côté écran, `lier_membre_au_cheval()` refuse toujours `p_role = 'proprietaire'`
 (c'est le rôle qui « ne s'attribue pas » par cette voie). Le raccourci
 « Attribuer et désigner comme propriétaire » (Cavaliers → + Attribuer, ou

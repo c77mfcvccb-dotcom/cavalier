@@ -115,7 +115,14 @@ sur la fiche de chaque cheval.
    │                  indisponibilités, cours) et peut toujours créer des
    │                  soins/documents partagés. Sans propriétaire désignée,
    │                  rien ne change : le club (ou la cavalière d'un cheval
-   │                  personnel) garde tous les droits, comme avant.
+   │                  personnel) garde tous les droits, comme avant. Le club
+   │                  garde aussi un droit propre, même avec une propriétaire
+   │                  désignée : « Retirer ce cheval de la cavalerie »
+   │                  (migration 0030) — détache le cheval de son club sans
+   │                  rien effacer, la propriétaire garde toutes ses données.
+   │                  Refusé tant qu'aucune propriétaire n'est désignée, pour
+   │                  ne pas orpheliner la fiche (dans ce cas, c'est la
+   │                  suppression complète qui reste ouverte au club).
    ├─ Fiche           photo, âge, race, robe, sexe, propriétaire (texte
    │                  libre), et si une propriétaire est désignée : sa
    │                  ligne « Propriétaire désignée » distincte du champ
@@ -124,7 +131,11 @@ sur la fiche de chaque cheval.
    │                  propriétaire effective (désignée, ou le club/la
    │                  cavalière par défaut). La propriétaire désignée d'un
    │                  cheval de club voit en plus « Retirer ce cheval du
-   │                  club » (détache `club_id`, RPC `retirer_du_club`).
+   │                  club » (détache `club_id`, RPC `retirer_du_club`). Le
+   │                  club, lui, voit alors « Retirer ce cheval de la
+   │                  cavalerie » (même effet, RPC `retirer_de_la_cavalerie`,
+   │                  migration 0030) — les deux boutons détachent le même
+   │                  `club_id`, chacun depuis son côté.
    │                  Section Disponibilité : le gestionnaire (club ou
    │                  propriétaire, toujours) met le cheval au repos (motif,
    │                  dates, « jusqu'à nouvel ordre ») et le remet au
