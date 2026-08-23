@@ -59,11 +59,14 @@ sur la fiche de chaque cheval.
 ```
 /                     ACCUEIL — tableau de bord, photo de profil à côté du
                       « Bonjour » en en-tête (initiales à défaut de photo)
-                      ├─ alertes échéances de soins triées par urgence
-                      │  (retard en rouge, < 7 j en orange, < 30 j en gris)
+                      ├─ SOINS À FAIRE : sélecteur Aujourd'hui / 7 jours /
+                      │  30 jours (même mécanique que l'accueil du club),
+                      │  échéances de mes chevaux triées par urgence
+                      │  (retard toujours visible, quel que soit l'horizon)
                       ├─ mes prochains créneaux
-                      ├─ cours du club à venir, avec mon statut et mon cheval
-                      │  (seulement si je suis rattaché à un club)
+                      ├─ MON PROCHAIN COURS : uniquement si je m'y suis
+                      │  inscrite (le planning complet du club vit dans
+                      │  l'onglet Cours) — statut, cheval si attribué
                       └─ accès rapide « Rejoindre un cheval »
 
 /cours                COURS DU CLUB — le planning publié par mon club.

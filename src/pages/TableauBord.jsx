@@ -1,12 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { chargerCours, chargerCreneaux, chargerEcheances, chargerMesChevaux } from '../lib/requetes'
-import { Avatar, Chargement, EtatVide, Erreur, PhotoCheval } from '../composants/Ui'
+import { Avatar, Chargement, EtatVide, Erreur } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import CarteEcheance from '../composants/CarteEcheance'
 import { formatDate, formatHeure } from '../lib/format'
 import { DISCIPLINES_COURS, TYPES_CRENEAU } from '../lib/constantes'
+
+/**
+ * Les trois horizons des soins à faire — même découpage que l'accueil du
+ * club (HORIZONS de ClubAccueil.jsx), pour la même raison : un soin saisi
+ * à l'instant pré-remplit son échéance à 4-12 semaines selon le type, donc
+ * la borne du mois est à 30 jours pour rester dans cette fenêtre.
+ */
+const HORIZONS = {
+  jour: { libelle: "Aujourd'hui", limite: 0, vide: "Rien à faire aujourd'hui, tout est à jour." },
+  semaine: { libelle: '7 jours', limite: 7, vide: 'Rien à faire ces 7 prochains jours.' },
+  mois: { libelle: '30 jours', limite: 30, vide: 'Rien à prévoir ces 30 prochains jours.' },
+}
 
 export default function TableauBord() {
   const { profil, utilisateur } = useAuth()
@@ -16,6 +28,9 @@ export default function TableauBord() {
   const [cours, setCours] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
+  // L'horizon choisi pour les soins à faire : la journée d'office, comme
+  // côté écurie.
+  const [horizon, setHorizon] = useState('jour')
 
   useEffect(() => {
     let annule = false
@@ -34,7 +49,9 @@ export default function TableauBord() {
         const estDuClub = mesChevaux.some((cheval) => cheval.club_id)
 
         const [prochainesEcheances, prochainsCreneaux, prochainsCours] = await Promise.all([
-          chargerEcheances({ limite: 6 }),
+          // Pas de limite ici : le tri par horizon (jour/semaine/mois) se
+          // fait à l'affichage, il lui faut la liste complète en main.
+          chargerEcheances(),
           chargerCreneaux({
             chevauxIds: mesChevaux.map((c) => c.id),
             debut: new Date(),
@@ -44,7 +61,9 @@ export default function TableauBord() {
         ])
 
         if (annule) return
-        setCours(prochainsCours.slice(0, 3))
+        // Seuls les cours où on s'est inscrit — le planning complet du club
+        // vit déjà dans l'onglet Cours, ici c'est « le mien qui vient ».
+        setCours(prochainsCours.filter((c) => c.inscriptions?.some((i) => i.cavalier_id === utilisateur.id)))
         // Les échéances à jour restent affichées : le code couleur n'a de
         // sens que si le vert existe. Sans lui, un carnet en règle est
         // indistinguable d'un carnet vide.
@@ -62,6 +81,15 @@ export default function TableauBord() {
       annule = true
     }
   }, [utilisateur.id])
+
+  // Les retards restent visibles quel que soit l'horizon choisi — même
+  // règle que l'accueil du club : « 30 jours » ne doit pas les masquer.
+  const echeancesAffichees = useMemo(
+    () => echeances.filter((e) => e.jours_restants <= HORIZONS[horizon].limite),
+    [echeances, horizon]
+  )
+  const prochainCours = cours[0] ?? null
+  const maPlace = prochainCours?.inscriptions?.find((i) => i.cavalier_id === profil.id)
 
   if (chargement) return <Chargement />
 
@@ -94,17 +122,28 @@ export default function TableauBord() {
           <>
             <section className="section">
               <div className="titre-section">
-                <h2>Échéances de soins</h2>
+                <h2>Soins à faire</h2>
                 <Link to="/chevaux" className="lien">Mes chevaux</Link>
               </div>
 
-              {echeances.length === 0 ? (
-                <div className="carte centre doux">
-                  Tout est à jour côté santé 👌
-                </div>
+              <div className="choix-puces" role="group" aria-label="Horizon des soins">
+                {Object.entries(HORIZONS).map(([cle, h]) => (
+                  <button
+                    key={cle}
+                    type="button"
+                    className={horizon === cle ? 'actif' : ''}
+                    onClick={() => setHorizon(cle)}
+                  >
+                    {h.libelle}
+                  </button>
+                ))}
+              </div>
+
+              {echeancesAffichees.length === 0 ? (
+                <div className="carte centre doux">{HORIZONS[horizon].vide}</div>
               ) : (
                 <div className="liste">
-                  {echeances.map((echeance) => (
+                  {echeancesAffichees.map((echeance) => (
                     <CarteEcheance key={echeance.id} echeance={echeance} />
                   ))}
                 </div>
@@ -144,57 +183,33 @@ export default function TableauBord() {
               )}
             </section>
 
-            {cours.length > 0 && (
+            {prochainCours && (
               <section className="section">
                 <div className="titre-section">
-                  <h2>Cours du club</h2>
+                  <h2>Mon prochain cours</h2>
                   <Link to="/cours" className="lien">Tous les cours</Link>
                 </div>
 
                 <div className="liste">
-                  {cours.map((c) => {
-                    const maPlace = c.inscriptions?.find((i) => i.cavalier_id === profil.id)
-                    return (
-                      <Link key={c.id} to="/cours" className="element">
-                        <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
-                        <div className="corps">
-                          <div className="titre">
-                            {DISCIPLINES_COURS[c.discipline]?.libelle}
-                            {c.niveau ? ` · ${c.niveau}` : ''}
-                          </div>
-                          <div className="meta">
-                            {formatDate(c.debut, { court: true })} à {formatHeure(c.debut)}
-                            {maPlace?.cheval ? ` · sur ${maPlace.cheval.nom}` : ''}
-                          </div>
-                        </div>
-                        {maPlace?.statut === 'inscrit' && <span className="badge ok">Inscrit</span>}
-                        {maPlace?.statut === 'attente' && (
-                          <span className="badge urgent">Attente</span>
-                        )}
-                      </Link>
-                    )
-                  })}
+                  <Link to="/cours" className="element">
+                    <span className="bordure-couleur" style={{ background: 'var(--bleu)' }} />
+                    <div className="corps">
+                      <div className="titre">
+                        {DISCIPLINES_COURS[prochainCours.discipline]?.libelle}
+                        {prochainCours.niveau ? ` · ${prochainCours.niveau}` : ''}
+                      </div>
+                      <div className="meta">
+                        {formatDate(prochainCours.debut, { court: true })} à{' '}
+                        {formatHeure(prochainCours.debut)}
+                        {maPlace?.cheval ? ` · sur ${maPlace.cheval.nom}` : ''}
+                      </div>
+                    </div>
+                    {maPlace?.statut === 'inscrit' && <span className="badge ok">Inscrit</span>}
+                    {maPlace?.statut === 'attente' && <span className="badge urgent">Attente</span>}
+                  </Link>
                 </div>
               </section>
             )}
-
-            <section className="section">
-              <div className="titre-section">
-                <h2>Mes chevaux</h2>
-              </div>
-              <div className="liste">
-                {chevaux.map((cheval) => (
-                  <Link key={cheval.id} to={`/chevaux/${cheval.id}`} className="carte-cheval">
-                    <PhotoCheval cheval={cheval} />
-                    <div className="infos">
-                      <div className="nom">{cheval.nom}</div>
-                      <div className="detail">{cheval.race || 'Cheval'}</div>
-                    </div>
-                    <span className="fleche">›</span>
-                  </Link>
-                ))}
-              </div>
-            </section>
           </>
         )}
       </main>

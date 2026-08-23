@@ -393,7 +393,7 @@ export async function verifier(base) {
       await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(900)
       const texte = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
-      noter('Accueil — la section « Cours du club » apparaît', texte.includes('Cours du club'), texte.slice(0, 120))
+      noter('Accueil — la section « Mon prochain cours » apparaît', texte.includes('Mon prochain cours'), texte.slice(0, 120))
       await page.close()
     }
 
