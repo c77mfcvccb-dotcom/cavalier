@@ -65,11 +65,17 @@ sur la fiche de chaque cheval.
                       │  (seulement si je suis rattaché à un club)
                       └─ accès rapide « Rejoindre un cheval »
 
-/cours                COURS DU CLUB — le planning publié par mon club, en
-                      vue JOUR par défaut, commutable Semaine ou Mois (même
-                      sélecteur que l'écurie) : discipline, niveau, coach,
-                      places. Filtre par coach : ne voir que les cours de
-                      SA monitrice, d'un geste.
+/cours                COURS DU CLUB — le planning publié par mon club.
+                      Bascule LISTE / TABLEAU, comme côté écurie :
+                      · LISTE, vue JOUR par défaut, commutable Semaine ou
+                        Mois (même sélecteur que l'écurie) : discipline,
+                        niveau, coach, places. Filtre par coach : ne voir
+                        que les cours de SA monitrice, d'un geste.
+                      · TABLEAU : le tableau blanc du jour affiché, un
+                        cours par ligne (heure, discipline, coach), la
+                        liste cavalier : cheval en dessous — la même vue
+                        que le club, en lecture. Un appui sur l'en-tête
+                        déplie les mêmes détails et gestes que la Liste.
                       Un appui déplie le détail : qui vient, sur quel cheval,
                       m'inscrire ou me désinscrire. À l'inscription, si j'ai
                       un cheval À MOI pour cette écurie (propriétaire, ou une

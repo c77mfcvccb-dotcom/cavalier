@@ -6,7 +6,8 @@ import { chargerCours, chargerMesChevaux, chargerMesClubs } from '../lib/requete
 import { useAgendaVivant } from '../lib/temps-reel'
 import { Avatar, Champ, Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
-import SelecteurPeriode, { fenetrePeriode } from '../composants/SelecteurPeriode'
+import SelecteurPeriode, { decalerAncre, fenetrePeriode } from '../composants/SelecteurPeriode'
+import { prenom } from '../lib/couleurs'
 import { DISCIPLINES_COURS, ROLES_CHEVAL_PROPRE } from '../lib/constantes'
 import { cleJour, formatDate, formatHeure } from '../lib/format'
 
@@ -37,6 +38,9 @@ export default function MesCours() {
   const [clubs, setClubs] = useState([])
   const [cours, setCours] = useState([])
   const [mesChevaux, setMesChevaux] = useState([])
+  // Comme côté écurie : Liste (par défaut) ou Tableau — le tableau blanc
+  // de la sellerie, un cours par ligne, qui vient sur quel cheval.
+  const [vue, setVue] = useState('liste')
   // Le JOUR d'office, comme côté écurie : les cours d'aujourd'hui d'abord,
   // la semaine et le mois d'un appui.
   const [periode, setPeriode] = useState('jour')
@@ -53,7 +57,7 @@ export default function MesCours() {
   const [choixCheval, setChoixCheval] = useState({})
 
   const recharger = useCallback(async () => {
-    const { debut, fin } = fenetrePeriode(periode, ancre)
+    const { debut, fin } = fenetrePeriode(vue === 'tableau' ? 'jour' : periode, ancre)
     const [mesClubs, chevaux, lesCours] = await Promise.all([
       chargerMesClubs(),
       chargerMesChevaux(profil.id),
@@ -62,7 +66,7 @@ export default function MesCours() {
     setClubs(mesClubs)
     setMesChevaux(chevaux)
     setCours(lesCours)
-  }, [profil.id, periode, ancre])
+  }, [profil.id, periode, ancre, vue])
 
   useEffect(() => {
     let annule = false
@@ -102,6 +106,13 @@ export default function MesCours() {
     }
     return [...carte.entries()]
   }, [coursAffiches])
+
+  // La vue Tableau : les cours du jour affiché, triés par heure — comme
+  // le tableau blanc de la sellerie, une ligne par cours.
+  const coursTableau = useMemo(
+    () => [...coursAffiches].sort((a, b) => new Date(a.debut) - new Date(b.debut)),
+    [coursAffiches]
+  )
 
   /**
    * Un cheval « à soi » pour CE club — propriétaire ou une formule de
@@ -145,6 +156,80 @@ export default function MesCours() {
     else recharger()
   }
 
+  /**
+   * Le détail d'un cours une fois déplié : qui vient, sur quel cheval, et le
+   * geste (s'inscrire, choisir son cheval, se désinscrire). Commun à la vue
+   * Liste et à la vue Tableau — seul l'en-tête au-dessus change de forme.
+   */
+  function detailCours(c) {
+    const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
+    const maPlace = c.inscriptions.find((i) => i.cavalier_id === profil.id)
+    const complet = inscrits.length >= c.places
+
+    return (
+      <div style={{ marginTop: 10 }}>
+        {inscrits.length > 0 && (
+          <div className="liste">
+            {inscrits.map((i) => (
+              <div key={i.id} className="element" style={{ padding: 8 }}>
+                <Avatar profil={i.cavalier} />
+                <div className="corps">
+                  <div className="titre" style={{ fontSize: '0.88rem' }}>
+                    {i.cavalier?.nom}
+                    {i.cavalier_id === profil.id && <span className="doux"> (vous)</span>}
+                  </div>
+                  {i.cheval && <div className="meta">sur {i.cheval.nom}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="pile" style={{ marginTop: 10 }}>
+          {maPlace ? (
+            <button
+              className="bouton secondaire pleine-largeur"
+              onClick={() => desinscrire(maPlace)}
+            >
+              {maPlace.statut === 'inscrit' ? 'Me désinscrire' : "Quitter la liste d'attente"}
+            </button>
+          ) : (
+            <>
+              {chevauxEligibles(c.club_id).length > 0 && (
+                <Champ label="Cheval">
+                  <select
+                    value={choixCheval[c.id] || ''}
+                    onChange={(e) =>
+                      setChoixCheval((m) => ({ ...m, [c.id]: e.target.value }))
+                    }
+                  >
+                    <option value="">Cheval choisi par le club</option>
+                    {chevauxEligibles(c.club_id).map((cheval) => (
+                      <option key={cheval.id} value={cheval.id}>
+                        {cheval.nom}
+                      </option>
+                    ))}
+                  </select>
+                </Champ>
+              )}
+              <button
+                className="bouton pleine-largeur"
+                disabled={envoiId === c.id}
+                onClick={() => inscrire(c.id, choixCheval[c.id])}
+              >
+                {envoiId === c.id
+                  ? 'Inscription…'
+                  : complet
+                    ? "M'inscrire en liste d'attente"
+                    : "M'inscrire"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   if (chargement) return <Chargement />
 
   return (
@@ -168,12 +253,53 @@ export default function MesCours() {
           />
         ) : (
           <>
-            <SelecteurPeriode
-              periode={periode}
-              ancre={ancre}
-              onPeriode={setPeriode}
-              onAncre={setAncre}
-            />
+            <div
+              className="choix-puces"
+              role="group"
+              aria-label="Présentation des cours"
+              style={{ justifyContent: 'center', marginBottom: 8 }}
+            >
+              <button
+                type="button"
+                className={vue === 'liste' ? 'actif' : undefined}
+                onClick={() => setVue('liste')}
+              >
+                Liste
+              </button>
+              <button
+                type="button"
+                className={vue === 'tableau' ? 'actif' : undefined}
+                onClick={() => setVue('tableau')}
+              >
+                Tableau
+              </button>
+            </div>
+
+            {vue === 'liste' ? (
+              <SelecteurPeriode
+                periode={periode}
+                ancre={ancre}
+                onPeriode={setPeriode}
+                onAncre={setAncre}
+              />
+            ) : (
+              <div className="calendrier-entete">
+                <button
+                  onClick={() => setAncre(decalerAncre('jour', ancre, -1))}
+                  aria-label="Jour précédent"
+                >
+                  ‹
+                </button>
+                <span className="mois">{formatDate(ancre, { avecJour: true, court: true })}</span>
+                <button
+                  onClick={() => setAncre(decalerAncre('jour', ancre, 1))}
+                  aria-label="Jour suivant"
+                >
+                  ›
+                </button>
+              </div>
+            )}
+
             {coachs.length > 0 && (
               <div className="champ" style={{ marginBottom: 12 }}>
                 <select
@@ -191,7 +317,68 @@ export default function MesCours() {
           </>
         )}
 
-        {clubs.length > 0 && (coursAffiches.length === 0 ? (
+        {clubs.length > 0 && (vue === 'tableau' ? (
+          coursTableau.length === 0 ? (
+            <EtatVide
+              emoji="🎠"
+              titre={coachFiltre ? `Aucun cours de ${coachFiltre} ce jour-là` : 'Journée vide'}
+              texte={
+                coachFiltre
+                  ? 'Changez de jour avec les flèches, ou repassez sur « Tous les coachs ».'
+                  : 'Changez de jour avec les flèches pour voir le prochain cours.'
+              }
+            />
+          ) : (
+            <>
+              <div className="tableau-cours">
+                {coursTableau.map((c) => {
+                  const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
+                  const ouvert = detailId === c.id
+                  return (
+                    <div key={c.id}>
+                      <div className="ligne-tableau">
+                        <button
+                          type="button"
+                          className={c.discipline === 'balade' ? 'entete balade' : 'entete'}
+                          onClick={() => setDetailId(ouvert ? null : c.id)}
+                          aria-expanded={ouvert}
+                        >
+                          <span className="heure">{formatHeure(c.debut)}</span>
+                          <span className="coach">
+                            {DISCIPLINES_COURS[c.discipline]?.libelle}
+                            {c.moniteur ? ` · ${c.moniteur}` : ''}
+                          </span>
+                        </button>
+                        <div className="corps">
+                          {inscrits.length === 0 && <span className="vide">Personne d'inscrit</span>}
+                          {inscrits.map((i) => (
+                            <span
+                              key={i.id}
+                              className={i.cheval_id ? 'ligne' : 'ligne sans-cheval'}
+                            >
+                              {i.cavalier_id === profil.id ? 'Vous' : prenom(i.cavalier?.nom)}
+                              {i.cheval ? ` : ${i.cheval.nom}` : ''}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      {ouvert && (
+                        <div className="carte" style={{ marginTop: 8, padding: 12 }}>
+                          {detailCours(c)}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="aide" style={{ marginTop: 10 }}>
+                Comme le tableau du jour à la sellerie : chaque cours sa
+                ligne, cavalier : cheval en dessous. Un appui sur l'en-tête
+                déplie les détails et l'inscription.
+              </p>
+            </>
+          )
+        ) : coursAffiches.length === 0 ? (
           <EtatVide
             emoji="🎠"
             titre={
@@ -222,7 +409,6 @@ export default function MesCours() {
                 {coursDuJour.map((c) => {
                   const inscrits = c.inscriptions.filter((i) => i.statut === 'inscrit')
                   const maPlace = c.inscriptions.find((i) => i.cavalier_id === profil.id)
-                  const complet = inscrits.length >= c.places
                   const maPosition =
                     maPlace?.statut === 'attente'
                       ? c.inscriptions
@@ -279,72 +465,7 @@ export default function MesCours() {
                         </div>
                       )}
 
-                      {ouvert && (
-                        <div style={{ marginTop: 10 }}>
-                          {inscrits.length > 0 && (
-                            <div className="liste">
-                              {inscrits.map((i) => (
-                                <div key={i.id} className="element" style={{ padding: 8 }}>
-                                  <Avatar profil={i.cavalier} />
-                                  <div className="corps">
-                                    <div className="titre" style={{ fontSize: '0.88rem' }}>
-                                      {i.cavalier?.nom}
-                                      {i.cavalier_id === profil.id && (
-                                        <span className="doux"> (vous)</span>
-                                      )}
-                                    </div>
-                                    {i.cheval && <div className="meta">sur {i.cheval.nom}</div>}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          <div className="pile" style={{ marginTop: 10 }}>
-                            {maPlace ? (
-                              <button
-                                className="bouton secondaire pleine-largeur"
-                                onClick={() => desinscrire(maPlace)}
-                              >
-                                {maPlace.statut === 'inscrit'
-                                  ? 'Me désinscrire'
-                                  : "Quitter la liste d'attente"}
-                              </button>
-                            ) : (
-                              <>
-                                {chevauxEligibles(c.club_id).length > 0 && (
-                                  <Champ label="Cheval">
-                                    <select
-                                      value={choixCheval[c.id] || ''}
-                                      onChange={(e) =>
-                                        setChoixCheval((m) => ({ ...m, [c.id]: e.target.value }))
-                                      }
-                                    >
-                                      <option value="">Cheval choisi par le club</option>
-                                      {chevauxEligibles(c.club_id).map((cheval) => (
-                                        <option key={cheval.id} value={cheval.id}>
-                                          {cheval.nom}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </Champ>
-                                )}
-                                <button
-                                  className="bouton pleine-largeur"
-                                  disabled={envoiId === c.id}
-                                  onClick={() => inscrire(c.id, choixCheval[c.id])}
-                                >
-                                  {envoiId === c.id
-                                    ? 'Inscription…'
-                                    : complet
-                                      ? "M'inscrire en liste d'attente"
-                                      : "M'inscrire"}
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      {ouvert && detailCours(c)}
                     </div>
                   )
                 })}
