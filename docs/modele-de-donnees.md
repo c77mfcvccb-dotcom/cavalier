@@ -372,7 +372,7 @@ réalité au premier départ).
 |---------------|------|-------------------------------------------------------|
 | `cours_id`    | uuid |                                                       |
 | `cavalier_id` | uuid | unique par cours                                      |
-| `cheval_id`   | uuid | **l'attribution**, posée par le club, jamais par le cavalier |
+| `cheval_id`   | uuid | l'attribution — posée par le club, ou par le cavalier lui-même s'il déclare SON cheval (migration 0027) |
 | `statut`      | text | `inscrit` \| `attente` — décidé par la base, pas par le client |
 | `present`     | bool | nullable — le pointage du jour J                      |
 
@@ -385,12 +385,17 @@ Trois triggers portent les règles :
 - `promouvoir_attente` (AFTER DELETE) : une place se libère → le plus ancien
   de la liste d'attente monte, automatiquement.
 - `verifier_cheval_cours` (BEFORE INSERT/UPDATE de `cheval_id`) refuse un
-  cheval d'un autre club (`CHEVAL_HORS_CLUB`) ou indisponible à la date du
-  cours (`CHEVAL_INDISPONIBLE`) — l'interface prévient, la base tranche.
+  cheval hors de ce club (`CHEVAL_HORS_CLUB` — ni à lui, ni en pension
+  confirmée chez lui) ou indisponible à la date du cours
+  (`CHEVAL_INDISPONIBLE`) — l'interface prévient, la base tranche.
 
-Côté RLS, le cavalier s'inscrit lui-même **les mains vides** (ni cheval ni
-présence à l'insertion) et peut se désinscrire ; attribution, pointage et
-inscriptions d'office restent au club.
+Côté RLS, le cavalier s'inscrit lui-même **présence toujours nulle**, et
+`cheval_id` seulement s'il s'agit d'un cheval où il a une vraie affectation —
+propriétaire, ou une formule de pension (`ROLES_CHEVAL_PROPRE`, migration
+0027) — jamais `cavalier_club`, où aucune monture ne lui est dédiée et où le
+choix reste donc au club. Sans cheval déclaré, `cheval_id` reste nul et
+l'attribution retombe sur le club, comme avant. Le club, lui, garde la main
+entière : attribution, correction, pointage et inscriptions d'office.
 
 ### Vue `v_charge_chevaux`
 

@@ -71,9 +71,14 @@ sur la fiche de chaque cheval.
                       places. Filtre par coach : ne voir que les cours de
                       SA monitrice, d'un geste.
                       Un appui déplie le détail : qui vient, sur quel cheval,
-                      m'inscrire ou me désinscrire. Complet → inscription en
-                      liste d'attente, avec ma position ; une place libérée
-                      promeut automatiquement le premier de la liste (base).
+                      m'inscrire ou me désinscrire. À l'inscription, si j'ai
+                      un cheval À MOI pour cette écurie (propriétaire, ou une
+                      formule de pension — pas simple cavalier de club), un
+                      sélecteur propose de le déclarer tout de suite, ou de
+                      laisser « Cheval choisi par le club » (migration 0027).
+                      Complet → inscription en liste d'attente, avec ma
+                      position ; une place libérée promeut automatiquement le
+                      premier de la liste (base).
                       Le cheval attribué par le club s'affiche dès qu'il l'est
 
 /chevaux              MES CHEVAUX — cartes photo + nom + badge de rôle

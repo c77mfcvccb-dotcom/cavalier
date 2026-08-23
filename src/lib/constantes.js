@@ -15,6 +15,14 @@ export const ROLES = {
  */
 export const ROLES_ATTRIBUTION = ['demi_pension', 'tiers_pension', 'pension_complete', 'cavalier_club']
 
+/**
+ * Les rôles où un cheval est vraiment « le sien » — à l'inverse de
+ * cavalier_club, qui ne distingue aucune monture en particulier et laisse
+ * donc le club choisir. Sert à proposer son propre cheval à l'inscription
+ * à un cours (migration 0027) ; la base applique la même liste côté RLS.
+ */
+export const ROLES_CHEVAL_PROPRE = ['proprietaire', 'demi_pension', 'tiers_pension', 'pension_complete']
+
 export const TYPES_SEANCE = {
   plat: 'Plat',
   dressage: 'Dressage',

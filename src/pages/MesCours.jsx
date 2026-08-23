@@ -4,11 +4,25 @@ import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
 import { chargerCours, chargerMesChevaux, chargerMesClubs } from '../lib/requetes'
 import { useAgendaVivant } from '../lib/temps-reel'
-import { Avatar, Chargement, Erreur, EtatVide } from '../composants/Ui'
+import { Avatar, Champ, Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import SelecteurPeriode, { fenetrePeriode } from '../composants/SelecteurPeriode'
-import { DISCIPLINES_COURS } from '../lib/constantes'
+import { DISCIPLINES_COURS, ROLES_CHEVAL_PROPRE } from '../lib/constantes'
 import { cleJour, formatDate, formatHeure } from '../lib/format'
+
+/**
+ * Les triggers des migrations 0017/0027 répondent par des codes : c'est
+ * ici qu'ils deviennent des phrases.
+ */
+function traduireErreur(message) {
+  if (message?.includes('CHEVAL_INDISPONIBLE'))
+    return 'Ce cheval est au repos à la date du cours — choisissez-en un autre.'
+  if (message?.includes('CHEVAL_HORS_CLUB'))
+    return 'Ce cheval n\'appartient pas à la cavalerie de ce club.'
+  if (message?.includes('duplicate') || message?.includes('unique'))
+    return 'Vous êtes déjà inscrit à ce cours.'
+  return message?.replace(/^.*?:\s*/, '') || 'Une erreur est survenue.'
+}
 
 /**
  * Les cours de mon club, côté cavalier : je vois le planning, je m'inscris,
@@ -22,7 +36,7 @@ export default function MesCours() {
   const { profil } = useAuth()
   const [clubs, setClubs] = useState([])
   const [cours, setCours] = useState([])
-  const [chevauxIds, setChevauxIds] = useState([])
+  const [mesChevaux, setMesChevaux] = useState([])
   // Le JOUR d'office, comme côté écurie : les cours d'aujourd'hui d'abord,
   // la semaine et le mois d'un appui.
   const [periode, setPeriode] = useState('jour')
@@ -34,16 +48,19 @@ export default function MesCours() {
   const [erreur, setErreur] = useState('')
   const [envoiId, setEnvoiId] = useState(null)
   const [detailId, setDetailId] = useState(null)
+  // Le cheval choisi pour CHAQUE cours pas encore rejoint, avant l'appui sur
+  // « M'inscrire » — une chaîne vide veut dire « choisi par le club ».
+  const [choixCheval, setChoixCheval] = useState({})
 
   const recharger = useCallback(async () => {
     const { debut, fin } = fenetrePeriode(periode, ancre)
-    const [mesClubs, mesChevaux, lesCours] = await Promise.all([
+    const [mesClubs, chevaux, lesCours] = await Promise.all([
       chargerMesClubs(),
       chargerMesChevaux(profil.id),
       chargerCours({ debut, fin }),
     ])
     setClubs(mesClubs)
-    setChevauxIds(mesChevaux.map((c) => c.id))
+    setMesChevaux(chevaux)
     setCours(lesCours)
   }, [profil.id, periode, ancre])
 
@@ -59,6 +76,7 @@ export default function MesCours() {
 
   // Une place qui se libère, une attribution posée par le club : l'écran
   // suit sans rechargement — même mécanique que le calendrier partagé.
+  const chevauxIds = useMemo(() => mesChevaux.map((c) => c.id), [mesChevaux])
   useAgendaVivant(chevauxIds, recharger)
 
   const coachs = useMemo(() => {
@@ -85,20 +103,31 @@ export default function MesCours() {
     return [...carte.entries()]
   }, [coursAffiches])
 
-  async function inscrire(coursId) {
+  /**
+   * Un cheval « à soi » pour CE club — propriétaire ou une formule de
+   * pension, jamais 'cavalier_club' (aucune monture n'y est dédiée, c'est
+   * justement le cas où le club doit choisir). Doit en plus avoir sa place
+   * chez ce club : à lui (club_id) ou en pension confirmée (ecurie_id) —
+   * même règle que le trigger verifier_cheval_cours (migration 0027), pour
+   * ne proposer que des choix que la base acceptera vraiment.
+   */
+  function chevauxEligibles(clubId) {
+    return mesChevaux.filter(
+      (c) =>
+        ROLES_CHEVAL_PROPRE.includes(c.role) &&
+        (c.club_id === clubId || (c.ecurie_id === clubId && c.pension_confirmee))
+    )
+  }
+
+  async function inscrire(coursId, chevalId) {
     setErreur('')
     setEnvoiId(coursId)
     const { error } = await supabase
       .from('inscriptions_cours')
-      .insert({ cours_id: coursId, cavalier_id: profil.id })
+      .insert({ cours_id: coursId, cavalier_id: profil.id, cheval_id: chevalId || null })
     setEnvoiId(null)
-    if (error) {
-      setErreur(
-        error.message.includes('duplicate') || error.message.includes('unique')
-          ? 'Vous êtes déjà inscrit à ce cours.'
-          : error.message.replace(/^.*?:\s*/, '')
-      )
-    } else recharger()
+    if (error) setErreur(traduireErreur(error.message))
+    else recharger()
   }
 
   async function desinscrire(inscription) {
@@ -242,7 +271,7 @@ export default function MesCours() {
                         </span>
                       </button>
 
-                      {maPlace?.statut === 'inscrit' && (
+                      {maPlace && (
                         <div className="meta doux" style={{ marginTop: 6 }}>
                           {maPlace.cheval
                             ? `Votre cheval : ${maPlace.cheval.nom}`
@@ -282,17 +311,36 @@ export default function MesCours() {
                                   : "Quitter la liste d'attente"}
                               </button>
                             ) : (
-                              <button
-                                className="bouton pleine-largeur"
-                                disabled={envoiId === c.id}
-                                onClick={() => inscrire(c.id)}
-                              >
-                                {envoiId === c.id
-                                  ? 'Inscription…'
-                                  : complet
-                                    ? "M'inscrire en liste d'attente"
-                                    : "M'inscrire"}
-                              </button>
+                              <>
+                                {chevauxEligibles(c.club_id).length > 0 && (
+                                  <Champ label="Cheval">
+                                    <select
+                                      value={choixCheval[c.id] || ''}
+                                      onChange={(e) =>
+                                        setChoixCheval((m) => ({ ...m, [c.id]: e.target.value }))
+                                      }
+                                    >
+                                      <option value="">Cheval choisi par le club</option>
+                                      {chevauxEligibles(c.club_id).map((cheval) => (
+                                        <option key={cheval.id} value={cheval.id}>
+                                          {cheval.nom}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </Champ>
+                                )}
+                                <button
+                                  className="bouton pleine-largeur"
+                                  disabled={envoiId === c.id}
+                                  onClick={() => inscrire(c.id, choixCheval[c.id])}
+                                >
+                                  {envoiId === c.id
+                                    ? 'Inscription…'
+                                    : complet
+                                      ? "M'inscrire en liste d'attente"
+                                      : "M'inscrire"}
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>
