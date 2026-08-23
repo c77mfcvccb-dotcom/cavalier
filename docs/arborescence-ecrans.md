@@ -172,7 +172,11 @@ sur la fiche de chaque cheval.
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
    ├─ Soins           historique par type + prochaines échéances,
-   │                  ajout d'un soin (échéance pré-remplie)
+   │                  ajout d'un soin (échéance pré-remplie). Toggle
+   │                  « Partage » (migration 0028) : Partagé par défaut ;
+   │                  décoché, le soin devient Privé — badge dans le
+   │                  carnet, visible de son auteur seul, masqué du club
+   │                  et des autres cavaliers.
    └─ Documents        document d'identification, contrat de demi-pension,
                       assurance — un fichier par ligne, ouvert via une URL
                       signée, visible par tous les cavaliers liés au cheval.

@@ -241,13 +241,13 @@ vaccin, vermifuge, ostéo, dentiste.
 | `prive`              | boolean | `false` par défaut (0028)                              |
 
 > **`prive`** (migration 0028) : un soin privé ne se lit, ne se modifie ni
-> ne se supprime que par qui l'a créé — l'écurie ne le voit plus, comme un
-> soin d'un cheval auquel elle n'aurait pas accès. `v_soins` et
-> `fiche_publique()` respectent la même règle. Cette migration porte
-> uniquement le **schéma** (colonne, politiques, vue) : la bascule
-> privé/partagé n'a pas encore de bouton dans l'écran de saisie — elle
-> arrivera avec le reste du travail en cours sur la branche
-> `claude/soins-prives`.
+> ne se supprime que par qui l'a créé — masqué du club et de tous les
+> autres cavaliers, comme un soin d'un cheval auquel ils n'auraient pas
+> accès. `v_soins` et `fiche_publique()` respectent la même règle. Le
+> toggle « Partage » de la feuille de saisie (`OngletSoins.jsx`, `true` par
+> défaut) le pose à la création ; un badge « Privé » l'indique ensuite
+> dans le carnet. Posé une seule fois à la création — pas d'écran d'édition
+> pour le rebasculer après coup, comme pour les autres champs du soin.
 
 À la saisie, l'application pré-remplit `prochaine_echeance` avec l'intervalle
 habituel du type (ferrure 6 semaines, vermifuge 3 mois, vaccin 1 an, dentiste
