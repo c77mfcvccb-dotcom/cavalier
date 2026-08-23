@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
@@ -329,6 +329,13 @@ function ClubGerant() {
   // liste pendant que le gérant la regarde.
   useAgendaVivant([profil.id], recharger)
 
+  // Une propriétaire désignée (migration 0029) retire au club le droit de
+  // gérer les accès de son cheval : plus de « Retirer » sur ses liaisons.
+  const chevauxAvecProprietaire = useMemo(
+    () => new Set(liaisons.filter((l) => l.role === 'proprietaire').map((l) => l.cheval_id)),
+    [liaisons]
+  )
+
   async function genererCode(regeneration) {
     if (
       regeneration &&
@@ -546,12 +553,14 @@ function ClubGerant() {
                               {liaison.remplacement_de ? ' · en remplacement' : ''}
                             </div>
                           </div>
-                          <button
-                            className="bouton fantome petit"
-                            onClick={() => retirerMonture(liaison, membre)}
-                          >
-                            Retirer
-                          </button>
+                          {!chevauxAvecProprietaire.has(liaison.cheval_id) && (
+                            <button
+                              className="bouton fantome petit"
+                              onClick={() => retirerMonture(liaison, membre)}
+                            >
+                              Retirer
+                            </button>
+                          )}
                         </div>
                       ))}
 
@@ -637,7 +646,7 @@ function ClubGerant() {
 
       <FeuilleAttribution
         membre={attribution}
-        cavalerie={cavalerie}
+        cavalerie={cavalerie.filter((c) => !chevauxAvecProprietaire.has(c.id))}
         liaisons={liaisons}
         onFermer={() => setAttribution(null)}
         onAttribue={() => {

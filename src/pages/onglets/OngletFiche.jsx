@@ -8,7 +8,7 @@ import { MOTIFS_INDISPO, SEXES } from '../../lib/constantes'
 import { chargerIndisponibilites, indisponibiliteActive } from '../../lib/requetes'
 import { ajouterJours, cleJour, formatDate, texteAge } from '../../lib/format'
 
-export default function OngletFiche({ cheval, cavaliers, estGestionnaire, recharger }) {
+export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estProprietaire, recharger }) {
   const { profil } = useAuth()
   const navigate = useNavigate()
 
@@ -23,9 +23,15 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
 
   const maLiaison = cavaliers.find((c) => c.cavalier_id === profil.id)
 
-  // Lien public actif éventuel — visible du seul propriétaire ou club (RLS)
+  // La propriétaire réellement désignée (distincte du champ libre
+  // proprietaire_nom, et du repli « le club garde tout » que reflète déjà
+  // estProprietaire quand personne n'est désignée).
+  const proprietaireDesignee = cavaliers.find((c) => c.role === 'proprietaire')
+  const estProprietaireDesignee = proprietaireDesignee?.cavalier_id === profil.id
+
+  // Lien public actif éventuel — visible de la seule propriétaire (RLS)
   useEffect(() => {
-    if (!estGestionnaire) return
+    if (!estProprietaire) return
     supabase
       .from('partages_publics')
       .select('token')
@@ -33,7 +39,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
       .eq('actif', true)
       .maybeSingle()
       .then(({ data }) => setLienPublic(data?.token ?? null))
-  }, [cheval.id, estGestionnaire])
+  }, [cheval.id, estProprietaire])
 
   const urlPublique = lienPublic ? `${window.location.origin}/public/${lienPublic}` : null
 
@@ -146,6 +152,13 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
     else navigate('/', { replace: true })
   }
 
+  async function retirerDuClub() {
+    if (!window.confirm(`${cheval.nom} ne sera plus rattaché à ce club. Continuer ?`)) return
+    const { error } = await supabase.rpc('retirer_du_club', { p_cheval: cheval.id })
+    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
+    else recharger()
+  }
+
   async function supprimerCheval() {
     if (!window.confirm(`Supprimer définitivement ${cheval.nom} et tout son suivi ?`)) return
 
@@ -195,6 +208,9 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           {cheval.proprietaire_nom && (
             <><dt>Propriétaire</dt><dd>{cheval.proprietaire_nom}</dd></>
           )}
+          {cheval.club_id && proprietaireDesignee && (
+            <><dt>Propriétaire désignée</dt><dd>{proprietaireDesignee.profil?.nom}</dd></>
+          )}
           {cheval.club_id && (<><dt>Statut</dt><dd>Cheval de club</dd></>)}
           {cheval.ecurie_id && (
             <>
@@ -225,7 +241,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           <p className="doux" style={{ marginTop: 14, whiteSpace: 'pre-wrap' }}>{cheval.notes}</p>
         )}
 
-        {estGestionnaire && (
+        {estProprietaire && (
           <button
             className="bouton secondaire petit"
             style={{ marginTop: 14 }}
@@ -304,7 +320,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             </div>
           )}
 
-          {indispoEnCours && estClubGestionnaire && cavaliers.length > 0 && (
+          {indispoEnCours && estClubGestionnaire && estProprietaire && cavaliers.length > 0 && (
             <button
               className="bouton secondaire pleine-largeur"
               style={{ marginTop: 10 }}
@@ -331,7 +347,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
           </Link>
 
           {/* Cavalier seulement : la fonction dépenses n'existe plus côté écurie. */}
-          {estGestionnaire && !estClubGestionnaire && (
+          {estProprietaire && !estClubGestionnaire && (
             <Link
               to={`/depenses?cheval=${cheval.id}`}
               className="bouton secondaire pleine-largeur"
@@ -340,7 +356,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             </Link>
           )}
 
-          {estGestionnaire &&
+          {estProprietaire &&
             (urlPublique ? (
               <button className="bouton secondaire pleine-largeur" onClick={() => setPartageOuvert(true)}>
                 Lien public actif — voir ou révoquer
@@ -363,7 +379,12 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
             Quitter ce cheval
           </button>
         )}
-        {estGestionnaire && (
+        {cheval.club_id && estProprietaireDesignee && (
+          <button className="bouton danger pleine-largeur" onClick={retirerDuClub}>
+            Retirer ce cheval du club
+          </button>
+        )}
+        {estProprietaire && (
           <button className="bouton danger pleine-largeur" onClick={supprimerCheval}>
             Supprimer ce cheval
           </button>
@@ -430,7 +451,7 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, rechar
         }}
       />
 
-      {estClubGestionnaire && (
+      {estClubGestionnaire && estProprietaire && (
         <FeuilleReport
           cheval={cheval}
           cavaliers={cavaliers}

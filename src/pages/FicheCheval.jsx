@@ -84,12 +84,22 @@ export default function FicheCheval() {
     )
   }
 
-  // Le propriétaire et le club gèrent la fiche, les invitations et les liaisons.
+  // Le club garde le planning (créneaux, séances, indisponibilités) que le
+  // cheval ait ou non une propriétaire désignée — voir est_gestionnaire_cheval.
   const estGestionnaire =
     cheval.club_id === profil.id ||
     cavaliers.some((c) => c.cavalier_id === profil.id && c.role === 'proprietaire')
 
-  const proprietes = { cheval, cavaliers, estGestionnaire, recharger }
+  // La gestion de la fiche elle-même (modifier, accès, suppression) devient
+  // exclusive à la propriétaire désignée dès qu'il y en a une — sinon elle
+  // reste au gestionnaire actuel (club ou propriétaire de fait). Miroir
+  // client de est_proprietaire_cheval() (migration 0029).
+  const proprietaireDesignee = cavaliers.find((c) => c.role === 'proprietaire')
+  const estProprietaire = proprietaireDesignee
+    ? proprietaireDesignee.cavalier_id === profil.id
+    : estGestionnaire
+
+  const proprietes = { cheval, cavaliers, estGestionnaire, estProprietaire, recharger }
 
   return (
     <>

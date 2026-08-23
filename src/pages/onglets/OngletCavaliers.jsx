@@ -14,7 +14,7 @@ import { identiteCavalier, repertoireCavaliers } from '../../lib/couleurs'
  * migration 0023), retirer une liaison. Côté cavalier, l'onglet montre qui
  * partage le cheval, chacun avec sa couleur de calendrier.
  */
-export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, recharger }) {
+export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, estProprietaire, recharger }) {
   const { profil } = useAuth()
   const [invitationOuverte, setInvitationOuverte] = useState(false)
   const [lierOuvert, setLierOuvert] = useState(false)
@@ -60,6 +60,21 @@ export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, re
     else recharger()
   }
 
+  async function designerProprietaire(liaison) {
+    if (
+      !window.confirm(
+        `Désigner ${liaison.profil?.nom} comme propriétaire de ${cheval.nom} ? Cette personne obtient les pleins droits sur la fiche (modification, accès, suppression, retrait du club).`
+      )
+    )
+      return
+    const { error } = await supabase.rpc('designer_proprietaire', {
+      p_cheval: cheval.id,
+      p_cavalier: liaison.cavalier_id,
+    })
+    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
+    else recharger()
+  }
+
   return (
     <div className="pile" style={{ gap: 18 }}>
       <Erreur>{erreur}</Erreur>
@@ -71,12 +86,12 @@ export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, re
             <span className="doux"> · {cavaliers.length}{plafond ? `/${plafond}` : ''}</span>
           </h2>
           <span className="rangee" style={{ gap: 10 }}>
-            {estClubGestionnaire && (
+            {estClubGestionnaire && estProprietaire && (
               <button className="lien" onClick={() => setLierOuvert(true)}>
                 + Attribuer
               </button>
             )}
-            {estGestionnaire && !complet && (
+            {estProprietaire && !complet && (
               <button className="lien" onClick={genererCode} disabled={envoi}>
                 + Inviter
               </button>
@@ -90,7 +105,7 @@ export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, re
           )}
 
           {cavaliers.map((liaison) => (
-            <div key={liaison.id} className="element">
+            <div key={liaison.id} className="element" style={{ flexWrap: 'wrap' }}>
               <span
                 className="bordure-couleur"
                 style={{
@@ -99,7 +114,7 @@ export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, re
                 }}
               />
               <Avatar profil={liaison.profil} />
-              <div className="corps">
+              <div className="corps" style={{ flexBasis: 120 }}>
                 <div className="titre">
                   {liaison.profil?.nom}
                   {liaison.cavalier_id === profil.id && <span className="doux"> (vous)</span>}
@@ -114,11 +129,27 @@ export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, re
                   Remplace{liaison.remplacement?.nom ? ` ${liaison.remplacement.nom}` : ''}
                 </span>
               )}
-              {estGestionnaire && liaison.cavalier_id !== profil.id && (
-                <button className="bouton fantome petit" onClick={() => retirerCavalier(liaison)}>
-                  Retirer
-                </button>
-              )}
+              {(estClubGestionnaire && liaison.role !== 'proprietaire') ||
+              (estProprietaire && liaison.cavalier_id !== profil.id) ? (
+                <div className="rangee" style={{ gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
+                  {estClubGestionnaire && liaison.role !== 'proprietaire' && (
+                    <button
+                      className="bouton fantome petit"
+                      onClick={() => designerProprietaire(liaison)}
+                    >
+                      Rendre propriétaire
+                    </button>
+                  )}
+                  {estProprietaire && liaison.cavalier_id !== profil.id && (
+                    <button
+                      className="bouton fantome petit"
+                      onClick={() => retirerCavalier(liaison)}
+                    >
+                      Retirer
+                    </button>
+                  )}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -128,6 +159,7 @@ export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, re
             ? `Ce cheval a atteint le maximum de ${plafond} cavaliers. Retirez-en un pour inviter quelqu'un d'autre.`
             : 'Chaque cavalier lié a sa couleur : elle sert de repère dans le calendrier partagé.'}
           {estClubGestionnaire &&
+            estProprietaire &&
             ' Le rôle dit la formule : demi-pension, tiers de pension, pension complète ou cheval de club.'}
         </p>
       </section>
@@ -174,7 +206,7 @@ export default function OngletCavaliers({ cheval, cavaliers, estGestionnaire, re
         </div>
       </Feuille>
 
-      {estClubGestionnaire && (
+      {estClubGestionnaire && estProprietaire && (
         <FeuilleLierMembre
           cheval={cheval}
           cavaliers={cavaliers}
