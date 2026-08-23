@@ -64,6 +64,7 @@ qui lit `type_compte` et `nom` dans les métadonnées d'inscription.
 | `club_id`          | uuid FK     | non nul ⇒ cheval de club                    |
 | `cree_par`         | uuid FK     | profil créateur                             |
 | `notes`            | text        |                                             |
+| `partage_soins_club`, `partage_documents_club`, `partage_creneaux_club` | bool | `true` par défaut (0032) — voir « Partage par catégorie » |
 
 Un trigger `apres_creation_cheval` crée automatiquement la liaison du créateur
 (rôle `proprietaire`, ou aucune liaison si c'est un club qui crée : le club
@@ -138,7 +139,6 @@ pointaient vers le cheval revenu.
 | `taille_octets` | int     |                                                       |
 | `type_mime`     | text    |                                                       |
 | `ajoute_par`    | uuid FK | profil de l'auteur                                    |
-| `prive`         | bool    | `false` par défaut (0031)                             |
 
 Module **freemium** (migrations 0015 puis 0016) : accessible à tous les
 cavaliers liés au cheval, borné par un quota — **10 documents par cheval en
@@ -176,9 +176,13 @@ connaît ni cheval, ni relation, seulement un chemin :
 using (
   bucket_id = 'documents'
   and a_acces_cheval((storage.foldername(name))[1]::uuid, auth.uid())
-  and not exists (
-    select 1 from public.documents d
-    where d.chemin = name and d.prive and d.ajoute_par is distinct from auth.uid()
+  and (
+    not est_ecurie_cheval((storage.foldername(name))[1]::uuid, auth.uid())
+    or partage_documents_actif((storage.foldername(name))[1]::uuid)
+    or exists (
+      select 1 from public.documents d
+      where d.chemin = name and d.ajoute_par = auth.uid()
+    )
   )
 )
 ```
@@ -187,12 +191,11 @@ Pas de politique `update` : un document se remplace (suppression puis
 nouvel envoi), il ne se corrige pas — ça évite qu'un fichier et sa ligne de
 métadonnées divergent silencieusement.
 
-**`prive`** (migration 0031) : même règle que `soins.prive` (0028), posée
-au toggle « Partage » de la feuille d'ajout — masqué de tout le monde sauf
-`ajoute_par`. La politique de stockage rejoint la table sur `chemin` pour
-que ce soit aussi vrai du **fichier brut** : sans ce join, la ligne
-`documents` serait masquée mais l'URL signée resterait délivrable à
-quiconque a accès au cheval.
+Visibilité pour l'écurie réglée par `chevaux.partage_documents_club` (0032),
+pas par le document — voir « Partage par catégorie » plus bas. La politique
+de stockage rejoint `documents` sur `chemin` pour que le réglage vaille
+aussi pour le **fichier brut** : sans ce join, la ligne serait masquée mais
+l'URL signée resterait délivrable à l'écurie.
 
 ### `invitations`
 | colonne          | type   | notes                                     |
@@ -216,19 +219,11 @@ l'expiration, le quota, l'absence de doublon, puis crée la liaison.
 | `debut` / `fin` | timestamptz |                                                    |
 | `type`        | text        | `monte` \| `seance` \| `balade` \| `cours` \| `soin` \| `autre` |
 | `titre`, `notes` | text     |                                                      |
-| `prive`       | bool        | `false` par défaut (0031)                            |
-
-**`prive`** (migration 0031) : masqué de tout le monde sauf `cavalier_id` —
-y compris du club/gestionnaire, qui perd alors aussi le droit de le
-modifier ou le supprimer. Sans effet sur l'accès obligatoire du club aux
-cours qu'il attribue : ceux-ci vivent dans `cours`/`inscriptions_cours`
-(0017+), une table à part que cette colonne ne touche pas — un créneau
-`type = 'cours'` privé n'est qu'une entrée personnelle du calendrier,
-jamais l'attribution officielle du club.
 
 Tous les cavaliers liés au cheval (et le club propriétaire) voient les mêmes
 créneaux. Chacun ne modifie que les siens ; le propriétaire et le club peuvent
-tout modifier.
+tout modifier — sauf si `chevaux.partage_creneaux_club` est coupé, voir
+« Partage par catégorie (0032) » plus bas.
 
 ### `seances` — carnet de séances
 `cheval_id`, `cavalier_id`, `date`, `type` (`dressage`, `obstacle`, `balade`,
@@ -258,16 +253,15 @@ vaccin, vermifuge, ostéo, dentiste.
 | `prochaine_echeance` | date | nullable — c'est ce champ qui alimente les alertes         |
 | `praticien`, `produit`, `notes` | text |                                                 |
 | `cout`               | numeric |                                                         |
-| `prive`              | boolean | `false` par défaut (0028)                              |
 
-> **`prive`** (migration 0028) : un soin privé ne se lit, ne se modifie ni
-> ne se supprime que par qui l'a créé — masqué du club et de tous les
-> autres cavaliers, comme un soin d'un cheval auquel ils n'auraient pas
-> accès. `v_soins` et `fiche_publique()` respectent la même règle. Le
-> toggle « Partage » de la feuille de saisie (`OngletSoins.jsx`, `true` par
-> défaut) le pose à la création ; un badge « Privé » l'indique ensuite
-> dans le carnet. Posé une seule fois à la création — pas d'écran d'édition
-> pour le rebasculer après coup, comme pour les autres champs du soin.
+> Visibilité pour l'écurie réglée par `chevaux.partage_soins_club`, pas par
+> le soin lui-même — voir « Partage par catégorie (0032) » plus bas. Deux
+> migrations antérieures (0028 « soins privés », 0031 « étendu aux
+> documents et créneaux ») posaient une colonne `prive` **par entrée** ;
+> la 0032 les remplace : un cheval partagé avec une autre cavalière doit
+> lui rester visible en entier, immédiatement, et cocher « Partagé » à
+> chaque soin était un geste répétitif pour un choix qui ne change pas
+> d'une entrée à l'autre. `soins.prive` a été supprimée.
 
 À la saisie, l'application pré-remplit `prochaine_echeance` avec l'intervalle
 habituel du type (ferrure 6 semaines, vermifuge 3 mois, vaccin 1 an, dentiste
@@ -512,6 +506,55 @@ Côté écran, `lier_membre_au_cheval()` refuse toujours `p_role = 'proprietaire
 Mes cavaliers → Attribuer un cheval) est donc un enchaînement de deux appels
 côté client : `lier_membre_au_cheval(..., p_role: 'cavalier_club')` puis
 `designer_proprietaire(...)` — pas une troisième RPC.
+
+### Partage par catégorie (0032)
+
+La propriétaire choisit ce que **l'écurie** voit, par catégorie plutôt
+qu'entrée par entrée : trois booléens sur `chevaux`
+(`partage_soins_club`, `partage_documents_club`, `partage_creneaux_club`,
+`true` par défaut), réglables uniquement par la propriétaire effective
+(portés par `chevaux_update`, déjà exclusif — 0029), depuis l'onglet Fiche.
+
+« L'écurie » est définie précisément par une nouvelle fonction :
+
+```sql
+create or replace function public.est_ecurie_cheval(p_cheval uuid, p_user uuid default auth.uid())
+returns boolean ... as $$
+  select exists (
+    select 1 from chevaux c
+    where c.id = p_cheval
+      and (c.club_id = p_user or (c.ecurie_id = p_user and c.pension_confirmee))
+  );
+$$;
+```
+
+— les deux branches **institutionnelles** de `a_acces_cheval()` (club
+propriétaire, écurie d'une pension confirmée), jamais un cavalier lié
+directement via `cheval_cavaliers`. Conséquence directe et volontaire :
+**entre cavaliers, le partage reste toujours total** — attribuer le cheval
+à une autre cavalière lui donne accès à tout, immédiatement, quel que soit
+le réglage. Seule l'écurie peut se voir masquer une catégorie.
+
+Chaque table concernée (`soins`, `documents`, `creneaux`) applique le même
+schéma de prédicat sur `select`/`update`/`delete` :
+
+```sql
+auteur_ou_cavalier = auth.uid()
+  or not est_ecurie_cheval(cheval_id, auth.uid())
+  or partage_<categorie>_actif(cheval_id)   -- lit chevaux.partage_<categorie>_club
+```
+
+Couper une catégorie retire aussi à l'écurie le droit de modifier ou
+supprimer ce qu'elle ne voit plus plutôt que de laisser un accès
+d'administration sur du contenu invisible.
+
+**Remplace 0028/0031.** Ces deux migrations posaient une colonne `prive`
+sur chaque table, réglée entrée par entrée, et qui masquait aussi bien de
+l'écurie que des autres cavaliers — les deux défauts que corrige la 0032.
+Les colonnes `soins.prive`, `documents.prive` et `creneaux.prive` ont été
+supprimées ; `fiche_publique()` n'a jamais dépendu de ce réglage (un lien
+public s'adresse à un tiers extérieur, sans rapport avec ce que voit
+l'écurie) et reste inchangée.
 
 ### Le cas particulier de la politique SELECT sur `chevaux`
 

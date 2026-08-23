@@ -95,6 +95,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0029_role_proprietaire.sql` | Rôle « propriétaire » désignable par le club sur un cheval de club (`designer_proprietaire`) : elle obtient l'exclusivité de la gestion de la fiche, le club garde le planning sans condition et peut toujours créer des soins/documents partagés ; `retirer_du_club` lui permet de détacher le cheval |
 | `0030_retirer_de_la_cavalerie.sql` | Le club garde le droit symétrique de détacher un cheval de sa cavalerie une fois une propriétaire désignée (`retirer_de_la_cavalerie`), sans effacer aucune donnée ; refusé tant qu'aucune propriétaire n'existe, pour ne pas orpheliner la fiche |
 | `0031_partage_documents_et_creneaux.sql` | Le toggle privé/partagé de la 0028 s'étend aux documents et aux créneaux : masqués de tout le monde sauf leur auteur/cavalier une fois marqués privés, y compris le fichier brut du bucket pour les documents ; sans effet sur les cours attribués par le club |
+| `0032_partage_par_categorie.sql` | Remplace 0028/0031 : le partage se règle par catégorie (soins/documents/créneaux) sur le cheval, pas entrée par entrée, et ne vise que l'écurie (club ou pension confirmée) — entre cavaliers liés, tout reste toujours visible en entier |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée
