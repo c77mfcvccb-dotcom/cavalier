@@ -8,7 +8,6 @@ import { Entete } from '../composants/Mise'
 import OngletFiche from './onglets/OngletFiche'
 import OngletCavaliers from './onglets/OngletCavaliers'
 import OngletCalendrier from './onglets/OngletCalendrier'
-import OngletSeances from './onglets/OngletSeances'
 import OngletSoins from './onglets/OngletSoins'
 import OngletDocuments from './onglets/OngletDocuments'
 
@@ -16,7 +15,6 @@ const ONGLETS = [
   { cle: 'fiche', libelle: 'Fiche' },
   { cle: 'cavaliers', libelle: 'Cavaliers' },
   { cle: 'calendrier', libelle: 'Calendrier' },
-  { cle: 'seances', libelle: 'Séances' },
   { cle: 'soins', libelle: 'Soins' },
   { cle: 'documents', libelle: 'Documents' },
 ]
@@ -25,7 +23,10 @@ export default function FicheCheval() {
   const { id } = useParams()
   const { profil } = useAuth()
   const [parametres, setParametres] = useSearchParams()
-  const ongletActif = parametres.get('onglet') || 'fiche'
+  // Un onglet disparu (Séances) ou une valeur inconnue dans un lien devenu
+  // périmé retombe sur la Fiche plutôt que de laisser le contenu vide.
+  const demande = parametres.get('onglet') || 'fiche'
+  const ongletActif = ONGLETS.some((o) => o.cle === demande) ? demande : 'fiche'
 
   const [cheval, setCheval] = useState(null)
   const [cavaliers, setCavaliers] = useState([])
@@ -112,7 +113,6 @@ export default function FicheCheval() {
         {ongletActif === 'fiche' && <OngletFiche {...proprietes} />}
         {ongletActif === 'cavaliers' && <OngletCavaliers {...proprietes} />}
         {ongletActif === 'calendrier' && <OngletCalendrier {...proprietes} />}
-        {ongletActif === 'seances' && <OngletSeances {...proprietes} />}
         {ongletActif === 'soins' && <OngletSoins {...proprietes} />}
         {ongletActif === 'documents' && <OngletDocuments {...proprietes} />}
       </main>

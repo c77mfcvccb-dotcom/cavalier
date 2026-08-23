@@ -242,7 +242,6 @@ const ECRANS = [
   [`/chevaux/${CHEVAL}?onglet=fiche`, 'Cheval · fiche'],
   [`/chevaux/${CHEVAL}?onglet=cavaliers`, 'Cheval · cavaliers'],
   [`/chevaux/${CHEVAL}?onglet=calendrier`, 'Cheval · calendrier'],
-  [`/chevaux/${CHEVAL}?onglet=seances`, 'Cheval · séances'],
   [`/chevaux/${CHEVAL}?onglet=soins`, 'Cheval · soins'],
   [`/chevaux/${CHEVAL}?onglet=documents`, 'Cheval · documents'],
   [`/chevaux/${CHEVAL}/carnet`, 'Carnet imprimable'],

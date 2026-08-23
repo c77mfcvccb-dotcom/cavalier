@@ -100,7 +100,7 @@ sur la fiche de chaque cheval.
 
 /rejoindre            Saisie du code d'invitation à 6 caractères
 
-/chevaux/:id          FICHE CHEVAL — 6 onglets internes
+/chevaux/:id          FICHE CHEVAL — 5 onglets internes
    ├─ Fiche           photo, âge, race, robe, sexe, propriétaire.
    │                  Section Disponibilité : le gestionnaire met le cheval
    │                  au repos (motif, dates, « jusqu'à nouvel ordre ») et
@@ -126,7 +126,6 @@ sur la fiche de chaque cheval.
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
-   ├─ Séances         carnet chronologique, ajout d'une séance
    ├─ Soins           historique par type + prochaines échéances,
    │                  ajout d'un soin (échéance pré-remplie)
    └─ Documents        document d'identification, contrat de demi-pension,
@@ -300,7 +299,7 @@ auquel un cavalier est lié apparaît dans les deux.
 
 - Une seule action principale par écran, en bouton flottant ou en pied de carte.
 - Les formulaires s'ouvrent en feuille modale qui remonte du bas (réflexe mobile).
-- Codes couleur cavaliers repris partout : calendrier, séances, planning club.
+- Codes couleur cavaliers repris partout : calendrier, planning club.
 - **Deux appuis pour créer un créneau, pas un.** Le premier choisit le jour —
   c'est ce qui permet d'en lire le détail, affiché au-dessus de la grille — et
   le second ouvre le formulaire. Ouvrir dès le premier appui rendrait
