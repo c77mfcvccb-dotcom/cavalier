@@ -159,6 +159,18 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
     else recharger()
   }
 
+  async function retirerDeLaCavalerie() {
+    if (
+      !window.confirm(
+        `${cheval.nom} quittera votre cavalerie. La propriétaire garde toutes ses données (soins, documents, historique). Continuer ?`
+      )
+    )
+      return
+    const { error } = await supabase.rpc('retirer_de_la_cavalerie', { p_cheval: cheval.id })
+    if (error) setErreur(error.message.replace(/^.*?:\s*/, ''))
+    else navigate('/chevaux', { replace: true })
+  }
+
   async function supprimerCheval() {
     if (!window.confirm(`Supprimer définitivement ${cheval.nom} et tout son suivi ?`)) return
 
@@ -382,6 +394,11 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
         {cheval.club_id && estProprietaireDesignee && (
           <button className="bouton danger pleine-largeur" onClick={retirerDuClub}>
             Retirer ce cheval du club
+          </button>
+        )}
+        {estClubGestionnaire && proprietaireDesignee && (
+          <button className="bouton danger pleine-largeur" onClick={retirerDeLaCavalerie}>
+            Retirer ce cheval de la cavalerie
           </button>
         )}
         {estProprietaire && (
