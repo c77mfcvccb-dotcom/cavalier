@@ -67,7 +67,9 @@ qui lit `type_compte` et `nom` dans les métadonnées d'inscription.
 
 Un trigger `apres_creation_cheval` crée automatiquement la liaison du créateur
 (rôle `proprietaire`, ou aucune liaison si c'est un club qui crée : le club
-accède à ses chevaux via `club_id`).
+accède à ses chevaux via `club_id`). Sur un cheval de club, ce rôle peut
+aussi être désigné après coup par le club sur un cavalier déjà lié — voir
+« Le rôle "propriétaire" désigné (0029) » plus bas.
 
 ### `cheval_cavaliers` — table de liaison
 | colonne       | type    | notes                                                    |
@@ -116,8 +118,10 @@ peut lier un de SES membres à un de SES chevaux en un geste, sans code, par
 le cavalier qui agit. La fonction pose aussi le **rôle** de l'attribution,
 la formule réelle de l'écurie : `demi_pension`, `tiers_pension`,
 `pension_complete` ou `cavalier_club` — jamais `proprietaire`, qui se
-constate à la création du cheval ; rappelée sur une liaison existante, elle
-ajuste le rôle au lieu d'échouer. La colonne `remplacement_de` (uuid → chevaux,
+constate à la création du cheval ou se désigne via `designer_proprietaire()`
+(0029), pas via cette fonction ; rappelée sur une liaison existante, elle
+ajuste le rôle au lieu d'échouer, sans jamais écraser une propriétaire en
+place (`and role <> 'proprietaire'`). La colonne `remplacement_de` (uuid → chevaux,
 nullable) mémorise le cheval indisponible qu'une liaison remplace : elle
 porte le badge « Remplace X » sur la fiche, et la levée de
 l'indisponibilité propose de clore d'un coup les remplacements qui
@@ -234,6 +238,16 @@ vaccin, vermifuge, ostéo, dentiste.
 | `prochaine_echeance` | date | nullable — c'est ce champ qui alimente les alertes         |
 | `praticien`, `produit`, `notes` | text |                                                 |
 | `cout`               | numeric |                                                         |
+| `prive`              | boolean | `false` par défaut (0028)                              |
+
+> **`prive`** (migration 0028) : un soin privé ne se lit, ne se modifie ni
+> ne se supprime que par qui l'a créé — l'écurie ne le voit plus, comme un
+> soin d'un cheval auquel elle n'aurait pas accès. `v_soins` et
+> `fiche_publique()` respectent la même règle. Cette migration porte
+> uniquement le **schéma** (colonne, politiques, vue) : la bascule
+> privé/partagé n'a pas encore de bouton dans l'écran de saisie — elle
+> arrivera avec le reste du travail en cours sur la branche
+> `claude/soins-prives`.
 
 À la saisie, l'application pré-remplit `prochaine_echeance` avec l'intervalle
 habituel du type (ferrure 6 semaines, vermifuge 3 mois, vaccin 1 an, dentiste
@@ -428,13 +442,40 @@ centralisent la règle d'accès :
 - `a_acces_cheval(cheval, user)` — vrai si l'utilisateur est lié au cheval
   via `cheval_cavaliers`, **ou** s'il est le club propriétaire (`club_id`).
 - `est_gestionnaire_cheval(cheval, user)` — vrai si l'utilisateur est
-  `proprietaire` du cheval ou le club propriétaire. Contrôle la modification
-  de la fiche, la génération d'invitations et le retrait d'un cavalier.
+  `proprietaire` du cheval ou le club propriétaire. Reste la porte du
+  **planning** (créneaux, séances, indisponibilités) : le club d'un cheval
+  de club la garde toujours, qu'une propriétaire soit désignée ou non
+  (0029) — c'est l'accès aux cours que le club conserve « obligatoirement ».
+- `est_proprietaire_cheval(cheval, user)` (0029) — vrai pour la **seule**
+  personne désignée `proprietaire` dans `cheval_cavaliers` si une telle
+  ligne existe pour ce cheval ; sinon se replie exactement sur
+  `est_gestionnaire_cheval` (club, ou cavalière d'un cheval personnel).
+  Contrôle la **gestion de la fiche elle-même** : modifier les infos,
+  générer une invitation, lier/retirer un cavalier, créer ou révoquer le
+  lien public, supprimer la fiche. Une fois une propriétaire désignée, le
+  club (rôle « écurie ») perd ces droits mais garde le planning et peut
+  toujours créer des soins/documents partagés (non privés).
 
 Toutes les tables filles (`creneaux`, `seances`, `soins`, `cheval_cavaliers`,
 `invitations`) sont filtrées par `a_acces_cheval`. Conséquence directe : un
 cheval n'expose ses données qu'aux cavaliers liés et/ou au club propriétaire,
 comme demandé.
+
+### Le rôle « propriétaire » désigné (0029)
+
+Le rôle `proprietaire` de `cheval_cavaliers` existait déjà pour les chevaux
+personnels (posé automatiquement à la création par le trigger de 0001). La
+0029 permet en plus au **club** de le désigner explicitement sur un cheval
+de club, via la RPC `designer_proprietaire(p_cheval, p_cavalier)` — réservée
+au club propriétaire (`chevaux.club_id = auth.uid()`), sur un cavalier déjà
+lié au cheval. Une propriétaire déjà en place est automatiquement
+rétrogradée en `cavalier_club` : la désignation se réattribue, elle ne
+s'additionne pas.
+
+La propriétaire désignée peut à son tour détacher le cheval de son club via
+`retirer_du_club(p_cheval)` (met `chevaux.club_id` à `null`) — réservée à qui
+possède réellement une ligne `role = 'proprietaire'` pour ce cheval, jamais
+au repli « le club garde tout » quand personne n'est désignée.
 
 ### Le cas particulier de la politique SELECT sur `chevaux`
 

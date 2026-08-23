@@ -90,6 +90,9 @@ la seule ouverture de l'écran d'abonnement.
 | `0024_acces_pension.sql` | `a_acces_cheval()` s'ouvre à l'écurie d'une pension CONFIRMÉE : soins, carnet, créneaux, séances et documents du cheval hébergé — sans en faire la gestionnaire (fiche, suppression, indisponibilités et coûts restent au propriétaire) |
 | `0025_motif_vacances.sql` | « Vacances » rejoint les motifs d'indisponibilité autorisés — un bloc de plusieurs jours annoncé à l'avance, distinct du repos du quotidien |
 | `0026_serie_cours.sql` | `cours` gagne `serie_id` : les occurrences d'une récurrence hebdomadaire le partagent, pour les supprimer toutes d'un coup plutôt qu'une par une |
+| `0027_cheval_choisi_a_inscription.sql` | La cavalière choisit son cheval à l'inscription à un cours (ou laisse « Cheval choisi par le club ») plutôt que de le déclarer après coup |
+| `0028_soins_prives.sql` | `soins` gagne `prive` : un soin privé ne se lit, ne se modifie ni ne se supprime que par son auteur — l'écurie ne le voit plus. Schéma seul, porté de la PR des soins privés ; le bouton de bascule arrive avec elle |
+| `0029_role_proprietaire.sql` | Rôle « propriétaire » désignable par le club sur un cheval de club (`designer_proprietaire`) : elle obtient l'exclusivité de la gestion de la fiche, le club garde le planning sans condition et peut toujours créer des soins/documents partagés ; `retirer_du_club` lui permet de détacher le cheval |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

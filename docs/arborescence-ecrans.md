@@ -104,28 +104,55 @@ sur la fiche de chaque cheval.
 /rejoindre            Saisie du code d'invitation à 6 caractères
 
 /chevaux/:id          FICHE CHEVAL — 5 onglets internes
-   ├─ Fiche           photo, âge, race, robe, sexe, propriétaire.
-   │                  Section Disponibilité : le gestionnaire met le cheval
-   │                  au repos (motif, dates, « jusqu'à nouvel ordre ») et
-   │                  le remet au travail ; tous les cavaliers le voient.
-   │                  « Lever » ferme le repos à HIER — le cheval est
-   │                  disponible immédiatement — et garde la ligne en
-   │                  historique ; « ✕ » l'efface entièrement, c'est le
-   │                  geste de la saisie par erreur (« il n'est pas
-   │                  blessé »), avec confirmation.
-   │                  Un cheval de club au repos propose de REPORTER ses
-   │                  cavaliers sur un autre cheval — la liaison porte
-   │                  « Remplace X » et la levée du repos propose d'y
-   │                  mettre fin.
+   │                  Sur un cheval de club, le club peut DÉSIGNER une
+   │                  propriétaire parmi les cavaliers déjà liés (migration
+   │                  0029, bouton « Rendre propriétaire » dans Cavaliers).
+   │                  Elle obtient alors l'EXCLUSIVITÉ de la gestion de la
+   │                  fiche (modifier, gérer les accès, lien public,
+   │                  supprimer, retirer le club) ; le club redevient une
+   │                  simple « écurie » : le cheval reste dans sa cavalerie,
+   │                  il garde SANS CONDITION le planning (créneaux, séances,
+   │                  indisponibilités, cours) et peut toujours créer des
+   │                  soins/documents partagés. Sans propriétaire désignée,
+   │                  rien ne change : le club (ou la cavalière d'un cheval
+   │                  personnel) garde tous les droits, comme avant.
+   ├─ Fiche           photo, âge, race, robe, sexe, propriétaire (texte
+   │                  libre), et si une propriétaire est désignée : sa
+   │                  ligne « Propriétaire désignée » distincte du champ
+   │                  libre. « Modifier la fiche », le lien public et
+   │                  « Supprimer ce cheval » sont réservés à la
+   │                  propriétaire effective (désignée, ou le club/la
+   │                  cavalière par défaut). La propriétaire désignée d'un
+   │                  cheval de club voit en plus « Retirer ce cheval du
+   │                  club » (détache `club_id`, RPC `retirer_du_club`).
+   │                  Section Disponibilité : le gestionnaire (club ou
+   │                  propriétaire, toujours) met le cheval au repos (motif,
+   │                  dates, « jusqu'à nouvel ordre ») et le remet au
+   │                  travail ; tous les cavaliers le voient. « Lever »
+   │                  ferme le repos à HIER — le cheval est disponible
+   │                  immédiatement — et garde la ligne en historique ;
+   │                  « ✕ » l'efface entièrement, c'est le geste de la
+   │                  saisie par erreur (« il n'est pas blessé »), avec
+   │                  confirmation.
+   │                  Un cheval de club au repos, SANS propriétaire
+   │                  désignée, propose au club de REPORTER ses cavaliers
+   │                  sur un autre cheval — la liaison porte « Remplace X »
+   │                  et la levée du repos propose d'y mettre fin.
    │                  « Dépenses de ce cheval » ouvre le suivi déjà filtré
    │                  (propriétaire cavalier seulement — pas côté club)
    ├─ Cavaliers       qui monte le cheval, chacun avec sa couleur de
    │                  calendrier et son rôle. « + Inviter » génère le code
-   │                  (demi-pension). Côté club, « + Attribuer » lie un
-   │                  membre sans code en posant la FORMULE : demi-pension,
-   │                  tiers de pension, pension complète ou cheval de club
-   │                  (migration 0023) — réattribuer ajuste le rôle sans
-   │                  rien refaire. Retrait d'une liaison au même endroit
+   │                  (demi-pension) — réservé à la propriétaire effective.
+   │                  Côté club, « + Attribuer » lie un membre sans code en
+   │                  posant la FORMULE : demi-pension, tiers de pension,
+   │                  pension complète ou cheval de club (migration 0023) —
+   │                  réattribuer ajuste le rôle sans rien refaire ; réservé
+   │                  lui aussi à la propriétaire effective. « Retirer » une
+   │                  liaison au même endroit, même garde.
+   │                  Côté club uniquement, sur chaque cavalier déjà lié
+   │                  (hors la propriétaire en place) : « Rendre
+   │                  propriétaire » (migration 0029) — reste disponible même
+   │                  après une première désignation, pour la réattribuer
    ├─ Calendrier      mois avec étiquettes de couleur par cavalier ;
    │                  un appui choisit le jour, un second sur le même
    │                  jour ouvre la création d'un créneau
