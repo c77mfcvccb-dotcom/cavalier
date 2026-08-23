@@ -57,7 +57,8 @@ dépenses ont quitté la barre : leur porte d'entrée vit dans le Profil et
 sur la fiche de chaque cheval.
 
 ```
-/                     ACCUEIL — tableau de bord
+/                     ACCUEIL — tableau de bord, photo de profil à côté du
+                      « Bonjour » en en-tête (initiales à défaut de photo)
                       ├─ alertes échéances de soins triées par urgence
                       │  (retard en rouge, < 7 j en orange, < 30 j en gris)
                       ├─ mes prochains créneaux

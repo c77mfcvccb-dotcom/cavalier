@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { chargerCours, chargerCreneaux, chargerEcheances, chargerMesChevaux } from '../lib/requetes'
-import { Chargement, EtatVide, Erreur, PhotoCheval } from '../composants/Ui'
+import { Avatar, Chargement, EtatVide, Erreur, PhotoCheval } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import CarteEcheance from '../composants/CarteEcheance'
 import { formatDate, formatHeure } from '../lib/format'
@@ -69,7 +69,11 @@ export default function TableauBord() {
 
   return (
     <>
-      <Entete titre={`Bonjour ${prenom}`} sousTitre={formatDate(new Date(), { avecJour: true })} />
+      <Entete
+        titre={`Bonjour ${prenom}`}
+        sousTitre={formatDate(new Date(), { avecJour: true })}
+        visuel={<Avatar profil={profil} />}
+      />
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
