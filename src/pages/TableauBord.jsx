@@ -123,7 +123,6 @@ export default function TableauBord() {
             <section className="section">
               <div className="titre-section">
                 <h2>Soins à faire</h2>
-                <Link to="/chevaux" className="lien">Mes chevaux</Link>
               </div>
 
               <div className="choix-puces" role="group" aria-label="Horizon des soins">
@@ -153,7 +152,6 @@ export default function TableauBord() {
             <section className="section">
               <div className="titre-section">
                 <h2>Prochains créneaux</h2>
-                <Link to="/calendrier" className="lien">Calendrier</Link>
               </div>
 
               {creneaux.length === 0 ? (
@@ -187,7 +185,6 @@ export default function TableauBord() {
               <section className="section">
                 <div className="titre-section">
                   <h2>Mon prochain cours</h2>
-                  <Link to="/cours" className="lien">Tous les cours</Link>
                 </div>
 
                 <div className="liste">
