@@ -352,7 +352,23 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       données au propriétaire), accès offert donné/retiré,
                       retrait du club. Plus le code d'adhésion multi-usage
                       (affichage, partage, régénération : l'ancien meurt).
-                      Bandeau si l'abonnement du club est inactif
+                      Bandeau si l'abonnement du club est inactif. Bouton
+                      « Récap » dans l'en-tête vers /club/recap
+
+/club/recap           RÉCAPITULATIF MENSUEL (gérant) — la comptabilité :
+                      combien de cours chaque cavalier a suivis dans le
+                      mois, pour la facturation. Navigation mois par mois,
+                      total en tête, puis une carte par cavalier (triée par
+                      nom) repliée sur son nombre de cours, dépliable sur
+                      le détail (date, discipline, cheval monté). Ne compte
+                      que les inscriptions pointées présentes
+                      (`present = true`) — un stage se lit comme plusieurs
+                      cours du mois, rien à distinguer. Un cours passé pas
+                      encore pointé est signalé par un bandeau d'aide
+                      renvoyant vers l'onglet Cours, plutôt que compté ou
+                      ignoré silencieusement. Aucune table ni RLS nouvelle :
+                      relit `cours`/`inscriptions_cours` via `chargerCours`,
+                      déjà visibles au club sur ses propres cours
 
 /profil               Nom du club, photo, ville, présentation, déconnexion
 ```
