@@ -69,8 +69,11 @@ sur la fiche de chaque cheval.
                       │  l'onglet Cours) — statut, cheval si attribué
                       └─ accès rapide « Rejoindre un cheval »
 
-/cours                COURS DU CLUB — le planning publié par mon club.
-                      Bascule LISTE / TABLEAU, comme côté écurie :
+/cours                COURS DU CLUB — le planning publié par mon club, logo
+                      de l'écurie à côté du titre (lecture directe de son
+                      profil, visible de ses membres — comme le logo sur
+                      l'écran Mon club). Bascule LISTE / TABLEAU, comme côté
+                      écurie :
                       · LISTE, vue JOUR par défaut, commutable Semaine ou
                         Mois (même sélecteur que l'écurie) : discipline,
                         niveau, coach, places. Filtre par coach : ne voir

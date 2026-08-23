@@ -237,6 +237,7 @@ export default function MesCours() {
       <Entete
         titre="Cours"
         sousTitre={clubs.map((c) => c.nom).join(' · ') || 'Planning du club'}
+        visuel={clubs.length > 0 ? <Avatar profil={clubs[0]} /> : undefined}
       />
 
       <main className="contenu">

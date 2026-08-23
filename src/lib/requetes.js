@@ -392,7 +392,7 @@ export async function chargerCours({ clubId = null, debut = null, fin = null } =
 export async function chargerMesClubs() {
   const { data, error } = await supabase.rpc('mes_adhesions')
   if (error) throw error
-  return (data || []).map((a) => ({
+  const clubs = (data || []).map((a) => ({
     id: a.club_id,
     nom: a.club_nom,
     siege: a.siege,
@@ -400,6 +400,18 @@ export async function chargerMesClubs() {
     club_premium: a.club_premium,
     cree_le: a.cree_le,
   }))
+  if (clubs.length === 0) return clubs
+
+  // Le logo n'est pas dans mes_adhesions() (RPC dédiée à l'adhésion, pas au
+  // visage de l'écurie) : une lecture directe suffit, le profil d'un club
+  // est déjà visible de ses membres (RLS, migration 0018) — même mécanique
+  // que la fiche club sur l'écran Mon club.
+  const { data: profils } = await supabase
+    .from('profils')
+    .select('id, photo_url')
+    .in('id', clubs.map((c) => c.id))
+  const photoParId = new Map((profils || []).map((p) => [p.id, p.photo_url]))
+  return clubs.map((c) => ({ ...c, photo_url: photoParId.get(c.id) ?? null }))
 }
 
 /** Documents administratifs du cheval, les plus récents d'abord. */
