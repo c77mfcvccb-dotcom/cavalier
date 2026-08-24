@@ -33,6 +33,10 @@ export default function NouveauCheval() {
   })
   const [erreur, setErreur] = useState('')
   const [envoi, setEnvoi] = useState(false)
+  // Tant que la photo choisie n'a pas fini de monter vers le bucket, « Créer »
+  // reste bloqué : sans ça, un appui trop rapide crée la fiche sans elle —
+  // l'envoi tournait encore, silencieusement abandonné à la navigation.
+  const [photoEnvoi, setPhotoEnvoi] = useState(false)
 
   const modifier = (champ) => (e) =>
     setValeurs((v) => ({ ...v, [champ]: e.target.value }))
@@ -83,6 +87,7 @@ export default function NouveauCheval() {
           <ChargeurPhoto
             valeur={valeurs.photo_url}
             onChange={(url) => setValeurs((v) => ({ ...v, photo_url: url }))}
+            onEnvoiChange={setPhotoEnvoi}
             label="Photo du cheval"
           />
 
@@ -136,8 +141,8 @@ export default function NouveauCheval() {
             />
           </Champ>
 
-          <button className="bouton pleine-largeur" disabled={envoi}>
-            {envoi ? 'Création…' : 'Créer la fiche'}
+          <button className="bouton pleine-largeur" disabled={envoi || photoEnvoi}>
+            {envoi ? 'Création…' : photoEnvoi ? 'Envoi de la photo…' : 'Créer la fiche'}
           </button>
         </form>
       </main>

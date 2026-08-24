@@ -6,12 +6,28 @@ import { useAuth } from '../contexte/AuthContexte'
 /**
  * Sélection d'une photo, redimensionnée dans le navigateur avant l'envoi
  * vers le bucket Storage « photos ». Évite d'expédier 5 Mo depuis un mobile.
+ *
+ * `onEnvoiChange` (optionnel) prévient le parent que l'envoi est en cours :
+ * un formulaire de création qui n'attend pas cette fin avant de soumettre
+ * enregistre la fiche sans la photo, choisie pourtant à temps — l'envoi
+ * n'a simplement pas eu le temps de se terminer.
  */
-export default function ChargeurPhoto({ valeur, onChange, forme = 'carre', label = 'Photo' }) {
+export default function ChargeurPhoto({
+  valeur,
+  onChange,
+  onEnvoiChange,
+  forme = 'carre',
+  label = 'Photo',
+}) {
   const { utilisateur } = useAuth()
   const champRef = useRef(null)
   const [envoi, setEnvoi] = useState(false)
   const [erreur, setErreur] = useState('')
+
+  function declarerEnvoi(enCours) {
+    setEnvoi(enCours)
+    onEnvoiChange?.(enCours)
+  }
 
   async function redimensionner(fichier, cote = 900) {
     const bitmap = await createImageBitmap(fichier)
@@ -32,7 +48,7 @@ export default function ChargeurPhoto({ valeur, onChange, forme = 'carre', label
     if (!fichier) return
 
     setErreur('')
-    setEnvoi(true)
+    declarerEnvoi(true)
     try {
       const blob = await redimensionner(fichier)
       const chemin = `${utilisateur.id}/${crypto.randomUUID()}.jpg`
@@ -48,7 +64,7 @@ export default function ChargeurPhoto({ valeur, onChange, forme = 'carre', label
       setErreur("L'envoi de la photo a échoué")
       console.error(e)
     } finally {
-      setEnvoi(false)
+      declarerEnvoi(false)
       if (champRef.current) champRef.current.value = ''
     }
   }
