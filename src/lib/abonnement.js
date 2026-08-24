@@ -171,7 +171,6 @@ export const AVANTAGES_PREMIUM = [
     titre: 'Calendrier sans limite',
     texte: 'Le plan gratuit s’arrête au dimanche de la semaine en cours.',
   },
-  { titre: 'Suivi des dépenses', texte: 'Totaux par mois, par type et par cheval.' },
 ]
 
 /**

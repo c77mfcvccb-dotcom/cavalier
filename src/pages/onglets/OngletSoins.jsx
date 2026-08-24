@@ -33,11 +33,8 @@ function statutEcheance(dateEcheance) {
   return { cle: 'ok', jours }
 }
 
-const euros = (montant) =>
-  `${Number(montant).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} €`
-
-export default function OngletSoins({ cheval, estGestionnaire }) {
-  const { profil, estClub, estPremium, adhesions } = useAuth()
+export default function OngletSoins({ cheval }) {
+  const { profil, estPremium, adhesions } = useAuth()
   // Premium contextuel (0018) : l'abonnement perso, ou le siège offert par
   // l'écurie quand le cheval est dans son périmètre.
   const premium = premiumPourCheval(cheval, { estPremium, adhesions })
@@ -110,32 +107,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
     return [...groupes.entries()].sort(
       (a, b) => new Date(b[1][0].date_realisee) - new Date(a[1][0].date_realisee)
     )
-  }, [soins])
-
-  const depenses = useMemo(() => {
-    const anneeCourante = new Date().getFullYear()
-    const moisCourant = new Date().getMonth()
-    let annee = 0
-    let mois = 0
-    const parType = new Map()
-
-    for (const soin of soins) {
-      if (!soin.cout) continue
-      const montant = Number(soin.cout)
-      const date = new Date(soin.date_realisee)
-      if (date.getFullYear() === anneeCourante) {
-        annee += montant
-        if (date.getMonth() === moisCourant) mois += montant
-        parType.set(soin.type, (parType.get(soin.type) || 0) + montant)
-      }
-    }
-
-    return {
-      annee,
-      mois,
-      anneeCourante,
-      parType: [...parType.entries()].sort((a, b) => b[1] - a[1]),
-    }
   }, [soins])
 
   async function supprimer(soin) {
@@ -213,52 +184,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
         </section>
       )}
 
-      {!estClub && depenses.annee > 0 && (
-        <section>
-          <div className="titre-section">
-            <h2>Dépenses {depenses.anneeCourante}</h2>
-          </div>
-          <div className="carte">
-            <div className="rangee espace" style={{ marginBottom: 12 }}>
-              <div>
-                <div className="doux" style={{ fontSize: '0.8rem' }}>Ce mois-ci</div>
-                <div className="gras" style={{ fontSize: '1.15rem' }}>{euros(depenses.mois)}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="doux" style={{ fontSize: '0.8rem' }}>Depuis janvier</div>
-                <div className="gras" style={{ fontSize: '1.15rem' }}>{euros(depenses.annee)}</div>
-              </div>
-            </div>
-
-            <div className="pile" style={{ gap: 7 }}>
-              {depenses.parType.map(([type, montant]) => {
-                const config = TYPES_SOIN[type] || TYPES_SOIN.autre
-                const part = Math.round((montant / depenses.annee) * 100)
-                return (
-                  <div key={type}>
-                    <div className="rangee espace" style={{ fontSize: '0.85rem' }}>
-                      <span>{config.libelle}</span>
-                      <span className="doux">{euros(montant)}</span>
-                    </div>
-                    <div className="jauge">
-                      <span style={{ width: `${part}%` }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {!estGestionnaire && (
-            <p className="aide" style={{ marginTop: 8 }}>
-              Seuls vos propres coûts apparaissent ici : ceux des autres
-              cavaliers et du gestionnaire restent privés (et
-              réciproquement).
-            </p>
-          )}
-        </section>
-      )}
-
       <section>
         <div className="titre-section">
           <h2>Carnet de santé</h2>
@@ -298,9 +223,6 @@ export default function OngletSoins({ cheval, estGestionnaire }) {
                             <span className="gras" style={{ fontSize: '0.9rem' }}>
                               {formatDate(soin.date_realisee)}
                             </span>
-                            {!estClub && soin.cout ? (
-                              <span className="doux">{euros(soin.cout)}</span>
-                            ) : null}
                           </div>
                           {(soin.praticien || soin.produit || soin.protocole) && (
                             <div className="meta">
@@ -373,7 +295,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
     prochaine_echeance: '',
     praticien: '',
     produit: '',
-    cout: '',
     notes: '',
   })
 
@@ -459,7 +380,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
             prochaine_echeance: dateAFaire,
             praticien: valeurs.praticien || null,
             produit: null,
-            cout: null,
             notes: valeurs.notes ? `À faire — ${valeurs.notes}` : 'À faire',
             cree_par: profilId,
           }
@@ -471,7 +391,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
             prochaine_echeance: valeurs.prochaine_echeance || null,
             praticien: valeurs.praticien || null,
             produit: valeurs.produit || null,
-            cout: valeurs.cout ? Number(valeurs.cout) : null,
             notes: valeurs.notes || null,
             cree_par: profilId,
           }
@@ -599,12 +518,6 @@ function FeuilleSoin({ cheval, profilId, intervalles = {}, ouverte, onFermer, on
               onChange={modifier('produit')}
               placeholder={valeurs.type === 'vaccin' ? 'Equilis Prequenza…' : 'Equimax…'}
             />
-          </Champ>
-        )}
-
-        {mode === 'fait' && !estClub && (
-          <Champ label="Montant (€)" aide="Facultatif — alimente le suivi des dépenses">
-            <input type="number" min="0" step="0.01" value={valeurs.cout} onChange={modifier('cout')} />
           </Champ>
         )}
 

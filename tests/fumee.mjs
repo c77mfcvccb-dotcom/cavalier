@@ -125,12 +125,6 @@ function reponse(url, methode, premium) {
       { id: 'doc2', cheval_id: CHEVAL, categorie: 'contrat_dp', nom: 'Contrat demi-pension', chemin: `${CHEVAL}/doc2.pdf`, taille_octets: 98000, type_mime: 'application/pdf', cree_le: dans(-10), profil: { id: MOI, nom: 'Alice Martin' } },
     ]
   }
-  if (url.includes('/rest/v1/depenses')) {
-    return [
-      { id: 'd1', profil_id: MOI, cheval_id: CHEVAL, montant: 320, categorie: 'pension', date: dans(-3), note: null, cheval: { id: CHEVAL, nom: 'Ivoire de la Bergerie' } },
-      { id: 'd2', profil_id: MOI, cheval_id: null, montant: 89.9, categorie: 'materiel', date: dans(-12), note: 'Guêtres', cheval: null },
-    ]
-  }
   if (url.includes('/rest/v1/v_echeances') || url.includes('/rest/v1/v_rappels')) {
     return [{ id: 'e1', cheval_id: CHEVAL, cheval_nom: 'Ivoire de la Bergerie', type: 'vermifuge', prochaine_echeance: dans(-4), jours_restants: -4, statut: 'retard', praticien: null, lu: false }]
   }
@@ -233,7 +227,6 @@ const ECRANS = [
   ['/calendrier', 'Calendrier'],
   ['/cours', 'Cours du club'],
   ['/club', 'Mon club'],
-  ['/depenses', 'Dépenses'],
   ['/profil', 'Profil'],
   ['/premium', 'Abonnement'],
   ['/cgv', 'CGV'],
@@ -294,11 +287,6 @@ export async function verifier(base) {
       noter('Soins — un badge par échéance, tous nommés',
         badges.every((b) => b.trim().length > 0), badges.join(' | '))
       noter('Soins — le retard est signalé', badges.includes('En retard'), badges.join(' | '))
-      // Alice n'est pas gestionnaire d'Ivoire : la confidentialité des
-      // coûts (0019) doit être annoncée sous le total.
-      const texteSoins = (await page.locator('main').innerText()).replace(/\s+/g, ' ')
-      noter('Soins — la confidentialité des coûts est annoncée',
-        texteSoins.includes('propres coûts'), texteSoins.slice(0, 150))
       await page.close()
     }
 

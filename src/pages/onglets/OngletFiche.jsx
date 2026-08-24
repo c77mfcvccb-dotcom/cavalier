@@ -423,16 +423,6 @@ export default function OngletFiche({ cheval, cavaliers, estGestionnaire, estPro
             Carnet de santé imprimable
           </Link>
 
-          {/* Cavalier seulement : la fonction dépenses n'existe plus côté écurie. */}
-          {estProprietaire && !estClubGestionnaire && (
-            <Link
-              to={`/depenses?cheval=${cheval.id}`}
-              className="bouton secondaire pleine-largeur"
-            >
-              Dépenses de ce cheval
-            </Link>
-          )}
-
           {estProprietaire &&
             (urlPublique ? (
               <button className="bouton secondaire pleine-largeur" onClick={() => setPartageOuvert(true)}>

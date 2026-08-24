@@ -227,7 +227,6 @@ export default function Decouverte() {
                 <li>Chevaux illimités</li>
                 <li>Carnet de santé complet et rappels d’échéances</li>
                 <li>Calendrier sans limite</li>
-                <li>Suivi des dépenses</li>
               </ul>
               <Link to="/inscription" className="bouton pleine-largeur">Essayer gratuitement</Link>
             </div>

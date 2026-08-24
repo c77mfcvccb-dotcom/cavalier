@@ -10,9 +10,8 @@ import Cloche from './Cloche'
  * « Calendrier », « Club » plutôt que « Mon club ».
  *
  * Les cours ont leur onglet des deux côtés — c'est le cœur du produit
- * club — et les dépenses sortent de la barre : elles restent accessibles
- * depuis le Profil et depuis la fiche de chaque cheval, mais un suivi de
- * budget n'a pas à occuper une place de premier plan.
+ * club. Le suivi des dépenses, qui occupait autrefois une place ici, a
+ * été retiré côté cavalier.
  */
 const ONGLETS_CAVALIER = [
   { to: '/', icone: '🏠', libelle: 'Accueil' },

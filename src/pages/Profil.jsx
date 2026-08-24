@@ -93,22 +93,6 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* Les dépenses ont quitté la barre du bas au profit des cours :
-            leur porte d'entrée vit ici, et sur la fiche de chaque cheval.
-            Côté club, la fonction n'existe plus du tout. */}
-        {!estClub && (
-        <Link to="/depenses" className="carte rangee" style={{ marginBottom: 18 }}>
-          <span style={{ fontSize: '1.4rem' }}>💶</span>
-          <div className="corps" style={{ flex: 1 }}>
-            <div className="gras">Suivi des dépenses</div>
-            <div className="doux" style={{ fontSize: '0.85rem' }}>
-              Totaux par mois, par poste et par cheval
-            </div>
-          </div>
-          <span className="fleche">›</span>
-        </Link>
-        )}
-
         {estClub && (
         <Link to="/club/tarifs" className="carte rangee" style={{ marginBottom: 18 }}>
           <span style={{ fontSize: '1.4rem' }}>💶</span>

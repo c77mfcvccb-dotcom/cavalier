@@ -112,25 +112,6 @@ export const PROTOCOLES_VACCIN = {
 }
 
 /**
- * Postes de dépense. Les clés sont contraintes en base (migration 0009) :
- * en ajouter une ici sans toucher au `check` ferait échouer l'insertion.
- *
- * L'ordre est celui du formulaire, et il n'est pas alphabétique : la
- * pension et le maréchal reviennent tous les mois, le reste est plus rare.
- */
-export const CATEGORIES_DEPENSE = {
-  pension: { libelle: 'Pension' },
-  marechal: { libelle: 'Maréchal' },
-  veterinaire: { libelle: 'Vétérinaire' },
-  osteo: { libelle: 'Ostéopathe' },
-  alimentation: { libelle: 'Alimentation' },
-  materiel: { libelle: 'Matériel' },
-  concours: { libelle: 'Concours' },
-  transport: { libelle: 'Transport' },
-  autre: { libelle: 'Autre' },
-}
-
-/**
  * Trois états, calés sur la vue v_echeances (migration 0011) : dépassé,
  * à prévoir sous 14 jours, ou rien à signaler.
  *
