@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../contexte/AuthContexte'
 import { supabase } from '../lib/supabase'
+import { chargerAnnonces } from '../lib/requetes'
 import { TYPES_ANNONCE } from '../lib/constantes'
 import { formatDate } from '../lib/format'
 import { Champ, Chargement, Erreur, EtatVide, Feuille } from '../composants/Ui'
@@ -235,12 +236,8 @@ function AnnoncesCavalier() {
     let annule = false
 
     async function charger() {
-      const { data, error } = await supabase
-        .from('annonces_club')
-        .select('*, club:profils(nom)')
-        .order('cree_le', { ascending: false })
-      if (error) throw error
-      if (!annule) setAnnonces(data || [])
+      const data = await chargerAnnonces()
+      if (!annule) setAnnonces(data)
     }
 
     charger()

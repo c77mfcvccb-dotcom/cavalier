@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
-import { chargerCours, chargerCreneaux, chargerEcheances, chargerMesChevaux } from '../lib/requetes'
+import {
+  chargerAnnonces,
+  chargerCours,
+  chargerCreneaux,
+  chargerEcheances,
+  chargerMesChevaux,
+} from '../lib/requetes'
 import { Avatar, Chargement, EtatVide, Erreur } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import CarteEcheance from '../composants/CarteEcheance'
 import { formatDate, formatHeure } from '../lib/format'
-import { DISCIPLINES_COURS, TYPES_CRENEAU } from '../lib/constantes'
+import { DISCIPLINES_COURS, TYPES_ANNONCE, TYPES_CRENEAU } from '../lib/constantes'
+
+// Les 3 plus récentes suffisent à l'aperçu : le fil complet vit sur
+// /annonces, ici c'est juste de quoi remarquer qu'il y a du nouveau.
+const ANNONCES_APERCU = 3
 
 /**
  * Les trois horizons des soins à faire — même découpage que l'accueil du
@@ -26,6 +36,7 @@ export default function TableauBord() {
   const [echeances, setEcheances] = useState([])
   const [creneaux, setCreneaux] = useState([])
   const [cours, setCours] = useState([])
+  const [annonces, setAnnonces] = useState([])
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
   // L'horizon choisi pour les soins à faire : la journée d'office, comme
@@ -48,7 +59,7 @@ export default function TableauBord() {
         // club — inutile d'interroger la table pour les autres.
         const estDuClub = mesChevaux.some((cheval) => cheval.club_id)
 
-        const [prochainesEcheances, prochainsCreneaux, prochainsCours] = await Promise.all([
+        const [prochainesEcheances, prochainsCreneaux, prochainsCours, dernieresAnnonces] = await Promise.all([
           // Pas de limite ici : le tri par horizon (jour/semaine/mois) se
           // fait à l'affichage, il lui faut la liste complète en main.
           chargerEcheances(),
@@ -58,6 +69,7 @@ export default function TableauBord() {
             fin: dans30Jours,
           }),
           estDuClub ? chargerCours({ debut: new Date(), fin: dans30Jours }) : Promise.resolve([]),
+          chargerAnnonces({ limite: ANNONCES_APERCU }),
         ])
 
         if (annule) return
@@ -69,6 +81,7 @@ export default function TableauBord() {
         // indistinguable d'un carnet vide.
         setEcheances(prochainesEcheances)
         setCreneaux(prochainsCreneaux.slice(0, 5))
+        setAnnonces(dernieresAnnonces)
       } catch (e) {
         if (!annule) setErreur(e.message || 'Chargement impossible')
       } finally {
@@ -105,6 +118,36 @@ export default function TableauBord() {
 
       <main className="contenu">
         <Erreur>{erreur}</Erreur>
+
+        {/* Une adhésion suffit à recevoir des annonces — pas besoin d'un
+            cheval attribué. D'où cette section hors du bloc « aucun
+            cheval » ci-dessous, et son silence total sans rien à montrer. */}
+        {annonces.length > 0 && (
+          <section className="section">
+            <div className="titre-section">
+              <h2>Annonces</h2>
+              <Link to="/annonces" className="lien">Tout voir</Link>
+            </div>
+            <div className="liste">
+              {annonces.map((annonce) => {
+                const config = TYPES_ANNONCE[annonce.type] || TYPES_ANNONCE.info
+                return (
+                  <Link key={annonce.id} to="/annonces" className="element">
+                    <div className="corps">
+                      <div className="rangee espace">
+                        <span className="titre">{annonce.titre}</span>
+                        <span className={`badge ${config.classe}`}>{config.libelle}</span>
+                      </div>
+                      <div className="meta">
+                        {annonce.club?.nom} · {formatDate(annonce.cree_le, { court: true })}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         {chevaux.length === 0 ? (
           <EtatVide

@@ -414,6 +414,23 @@ export async function chargerMesClubs() {
   return clubs.map((c) => ({ ...c, photo_url: photoParId.get(c.id) ?? null }))
 }
 
+/**
+ * Annonces des écuries adhérées, les plus récentes d'abord — un fil
+ * fusionné, pas un par club : le RLS scope déjà à ce que le cavalier peut
+ * lire (migration 0034), inutile de filtrer ici. `limite` sert à
+ * l'aperçu de l'accueil ; l'écran complet l'omet.
+ */
+export async function chargerAnnonces({ limite = null } = {}) {
+  let requete = supabase
+    .from('annonces_club')
+    .select('*, club:profils(nom)')
+    .order('cree_le', { ascending: false })
+  if (limite) requete = requete.limit(limite)
+  const { data, error } = await requete
+  if (error) throw error
+  return data || []
+}
+
 /** Documents administratifs du cheval, les plus récents d'abord. */
 export async function chargerDocuments(chevalId) {
   const { data, error } = await supabase
