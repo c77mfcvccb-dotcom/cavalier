@@ -54,6 +54,7 @@ const MesCours = ecranDiffere(() => import('./pages/MesCours'))
 const MonClub = ecranDiffere(() => import('./pages/MonClub'))
 const RecapMensuel = ecranDiffere(() => import('./pages/RecapMensuel'))
 const RecapCavalier = ecranDiffere(() => import('./pages/RecapCavalier'))
+const TarifsClub = ecranDiffere(() => import('./pages/TarifsClub'))
 const Bienvenue = ecranDiffere(() => import('./pages/Bienvenue'))
 const Decouverte = ecranDiffere(() => import('./pages/Decouverte'))
 
@@ -147,6 +148,7 @@ export default function App() {
                 <Route path="/cours" element={<ClubCours />} />
                 <Route path="/club/recap" element={<RecapMensuel />} />
                 <Route path="/club/recap/:cavalierId/:mois" element={<RecapCavalier />} />
+                <Route path="/club/tarifs" element={<TarifsClub />} />
               </>
             ) : (
               <>
@@ -169,6 +171,7 @@ export default function App() {
                     côté écurie — un club qui tape l'URL retombe à l'accueil. */}
                 <Route path="/depenses" element={<Depenses />} />
                 <Route path="/rejoindre" element={<RejoindreCheval />} />
+                <Route path="/club/tarifs/:clubId" element={<TarifsClub />} />
               </>
             )}
 

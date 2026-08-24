@@ -29,6 +29,10 @@ function ClubAdherent() {
   const { profil, adhesions, rafraichirAdhesions } = useAuth()
   const [chevaux, setChevaux] = useState([])
   const [clubs, setClubs] = useState(new Map())
+  // Clubs ayant publié au moins un tarif visible : le lien « Voir les
+  // tarifs » ne doit apparaître QUE là où il mène à quelque chose — pas
+  // vers un écran vide pour une écurie qui n'a encore rien publié.
+  const [clubsAvecTarifs, setClubsAvecTarifs] = useState(new Set())
   const [chargement, setChargement] = useState(true)
   const [erreur, setErreur] = useState('')
 
@@ -44,6 +48,10 @@ function ClubAdherent() {
       .select('id, nom, photo_url, ville')
       .eq('type_compte', 'club')
     setClubs(new Map((data || []).map((c) => [c.id, c])))
+    // Le RLS de tarifs_club ne rend déjà que les lignes visibles des clubs
+    // dont on est adhérent — un simple select suffit, pas de filtre ici.
+    const { data: tarifs } = await supabase.from('tarifs_club').select('club_id')
+    setClubsAvecTarifs(new Set((tarifs || []).map((t) => t.club_id)))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profil.id])
 
@@ -243,6 +251,14 @@ function ClubAdherent() {
                       <Link to="/cours" className="bouton secondaire pleine-largeur">
                         Voir les cours du club
                       </Link>
+                      {clubsAvecTarifs.has(a.club_id) && (
+                        <Link
+                          to={`/club/tarifs/${a.club_id}`}
+                          className="bouton secondaire pleine-largeur"
+                        >
+                          Voir les tarifs
+                        </Link>
+                      )}
                       <button className="bouton fantome petit" onClick={() => quitter(a)}>
                         Quitter l'écurie
                       </button>

@@ -195,6 +195,13 @@ export const DISCIPLINES_COURS = {
   autre: { libelle: 'Autre' },
 }
 
+/** Périodicités des tarifs du club (migration 0033), contraintes en base. */
+export const PERIODICITES_TARIF = {
+  mois: { libelle: 'Par mois', suffixe: '/mois' },
+  seance: { libelle: 'Par séance', suffixe: '/séance' },
+  unique: { libelle: 'Prix unique', suffixe: '' },
+}
+
 /**
  * Motifs d'indisponibilité d'un cheval (migration 0017, même règle : les
  * clés sont contraintes en base). « Repos » est le motif par défaut — c'est

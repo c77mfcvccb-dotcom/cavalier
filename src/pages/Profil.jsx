@@ -109,6 +109,19 @@ export default function Profil() {
         </Link>
         )}
 
+        {estClub && (
+        <Link to="/club/tarifs" className="carte rangee" style={{ marginBottom: 18 }}>
+          <span style={{ fontSize: '1.4rem' }}>💶</span>
+          <div className="corps" style={{ flex: 1 }}>
+            <div className="gras">Tarifs</div>
+            <div className="doux" style={{ fontSize: '0.85rem' }}>
+              La grille que vos adhérents consultent
+            </div>
+          </div>
+          <span className="fleche">›</span>
+        </Link>
+        )}
+
         <form onSubmit={enregistrer}>
           <Erreur>{erreur}</Erreur>
           <Succes>{message}</Succes>
