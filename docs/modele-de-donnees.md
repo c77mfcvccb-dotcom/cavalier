@@ -433,6 +433,24 @@ choix reste donc au club. Sans cheval déclaré, `cheval_id` reste nul et
 l'attribution retombe sur le club, comme avant. Le club, lui, garde la main
 entière : attribution, correction, pointage et inscriptions d'office.
 
+### `tarifs_club` — la grille tarifaire (migration 0033)
+
+| colonne       | type        | notes                                              |
+|---------------|-------------|-----------------------------------------------------|
+| `club_id`     | uuid        |                                                       |
+| `nom`         | text        | libre — pas de catégorie imposée                     |
+| `prix`        | numeric(10,2) |                                                     |
+| `periodicite` | text        | `mois` \| `seance` \| `unique`                       |
+| `description` | text        | optionnelle                                          |
+| `visible`     | bool        | masquer sans supprimer — historique conservé côté club |
+| `ordre`       | int         | position dans la liste, échangée entre deux lignes voisines au réordre |
+
+RLS : le club voit toutes ses lignes (gestion), un cavalier adhérent
+(`est_cavalier_du_club`, même relation que `cours`) seulement celles
+`visible`. Un cavalier qui n'est adhérent d'aucun club, ou dont le club n'a
+rien publié, n'obtient aucune ligne — c'est ce silence, côté client, qui
+retire l'écran plutôt qu'un état vide affiché à tort.
+
 ### Vue `v_charge_chevaux`
 
 `security_invoker`, une ligne par cheval visible : `aujourd_hui` et

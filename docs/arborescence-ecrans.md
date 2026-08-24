@@ -220,7 +220,14 @@ sur la fiche de chaque cheval.
                       quitter, et le code d'adhésion pour rejoindre.
                       L'accès offert par l'écurie = premium sur son
                       périmètre uniquement ; les chevaux personnels hors
-                      écurie restent sur le plan du compte
+                      écurie restent sur le plan du compte. Bouton « Voir
+                      les tarifs » sur la carte, uniquement si l'écurie en
+                      a publié au moins un (sinon rien ne s'affiche)
+
+/club/tarifs/:id      TARIFS DE L'ÉCURIE (cavalier, lecture seule) — la
+                      grille publiée par ce club précisément : une carte
+                      par ligne visible, nom, prix, périodicité et
+                      description. Rien à modifier ici
 
 /profil               Nom, photo, galop, ville, téléphone, déconnexion,
                       badge de plan (Premium / Accès offert par l'écurie /
@@ -378,7 +385,16 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       « Exporter en PDF » via window.print(), même
                       mécanique que le carnet de santé imprimable
 
-/profil               Nom du club, photo, ville, présentation, déconnexion
+/club/tarifs          TARIFS (gérant) — la grille du club : une ligne par
+                      formule (nom libre, prix, périodicité mois/séance/
+                      unique, description optionnelle), réordonnée par
+                      flèches ▲▼, masquée sans être supprimée (case
+                      « Visible par les adhérents » dans la feuille
+                      d'édition), ou supprimée pour de bon. « + » flottant
+                      pour en ajouter une. Aucune catégorie imposée
+
+/profil               Nom du club, photo, ville, présentation, entrée
+                      « Tarifs », déconnexion
 ```
 
 ## Écrans partagés
