@@ -362,12 +362,16 @@ export default function ClubCours() {
         ) : (
           joursRemplis.map(({ jour, cours: coursDuJour }) => (
             <section key={cleJour(jour)} className="section">
-              <div className="titre-section">
-                <h2 style={{ fontSize: '1rem' }}>
-                  {formatDate(jour, { avecJour: true, court: true })}
-                </h2>
-                <span className="doux">{coursDuJour.length}</span>
-              </div>
+              {/* En vue Jour, la date est déjà dans le sélecteur de période
+                  au-dessus — la répéter ici l'affichait deux fois. */}
+              {periode !== 'jour' && (
+                <div className="titre-section">
+                  <h2 style={{ fontSize: '1rem' }}>
+                    {formatDate(jour, { avecJour: true, court: true })}
+                  </h2>
+                  <span className="doux">{coursDuJour.length}</span>
+                </div>
+              )}
 
               <div className="liste">
                 {coursDuJour.map((c) => {
