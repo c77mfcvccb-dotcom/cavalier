@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexte/AuthContexte'
 import { chargerCours } from '../lib/requetes'
-import { debutMois, decalerMois, moisSuivantPossible } from '../lib/depenses'
+import { cleMois, debutMois, decalerMois, moisSuivantPossible } from '../lib/depenses'
 import { formatDate, formatMoisAnnee } from '../lib/format'
 import { Avatar, Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
@@ -128,19 +129,36 @@ export default function RecapMensuel() {
               const ouvert = depli === cavalier?.id
               return (
                 <div key={cavalier?.id} className="carte" style={{ padding: 0, overflow: 'hidden' }}>
-                  <button
-                    className="entete-groupe"
-                    onClick={() => setDepli(ouvert ? null : cavalier?.id)}
-                  >
-                    <Avatar profil={cavalier} />
-                    <span className="gras" style={{ flex: 1, textAlign: 'left', marginLeft: 10 }}>
-                      {cavalier?.nom}
-                    </span>
-                    <span className="badge contour">
-                      {seances.length} cours
-                    </span>
-                    <span className="doux">{ouvert ? '▴' : '▾'}</span>
-                  </button>
+                  <div className="entete-groupe">
+                    <button
+                      type="button"
+                      onClick={() => setDepli(ouvert ? null : cavalier?.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flex: 1,
+                        minWidth: 0,
+                        gap: 10,
+                        textAlign: 'left',
+                      }}
+                    >
+                      <Avatar profil={cavalier} />
+                      <span className="gras" style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                        {cavalier?.nom}
+                      </span>
+                      <span className="badge contour">
+                        {seances.length} cours
+                      </span>
+                      <span className="doux">{ouvert ? '▴' : '▾'}</span>
+                    </button>
+                    <Link
+                      to={`/club/recap/${cavalier?.id}/${cleMois(mois)}`}
+                      className="bouton fantome petit"
+                      aria-label={`Fiche PDF de ${cavalier?.nom}`}
+                    >
+                      PDF
+                    </Link>
+                  </div>
 
                   {ouvert && (
                     <div className="pile" style={{ gap: 0 }}>

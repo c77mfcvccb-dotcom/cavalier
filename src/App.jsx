@@ -53,6 +53,7 @@ const CalendrierGlobal = ecranDiffere(() => import('./pages/CalendrierGlobal'))
 const MesCours = ecranDiffere(() => import('./pages/MesCours'))
 const MonClub = ecranDiffere(() => import('./pages/MonClub'))
 const RecapMensuel = ecranDiffere(() => import('./pages/RecapMensuel'))
+const RecapCavalier = ecranDiffere(() => import('./pages/RecapCavalier'))
 const Bienvenue = ecranDiffere(() => import('./pages/Bienvenue'))
 const Decouverte = ecranDiffere(() => import('./pages/Decouverte'))
 
@@ -145,6 +146,7 @@ export default function App() {
                 <Route path="/planning" element={<ClubPlanning />} />
                 <Route path="/cours" element={<ClubCours />} />
                 <Route path="/club/recap" element={<RecapMensuel />} />
+                <Route path="/club/recap/:cavalierId/:mois" element={<RecapCavalier />} />
               </>
             ) : (
               <>
