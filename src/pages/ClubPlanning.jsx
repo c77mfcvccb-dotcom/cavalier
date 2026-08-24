@@ -14,7 +14,7 @@ import { Chargement, Erreur, EtatVide } from '../composants/Ui'
 import { Entete } from '../composants/Mise'
 import LigneEvenement from '../composants/LigneEvenement'
 import SelecteurPeriode, { decalerAncre, fenetrePeriode } from '../composants/SelecteurPeriode'
-import { DISCIPLINES_COURS, MOTIFS_INDISPO, TYPES_SOIN } from '../lib/constantes'
+import { DISCIPLINES_COURS, MOTIFS_INDISPO, TYPES_CRENEAU, TYPES_SOIN } from '../lib/constantes'
 import { cleJour, debutSemaine, formatDate, formatHeure } from '../lib/format'
 
 const JOURS_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
@@ -154,8 +154,10 @@ export default function ClubPlanning() {
 
   /**
    * Le contenu des cases : pour chaque cheval et chaque jour, ses créneaux
-   * de monte (prénom du cavalier) et ses passages en cours, triés par
-   * heure — exactement ce qu'on écrirait au feutre dans la case.
+   * de monte (prénom du cavalier ET ce qu'elle vient y faire — balade,
+   * séance, soin… le prénom seul ne dit pas pourquoi le cheval est pris) et
+   * ses passages en cours, triés par heure — exactement ce qu'on écrirait
+   * au feutre dans la case.
    */
   const casesSemaine = useMemo(() => {
     const carte = new Map()
@@ -165,10 +167,12 @@ export default function ClubPlanning() {
       carte.get(cle).push(entree)
     }
     for (const creneau of creneaux) {
+      const prenom = creneau.etiquette?.court || creneau.etiquette?.libelle || 'Monte'
+      const nature = creneau.titre || TYPES_CRENEAU[creneau.type] || 'Monte'
       poser(creneau.cheval_id, cleJour(creneau.debut), {
         id: `c-${creneau.id}`,
         debut: creneau.debut,
-        texte: creneau.etiquette?.court || creneau.etiquette?.libelle || 'Monte',
+        texte: nature === prenom ? prenom : `${prenom} · ${nature}`,
         couleur: creneau.couleur,
       })
     }
