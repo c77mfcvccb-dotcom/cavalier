@@ -171,8 +171,6 @@ sur la fiche de chaque cheval.
    │                  désignée, propose au club de REPORTER ses cavaliers
    │                  sur un autre cheval — la liaison porte « Remplace X »
    │                  et la levée du repos propose d'y mettre fin.
-   │                  « Dépenses de ce cheval » ouvre le suivi déjà filtré
-   │                  (propriétaire cavalier seulement — pas côté club)
    ├─ Cavaliers       qui monte le cheval, chacun avec sa couleur de
    │                  calendrier et son rôle. « + Inviter » génère le code
    │                  (demi-pension) — réservé à la propriétaire effective.
