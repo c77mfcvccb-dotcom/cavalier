@@ -59,6 +59,11 @@ sur la fiche de chaque cheval.
 ```
 /                     ACCUEIL — tableau de bord, photo de profil à côté du
                       « Bonjour » en en-tête (initiales à défaut de photo)
+                      ├─ ANNONCES : les 3 plus récentes de mes écuries
+                      │  adhérées (lien « Tout voir » vers /annonces),
+                      │  entièrement absente s'il n'y en a aucune. Ne
+                      │  dépend d'aucun cheval attribué — une adhésion
+                      │  suffit, elle s'affiche donc même écran vide
                       ├─ SOINS À FAIRE : sélecteur Aujourd'hui / 7 jours /
                       │  30 jours (même mécanique que l'accueil du club),
                       │  échéances de mes chevaux triées par urgence
