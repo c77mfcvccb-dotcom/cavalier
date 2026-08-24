@@ -368,7 +368,15 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       renvoyant vers l'onglet Cours, plutôt que compté ou
                       ignoré silencieusement. Aucune table ni RLS nouvelle :
                       relit `cours`/`inscriptions_cours` via `chargerCours`,
-                      déjà visibles au club sur ses propres cours
+                      déjà visibles au club sur ses propres cours. Bouton
+                      « PDF » sur chaque cavalier vers /club/recap/:id/:mois
+
+/club/recap/:id/:mois FICHE CAVALIER imprimable (gérant) — le détail qui
+                      justifie le total du récap, prêt à joindre à une
+                      facture : identité du cavalier, mois concerné, tableau
+                      des cours suivis (date, heure, discipline, cheval).
+                      « Exporter en PDF » via window.print(), même
+                      mécanique que le carnet de santé imprimable
 
 /profil               Nom du club, photo, ville, présentation, déconnexion
 ```
