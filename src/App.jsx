@@ -55,6 +55,7 @@ const MonClub = ecranDiffere(() => import('./pages/MonClub'))
 const RecapMensuel = ecranDiffere(() => import('./pages/RecapMensuel'))
 const RecapCavalier = ecranDiffere(() => import('./pages/RecapCavalier'))
 const TarifsClub = ecranDiffere(() => import('./pages/TarifsClub'))
+const AnnoncesClub = ecranDiffere(() => import('./pages/AnnoncesClub'))
 const Bienvenue = ecranDiffere(() => import('./pages/Bienvenue'))
 const Decouverte = ecranDiffere(() => import('./pages/Decouverte'))
 
@@ -149,6 +150,7 @@ export default function App() {
                 <Route path="/club/recap" element={<RecapMensuel />} />
                 <Route path="/club/recap/:cavalierId/:mois" element={<RecapCavalier />} />
                 <Route path="/club/tarifs" element={<TarifsClub />} />
+                <Route path="/club/annonces" element={<AnnoncesClub />} />
               </>
             ) : (
               <>
@@ -172,6 +174,7 @@ export default function App() {
                 <Route path="/depenses" element={<Depenses />} />
                 <Route path="/rejoindre" element={<RejoindreCheval />} />
                 <Route path="/club/tarifs/:clubId" element={<TarifsClub />} />
+                <Route path="/annonces" element={<AnnoncesClub />} />
               </>
             )}
 

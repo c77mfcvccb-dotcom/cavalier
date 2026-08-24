@@ -127,6 +127,17 @@ function ClubAdherent() {
           </>
         ) : (
           <>
+            <Link to="/annonces" className="carte rangee" style={{ marginBottom: 14 }}>
+              <span style={{ fontSize: '1.4rem' }}>📣</span>
+              <div className="corps" style={{ flex: 1 }}>
+                <div className="gras">Annonces</div>
+                <div className="doux" style={{ fontSize: '0.85rem' }}>
+                  Fermetures, stages, actualités de vos écuries
+                </div>
+              </div>
+              <span className="fleche">›</span>
+            </Link>
+
             {adhesions.map((a) => {
               const club = clubs.get(a.club_id)
               const duClub = chevaux.filter((c) => c.club_id === a.club_id)

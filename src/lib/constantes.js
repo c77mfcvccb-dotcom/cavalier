@@ -203,6 +203,17 @@ export const PERIODICITES_TARIF = {
 }
 
 /**
+ * Types d'annonce du club (migration 0034), contraints en base. Une
+ * fermeture se distingue visuellement (badge urgent) — c'est celle qui
+ * change le quotidien d'un adhérent, contrairement à une actualité.
+ */
+export const TYPES_ANNONCE = {
+  info: { libelle: 'Actualité', classe: 'contour' },
+  fermeture: { libelle: 'Fermeture exceptionnelle', classe: 'urgent' },
+  stage: { libelle: 'Stage', classe: 'ok' },
+}
+
+/**
  * Motifs d'indisponibilité d'un cheval (migration 0017, même règle : les
  * clés sont contraintes en base). « Repos » est le motif par défaut — c'est
  * le plus fréquent, et le moins alarmant.
