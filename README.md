@@ -97,6 +97,7 @@ la seule ouverture de l'écran d'abonnement.
 | `0031_partage_documents_et_creneaux.sql` | Le toggle privé/partagé de la 0028 s'étend aux documents et aux créneaux : masqués de tout le monde sauf leur auteur/cavalier une fois marqués privés, y compris le fichier brut du bucket pour les documents ; sans effet sur les cours attribués par le club |
 | `0032_partage_par_categorie.sql` | Remplace 0028/0031 : le partage se règle par catégorie (soins/documents/créneaux) sur le cheval, pas entrée par entrée, et ne vise que l'écurie (club ou pension confirmée) — entre cavaliers liés, tout reste toujours visible en entier |
 | `0033_tarifs_club.sql` | Table `tarifs_club` : le club publie librement sa grille (nom, prix, périodicité, description), les cavaliers adhérents ne lisent que les lignes visibles — même relation d'adhésion que les cours |
+| `0034_annonces_club.sql` | Table `annonces_club` : fil chronologique du club (actualité/fermeture/stage), lu en un flux fusionné par les cavaliers sur toutes leurs écuries adhérées — pas de masquage, une annonce se supprime plutôt que de s'archiver |
 
 > Écrire du SQL pour Supabase : les extensions y vivent dans le schéma
 > `extensions`, pas dans `public`. Une fonction `security definer` déclarée

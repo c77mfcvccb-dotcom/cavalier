@@ -222,12 +222,21 @@ sur la fiche de chaque cheval.
                       périmètre uniquement ; les chevaux personnels hors
                       écurie restent sur le plan du compte. Bouton « Voir
                       les tarifs » sur la carte, uniquement si l'écurie en
-                      a publié au moins un (sinon rien ne s'affiche)
+                      a publié au moins un (sinon rien ne s'affiche).
+                      Bandeau « Annonces » en tête d'écran, vers /annonces
 
 /club/tarifs/:id      TARIFS DE L'ÉCURIE (cavalier, lecture seule) — la
                       grille publiée par ce club précisément : une carte
                       par ligne visible, nom, prix, périodicité et
                       description. Rien à modifier ici
+
+/annonces             ANNONCES (cavalier, lecture seule) — le fil de
+                      toutes les écuries adhérées, FUSIONNÉ et trié du
+                      plus récent au plus ancien (pas d'écran par club :
+                      c'est le RLS qui scope, pas l'écran). Chaque carte
+                      porte son type en badge (Actualité, Fermeture
+                      exceptionnelle en rouge, Stage), et le nom de
+                      l'écurie si le cavalier en a plusieurs
 
 /profil               Nom, photo, galop, ville, téléphone, déconnexion,
                       badge de plan (Premium / Accès offert par l'écurie /
@@ -393,8 +402,15 @@ Barre d'onglets : **Accueil · Chevaux · Cavaliers · Planning · Cours · Prof
                       d'édition), ou supprimée pour de bon. « + » flottant
                       pour en ajouter une. Aucune catégorie imposée
 
-/profil               Nom du club, photo, ville, présentation, entrée
-                      « Tarifs », déconnexion
+/club/annonces        ANNONCES (gérant) — le fil du club : une ligne par
+                      annonce (type Actualité/Fermeture exceptionnelle/
+                      Stage en puces, titre, message), triées du plus
+                      récent au plus ancien. Publier ou supprimer
+                      seulement — pas de masquage, une annonce n'a pas
+                      vocation à rester en coulisses. « + » flottant
+
+/profil               Nom du club, photo, ville, présentation, entrées
+                      « Tarifs » et « Annonces », déconnexion
 ```
 
 ## Écrans partagés

@@ -451,6 +451,22 @@ RLS : le club voit toutes ses lignes (gestion), un cavalier adhérent
 rien publié, n'obtient aucune ligne — c'est ce silence, côté client, qui
 retire l'écran plutôt qu'un état vide affiché à tort.
 
+### `annonces_club` — le fil du club (migration 0034)
+
+| colonne   | type        | notes                                          |
+|-----------|-------------|---------------------------------------------------|
+| `club_id` | uuid        |                                                   |
+| `titre`   | text        |                                                   |
+| `contenu` | text        |                                                   |
+| `type`    | text        | `info` \| `fermeture` \| `stage`                 |
+| `cree_le` | timestamptz | ordre d'affichage : chronologique décroissant    |
+
+RLS : même relation d'adhésion que `tarifs_club` et `cours`, mais sans
+masquage — une annonce est publiée ou supprimée, elle n'a pas vocation à
+rester en coulisses. Le cavalier lit un fil FUSIONNÉ de toutes ses écuries
+(pas de filtre par club côté client) : le RLS scope déjà aux clubs dont il
+est adhérent, un simple tri par date suffit.
+
 ### Vue `v_charge_chevaux`
 
 `security_invoker`, une ligne par cheval visible : `aujourd_hui` et
